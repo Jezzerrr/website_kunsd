@@ -1,5 +1,5 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: "Syne", sans-serif;
     max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
@@ -17,4 +17,30 @@ nav a {
 
 main {
     line-height: 1.6;
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.gallery img {
+    width: 100%;
+    display: block;
+}
+
+.uploaded-image {
+    max-width: 800px;
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+
+.result-image {
+    max-width: 800px;
+    width: 100%;
+    height: auto;
+    display: block;
 }
