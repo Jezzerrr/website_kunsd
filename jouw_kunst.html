@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Jouw kunsd - Jesses website</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="over-mij.html">Over mij</a>
+            <a href="kunst.html">Kunsd</a>
+            <a href="jouw_kunst.html">Jouw kunsd</a>
+            <a href="muziek.html">Muziek</a>
+            <a href="downloads.html">Downloads</a>
+        </nav>
+    </header>
+
+
+    <main>
+
+        <h1>Jouw Kunsd</h1>
+
+        <p>Maak hier jouw eigen kunsd.</p>
+
+
+        <!-- Foto kiezen -->
+
+        <input
+            type="file"
+            id="imageInput"
+            accept="image/jpeg,image/png"
+        >
+
+
+        <!-- Originele foto -->
+
+        <div id="preview">
+            <p>Je hebt nog geen foto gekozen.</p>
+        </div>
+
+
+        <!-- Bewerkingsknoppen -->
+
+        <div id="buttons">
+
+            <button id="blackWhiteButton" disabled>
+                Zwart-wit
+            </button>
+
+            <button id="rotateButton" disabled>
+                180 graden roteren
+            </button>
+
+            <button id="inverseButton" disabled>
+                Inverse color
+            </button>
+
+        </div>
+
+
+        <!-- Resultaat -->
+
+        <div id="result"></div>
+
+    </main>
+
+
+    <!--
+        Eerst de algoritmes laden.
+        Daarna laden we jouw_kunst.js,
+        dat deze functies gebruikt.
+    -->
+
+    <script src="js/jouw_kunst.js"></script>
+    <script src="js/black_and_white.js"></script>
+    <script src="js/rotation_180.js"></script>
+    <script src="js/inverse_color.js"></script>
+
+</body>
+
+</html>
