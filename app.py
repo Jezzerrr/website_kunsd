@@ -22,36 +22,6 @@ def serve_file(filename):
     return send_from_directory(".", filename)
 
 
-@app.route("/api/python-bewerking", methods=["POST"])
-def python_bewerking():
-
-    if "image" not in request.files:
-        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
-
-    file = request.files["image"]
-
-    try:
-        image = Image.open(file)
-
-        # Voorlopige Python-bewerking:
-        result = image.convert("L")
-
-        output = io.BytesIO()
-        result.save(output, format="PNG")
-        output.seek(0)
-
-        image_base64 = base64.b64encode(
-            output.read()
-        ).decode("utf-8")
-
-        return jsonify({
-            "image": f"data:image/png;base64,{image_base64}"
-        })
-
-    except Exception as error:
-        return jsonify({"error": str(error)}), 500
-
-
 @app.route("/api/ranked-dots", methods=["POST"])
 def ranked_dots():
 
@@ -62,6 +32,18 @@ def ranked_dots():
 
     try:
         input_image = Image.open(file).convert("RGB")
+
+        # Percentage van de afbeeldingsbreedte
+        grid_size_percent = float(request.form.get("grid_size_percent", 3))
+
+        # Beperk de waarde tot 0.5% - 5%
+        grid_size_percent = max(
+            0.5,
+            min(5, grid_size_percent)
+        )
+
+        # Bereken de daadwerkelijke grid size in pixels
+        grid_size = input_image.width * grid_size_percent / 100
 
         # Kleurenpalet
         colors = get_palette(
@@ -75,23 +57,18 @@ def ranked_dots():
         color_image = image_to_ranked_dots(
             input_image,
             colors=colors,
-            grid_size=input_image.width * 0.03,
+            grid_size=grid_size,
             balance=0.5
         )
 
         # Zet het resultaat om naar PNG
         output = io.BytesIO()
 
-        color_image.save(
-            output,
-            format="PNG"
-        )
+        color_image.save(output, format="PNG")
 
         output.seek(0)
 
-        image_base64 = base64.b64encode(
-            output.read()
-        ).decode("utf-8")
+        image_base64 = base64.b64encode(output.read()).decode("utf-8")
 
         return jsonify({
             "image": f"data:image/png;base64,{image_base64}"

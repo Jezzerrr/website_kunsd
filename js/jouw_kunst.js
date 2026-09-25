@@ -4,10 +4,16 @@ let selectedImage = null;
 // HTML elements
 const imageUpload = document.getElementById("image-upload");
 const uploadedImage = document.getElementById("uploaded-image");
-const buttons = document.getElementById("buttons");
+
+const buttonsHTML = document.getElementById("buttons-html");
+const buttonsPython = document.getElementById("buttons-python");
+
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
 const downloadButton = document.getElementById("download-button");
+
+const gridSizeSlider = document.getElementById("grid-size-slider");
+const gridSizeValue = document.getElementById("grid-size-value");
 
 
 // Upload
@@ -29,7 +35,9 @@ imageUpload.addEventListener("change", function () {
 
             uploadedImage.src = event.target.result;
 
-            buttons.style.display = "block";
+            buttonsHTML.style.display = "block";
+            buttonsPython.style.display = "block";
+
             resultContainer.style.display = "none";
         };
 
@@ -102,53 +110,11 @@ document
     });
 
 
-// Python-bewerking
-document
-    .getElementById("python-button")
-    .addEventListener("click", async function () {
+// Update displayed grid size
+gridSizeSlider.addEventListener("input", function () {
 
-        if (!imageUpload.files[0]) {
-            return;
-        }
-
-        const file = imageUpload.files[0];
-
-        const formData = new FormData();
-
-        formData.append("image", file);
-
-        try {
-
-            const response = await fetch(
-                "/api/python-bewerking",
-                {
-                    method: "POST",
-                    body: formData
-                }
-            );
-
-            if (!response.ok) {
-
-                console.error(
-                    "Python gaf een fout:",
-                    response.status
-                );
-
-                return;
-            }
-
-            const data = await response.json();
-
-            showResult(data.image);
-
-        } catch (error) {
-
-            console.error(
-                "Kon Python niet bereiken:",
-                error
-            );
-        }
-    });
+    gridSizeValue.textContent = `${gridSizeSlider.value}%`;
+});
 
 
 // Ranked dots
@@ -165,6 +131,10 @@ document
         const formData = new FormData();
 
         formData.append("image", file);
+        formData.append(
+            "grid_size_percent",
+            gridSizeSlider.value
+        );
 
         try {
 
