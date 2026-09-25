@@ -5,13 +5,12 @@ import base64
 from flask import Flask, request, send_from_directory, jsonify
 from PIL import Image
 
+from src.dotty_affair import image_to_ranked_dots
+from src.helper_functions.color_helpers import get_palette
+
 
 app = Flask(__name__)
 
-
-# ========================================
-# Website-bestanden
-# ========================================
 
 @app.route("/")
 def home():
@@ -23,80 +22,87 @@ def serve_file(filename):
     return send_from_directory(".", filename)
 
 
-# ========================================
-# Python-afbeeldingsbewerking
-# ========================================
-
 @app.route("/api/python-bewerking", methods=["POST"])
 def python_bewerking():
 
-    # Controleer of er een afbeelding is meegestuurd
     if "image" not in request.files:
-        return jsonify({
-            "error": "Geen afbeelding ontvangen"
-        }), 400
-
+        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
 
     file = request.files["image"]
 
-
     try:
-
-        # Open de afbeelding
         image = Image.open(file)
 
-        # --------------------------------
-        # Python-bewerking
-        # --------------------------------
-
-        # Voorlopig maken we hem grijswaarden.
-        # Hier kunnen we later jouw eigen
-        # kunst-algoritmes neerzetten.
-
+        # Voorlopige Python-bewerking:
         result = image.convert("L")
 
-        # --------------------------------
-        # Resultaat opslaan in geheugen
-        # --------------------------------
-
         output = io.BytesIO()
-
-        result.save(
-            output,
-            format="PNG"
-        )
-
+        result.save(output, format="PNG")
         output.seek(0)
-
-        # --------------------------------
-        # Omzetten naar base64
-        # --------------------------------
 
         image_base64 = base64.b64encode(
             output.read()
         ).decode("utf-8")
-
 
         return jsonify({
             "image": f"data:image/png;base64,{image_base64}"
         })
 
     except Exception as error:
+        return jsonify({"error": str(error)}), 500
+
+
+@app.route("/api/ranked-dots", methods=["POST"])
+def ranked_dots():
+
+    if "image" not in request.files:
+        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
+
+    file = request.files["image"]
+
+    try:
+        input_image = Image.open(file).convert("RGB")
+
+        # Kleurenpalet
+        colors = get_palette(
+            "gist_heat",
+            3,
+            add_white=True,
+            sort_by_darkness=True
+        )
+
+        # Maak de dot-afbeelding
+        color_image = image_to_ranked_dots(
+            input_image,
+            colors=colors,
+            grid_size=input_image.width * 0.03,
+            balance=0.5
+        )
+
+        # Zet het resultaat om naar PNG
+        output = io.BytesIO()
+
+        color_image.save(
+            output,
+            format="PNG"
+        )
+
+        output.seek(0)
+
+        image_base64 = base64.b64encode(
+            output.read()
+        ).decode("utf-8")
 
         return jsonify({
-            "error": str(error)
-        }), 500
+            "image": f"data:image/png;base64,{image_base64}"
+        })
 
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
 
-# ========================================
-# Start server
-# ========================================
 
 if __name__ == "__main__":
-
-    port = int(
-        os.environ.get("PORT", 5000)
-    )
+    port = int(os.environ.get("PORT", 5000))
 
     app.run(
         host="0.0.0.0",
