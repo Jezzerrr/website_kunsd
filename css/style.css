@@ -30,6 +30,12 @@ main {
     display: block;
 }
 
+.featured-art img {
+    width: 60%;
+    max-width: 700px;
+    display: block;
+}
+
 .uploaded-image {
     max-width: 800px;
     width: 100%;
