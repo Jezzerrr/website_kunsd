@@ -1,179 +1,264 @@
-const imageInput = document.getElementById("imageInput");
-
-const preview = document.getElementById("preview");
-const result = document.getElementById("result");
-
-const blackWhiteButton = document.getElementById("blackWhiteButton");
-const rotateButton = document.getElementById("rotateButton");
-const inverseButton = document.getElementById("inverseButton");
-
-
-// Hier bewaren we de gekozen afbeelding
-
 let selectedImage = null;
 
 
-// Wanneer de gebruiker een foto kiest
+// ========================================
+// HTML-elementen
+// ========================================
 
-imageInput.addEventListener("change", function () {
+const imageUpload =
+    document.getElementById("image-upload");
 
-    const file = imageInput.files[0];
+const uploadedImage =
+    document.getElementById("uploaded-image");
 
-    if (!file) {
-        return;
+const buttons =
+    document.getElementById("buttons");
+
+const resultContainer =
+    document.getElementById("result-container");
+
+const resultImage =
+    document.getElementById("result-image");
+
+const downloadButton =
+    document.getElementById("download-button");
+
+
+// ========================================
+// Afbeelding uploaden
+// ========================================
+
+imageUpload.addEventListener(
+    "change",
+    function () {
+
+        const file =
+            imageUpload.files[0];
+
+
+        if (!file) {
+            return;
+        }
+
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function (event) {
+
+                selectedImage =
+                    new Image();
+
+
+                selectedImage.onload =
+                    function () {
+
+                        uploadedImage.src =
+                            event.target.result;
+
+
+                        buttons.style.display =
+                            "block";
+
+
+                        resultContainer.style.display =
+                            "none";
+
+                    };
+
+
+                selectedImage.src =
+                    event.target.result;
+
+            };
+
+
+        reader.readAsDataURL(file);
+
     }
+);
 
 
-    // Maak een Image-object
-
-    selectedImage = new Image();
-
-    selectedImage.src = URL.createObjectURL(file);
-
-
-    // Wacht totdat de afbeelding geladen is
-
-    selectedImage.onload = function () {
-
-        // Oude preview verwijderen
-
-        preview.innerHTML = "";
-
-
-        // Geef de afbeelding een CSS-class
-
-        selectedImage.classList.add("uploaded-image");
-
-
-        // Toon de afbeelding
-
-        preview.appendChild(selectedImage);
-
-
-        // Maak de drie knoppen actief
-
-        blackWhiteButton.disabled = false;
-        rotateButton.disabled = false;
-        inverseButton.disabled = false;
-
-
-        // Verwijder eventueel een oud resultaat
-
-        result.innerHTML = "";
-    };
-});
-
-
-// ----------------------------------------
-// Zwart-wit
-// ----------------------------------------
-
-blackWhiteButton.addEventListener("click", function () {
-
-    if (!selectedImage) {
-        return;
-    }
-
-
-    const canvas = makeBlackAndWhite(selectedImage);
-
-
-    showResult(
-        canvas,
-        "Zwart-wit",
-        "jouw_kunsd_zwart_wit.jpg"
-    );
-});
-
-
-// ----------------------------------------
-// 180 graden roteren
-// ----------------------------------------
-
-rotateButton.addEventListener("click", function () {
-
-    if (!selectedImage) {
-        return;
-    }
-
-
-    const canvas = rotate180(selectedImage);
-
-
-    showResult(
-        canvas,
-        "180 graden geroteerd",
-        "jouw_kunsd_180_graden.jpg"
-    );
-});
-
-
-// ----------------------------------------
-// Inverse colors
-// ----------------------------------------
-
-inverseButton.addEventListener("click", function () {
-
-    if (!selectedImage) {
-        return;
-    }
-
-
-    const canvas = makeInverseColors(selectedImage);
-
-
-    showResult(
-        canvas,
-        "Inverse color",
-        "jouw_kunsd_inverse.jpg"
-    );
-});
-
-
-// ----------------------------------------
+// ========================================
 // Resultaat tonen
-// ----------------------------------------
+// ========================================
 
-function showResult(canvas, title, filename) {
+function showResult(imageSource) {
 
-    // Verwijder eventueel een vorig resultaat
-
-    result.innerHTML = "";
-
-
-    // Titel
-
-    const heading = document.createElement("h2");
-
-    heading.textContent = title;
-
-    result.appendChild(heading);
+    resultImage.src =
+        imageSource;
 
 
-    // Canvas een CSS-class geven
-
-    canvas.classList.add("result-image");
-
-
-    // Canvas tonen
-
-    result.appendChild(canvas);
+    resultContainer.style.display =
+        "block";
 
 
-    // Downloadknop
+    // Maak de downloadknop actief
 
-    const downloadButton = document.createElement("a");
+    downloadButton.href =
+        imageSource;
 
-    downloadButton.textContent = "Download jouw kunsd";
-
-    downloadButton.href = canvas.toDataURL("image/jpeg");
-
-    downloadButton.download = filename;
+}
 
 
-    result.appendChild(
-        document.createElement("br")
+// ========================================
+// Zwart-wit
+// ========================================
+
+document
+    .getElementById("black-white-button")
+    .addEventListener(
+        "click",
+        function () {
+
+            if (!selectedImage) {
+                return;
+            }
+
+
+            const result =
+                makeBlackAndWhite(
+                    selectedImage
+                );
+
+
+            showResult(
+                result.toDataURL("image/png")
+            );
+
+        }
     );
 
-    result.appendChild(downloadButton);
-}
+
+// ========================================
+// 180 graden draaien
+// ========================================
+
+document
+    .getElementById("rotate-button")
+    .addEventListener(
+        "click",
+        function () {
+
+            if (!selectedImage) {
+                return;
+            }
+
+
+            const result =
+                rotate180(
+                    selectedImage
+                );
+
+
+            showResult(
+                result.toDataURL("image/png")
+            );
+
+        }
+    );
+
+
+// ========================================
+// Inverse colors
+// ========================================
+
+document
+    .getElementById("inverse-button")
+    .addEventListener(
+        "click",
+        function () {
+
+            if (!selectedImage) {
+                return;
+            }
+
+
+            const result =
+                makeInverseColors(
+                    selectedImage
+                );
+
+
+            showResult(
+                result.toDataURL("image/png")
+            );
+
+        }
+    );
+
+
+// ========================================
+// Python-bewerking
+// ========================================
+
+document
+    .getElementById("python-button")
+    .addEventListener(
+        "click",
+        async function () {
+
+            if (!imageUpload.files[0]) {
+                return;
+            }
+
+
+            const file =
+                imageUpload.files[0];
+
+
+            const formData =
+                new FormData();
+
+
+            formData.append(
+                "image",
+                file
+            );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/python-bewerking",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    console.error(
+                        "Python gaf een fout:",
+                        response.status
+                    );
+
+                    return;
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                showResult(
+                    data.image
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Kon Python niet bereiken:",
+                    error
+                );
+
+            }
+
+        }
+    );
