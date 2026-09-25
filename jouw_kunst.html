@@ -2,91 +2,202 @@
 <html lang="nl">
 
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Jouw kunsd - Jesses website</title>
+    <title>Jouw kunst</title>
+
+
+    <!-- Google Font -->
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/style.css">
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- CSS -->
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
 </head>
+
 
 <body>
 
+
     <header>
+
         <nav>
-            <a href="index.html">Home</a>
-            <a href="over-mij.html">Over mij</a>
-            <a href="kunst.html">Kunsd</a>
-            <a href="jouw_kunst.html">Jouw kunsd</a>
-            <a href="muziek.html">Muziek</a>
-            <a href="downloads.html">Downloads</a>
+
+            <a href="index.html">
+                Home
+            </a>
+
+            <a href="over-mij.html">
+                Over mij
+            </a>
+
+            <a href="kunst.html">
+                Kunst
+            </a>
+
+            <a href="jouw_kunst.html">
+                Jouw kunst
+            </a>
+
+            <a href="muziek.html">
+                Muziek
+            </a>
+
+            <a href="downloads.html">
+                Downloads
+            </a>
+
         </nav>
+
     </header>
 
 
     <main>
 
-        <h1>Jouw Kunsd</h1>
 
-        <p>Maak hier jouw eigen kunsd.</p>
+        <h1>Jouw kunst</h1>
 
 
-        <!-- Foto kiezen -->
+        <p>
+            Upload een afbeelding en verander hem in kunst.
+        </p>
+
+
+        <!-- ================================ -->
+        <!-- Afbeelding uploaden -->
+        <!-- ================================ -->
 
         <input
             type="file"
-            id="imageInput"
-            accept="image/jpeg,image/png"
+            id="image-upload"
+            accept="image/*"
         >
 
 
-        <!-- Originele foto -->
+        <!-- ================================ -->
+        <!-- Originele afbeelding -->
+        <!-- ================================ -->
 
-        <div id="preview">
-            <p>Je hebt nog geen foto gekozen.</p>
+        <div id="original-container">
+
+            <h2>Origineel</h2>
+
+            <img
+                id="uploaded-image"
+                class="uploaded-image"
+                alt="Geüploade afbeelding"
+            >
+
         </div>
 
 
-        <!-- Bewerkingsknoppen -->
+        <!-- ================================ -->
+        <!-- Bewerkingen -->
+        <!-- ================================ -->
 
-        <div id="buttons">
+        <div
+            id="buttons"
+            style="display: none;"
+        >
 
-            <button id="blackWhiteButton" disabled>
+            <h2>Bewerkingen</h2>
+
+
+            <button id="black-white-button">
                 Zwart-wit
             </button>
 
-            <button id="rotateButton" disabled>
-                180 graden roteren
+
+            <button id="rotate-button">
+                180 graden draaien
             </button>
 
-            <button id="inverseButton" disabled>
+
+            <button id="inverse-button">
                 Inverse color
+            </button>
+
+
+            <button id="python-button">
+                Python-bewerking
             </button>
 
         </div>
 
 
+        <!-- ================================ -->
         <!-- Resultaat -->
+        <!-- ================================ -->
 
-        <div id="result"></div>
+        <div
+            id="result-container"
+            style="display: none;"
+        >
+
+            <h2>Resultaat</h2>
+
+
+            <img
+                id="result-image"
+                class="result-image"
+                alt="Bewerkte afbeelding"
+            >
+
+
+            <br>
+
+
+            <a
+                id="download-button"
+                href="#"
+                download="mijn-kunst.png"
+            >
+                <button>
+                    Download afbeelding
+                </button>
+            </a>
+
+        </div>
+
 
     </main>
 
 
-    <!--
-        Eerst de algoritmes laden.
-        Daarna laden we jouw_kunst.js,
-        dat deze functies gebruikt.
-    -->
+    <!-- ================================ -->
+    <!-- Afbeeldingsbewerkingen -->
+    <!-- ================================ -->
+
+    <script src="js/black_and_white.js"></script>
+
+    <script src="js/rotation_180.js"></script>
+
+    <script src="js/inverse_color.js"></script>
+
+
+    <!-- Algemene logica -->
 
     <script src="js/jouw_kunst.js"></script>
-    <script src="js/black_and_white.js"></script>
-    <script src="js/rotation_180.js"></script>
-    <script src="js/inverse_color.js"></script>
+
 
 </body>
 
