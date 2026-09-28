@@ -1,24 +1,23 @@
-let selectedImage = null;
-
-
-// HTML elements
 const imageUpload = document.getElementById("image-upload");
 const uploadedImage = document.getElementById("uploaded-image");
-
-const buttonsHTML = document.getElementById("buttons-html");
-const buttonsPython = document.getElementById("buttons-python");
-
+const originalContainer = document.getElementById("original-container");
+const algorithmSection = document.getElementById("algorithm-section");
+const algorithmButtons = document.querySelectorAll(".algorithm-button");
+const algorithmSettings = document.querySelectorAll(".algorithm-settings");
+const rankedGridSizeSlider = document.getElementById("ranked-grid-size-slider");
+const rankedGridSizeValue = document.getElementById("ranked-grid-size-value");
+const dotsGridSizeSlider = document.getElementById("dots-grid-size-slider");
+const dotsGridSizeValue = document.getElementById("dots-grid-size-value");
+const dotsFill = document.getElementById("dots-fill");
+const rankedDotsButton = document.getElementById("ranked-dots-button");
+const dotsButton = document.getElementById("dots-button");
+const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
 const downloadButton = document.getElementById("download-button");
 
-const gridSizeSlider = document.getElementById("grid-size-slider");
-const gridSizeValue = document.getElementById("grid-size-value");
 
-
-// Upload
 imageUpload.addEventListener("change", function () {
-
     const file = imageUpload.files[0];
 
     if (!file) {
@@ -28,143 +27,145 @@ imageUpload.addEventListener("change", function () {
     const reader = new FileReader();
 
     reader.onload = function (event) {
+        uploadedImage.src = event.target.result;
 
-        selectedImage = new Image();
+        originalContainer.classList.remove("hidden");
+        algorithmSection.classList.remove("hidden");
+        resultContainer.classList.add("hidden");
+        statusMessage.classList.add("hidden");
 
-        selectedImage.onload = function () {
-
-            uploadedImage.src = event.target.result;
-
-            buttonsHTML.style.display = "block";
-            buttonsPython.style.display = "block";
-
-            resultContainer.style.display = "none";
-        };
-
-        selectedImage.src = event.target.result;
+        closeAlgorithmSettings();
     };
 
     reader.readAsDataURL(file);
 });
 
 
-// Resultaat tonen
-function showResult(imageSource) {
+algorithmButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+        const settingsId = button.dataset.settings;
+        const selectedSettings = document.getElementById(settingsId);
 
-    resultImage.src = imageSource;
+        algorithmButtons.forEach(function (otherButton) {
+            otherButton.classList.remove("active");
+        });
 
-    resultContainer.style.display = "block";
+        algorithmSettings.forEach(function (settings) {
+            settings.classList.add("hidden");
+        });
 
-    downloadButton.href = imageSource;
-}
-
-
-// Zwart-wit
-document
-    .getElementById("black-white-button")
-    .addEventListener("click", function () {
-
-        if (!selectedImage) {
-            return;
-        }
-
-        const result = makeBlackAndWhite(selectedImage);
-
-        showResult(
-            result.toDataURL("image/png")
-        );
+        button.classList.add("active");
+        selectedSettings.classList.remove("hidden");
     });
-
-
-// 180 graden draaien
-document
-    .getElementById("rotate-button")
-    .addEventListener("click", function () {
-
-        if (!selectedImage) {
-            return;
-        }
-
-        const result = rotate180(selectedImage);
-
-        showResult(
-            result.toDataURL("image/png")
-        );
-    });
-
-
-// Inverse colors
-document
-    .getElementById("inverse-button")
-    .addEventListener("click", function () {
-
-        if (!selectedImage) {
-            return;
-        }
-
-        const result = makeInverseColors(selectedImage);
-
-        showResult(
-            result.toDataURL("image/png")
-        );
-    });
-
-
-// Update displayed grid size
-gridSizeSlider.addEventListener("input", function () {
-
-    gridSizeValue.textContent = `${gridSizeSlider.value}%`;
 });
 
 
-// Ranked dots
-document
-    .getElementById("ranked-dots-button")
-    .addEventListener("click", async function () {
+rankedGridSizeSlider.addEventListener("input", function () {
+    rankedGridSizeValue.textContent = `${rankedGridSizeSlider.value}%`;
+});
 
-        if (!imageUpload.files[0]) {
-            return;
+
+dotsGridSizeSlider.addEventListener("input", function () {
+    dotsGridSizeValue.textContent = `${dotsGridSizeSlider.value}%`;
+});
+
+
+rankedDotsButton.addEventListener("click", async function () {
+    await runPythonAlgorithm(
+        "/api/ranked-dots",
+        rankedGridSizeSlider.value,
+        false,
+        rankedDotsButton
+    );
+});
+
+
+dotsButton.addEventListener("click", async function () {
+    await runPythonAlgorithm(
+        "/api/dots",
+        dotsGridSizeSlider.value,
+        !dotsFill.checked,
+        dotsButton
+    );
+});
+
+
+async function runPythonAlgorithm(url, gridSizePercent, fill, button) {
+    const file = imageUpload.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("image", file);
+    formData.append("grid_size_percent", gridSizePercent);
+    formData.append("fill", fill);
+
+    setLoadingState(button, true);
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "De bewerking is mislukt.");
         }
 
-        const file = imageUpload.files[0];
+        showResult(data.image);
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        setLoadingState(button, false);
+    }
+}
 
-        const formData = new FormData();
 
-        formData.append("image", file);
-        formData.append(
-            "grid_size_percent",
-            gridSizeSlider.value
-        );
+function showResult(imageSource) {
+    resultImage.src = imageSource;
+    downloadButton.href = imageSource;
 
-        try {
+    statusMessage.classList.add("hidden");
+    resultContainer.classList.remove("hidden");
 
-            const response = await fetch(
-                "/api/ranked-dots",
-                {
-                    method: "POST",
-                    body: formData
-                }
-            );
-
-            if (!response.ok) {
-
-                console.error(
-                    "Ranked dots gaf een fout:",
-                    response.status
-                );
-
-                return;
-            }
-
-            const data = await response.json();
-
-            showResult(data.image);
-
-        } catch (error) {
-
-            console.error(
-                "Kon ranked dots niet uitvoeren:",
-                error
-            );
-        }
+    resultContainer.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
     });
+}
+
+
+function showError(message) {
+    statusMessage.textContent = message;
+    statusMessage.classList.remove("hidden");
+}
+
+
+function setLoadingState(button, isLoading) {
+    if (isLoading) {
+        button.dataset.originalText = button.textContent;
+        button.textContent = "Kunsd wordt gemaakt...";
+        button.disabled = true;
+        statusMessage.classList.add("hidden");
+        resultContainer.classList.add("hidden");
+    } else {
+        button.textContent = button.dataset.originalText;
+        button.disabled = false;
+    }
+}
+
+
+function closeAlgorithmSettings() {
+    algorithmButtons.forEach(function (button) {
+        button.classList.remove("active");
+    });
+
+    algorithmSettings.forEach(function (settings) {
+        settings.classList.add("hidden");
+    });
+}
