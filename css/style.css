@@ -5,13 +5,15 @@ body {
     padding: 20px;
     color: #171717;
     background: #ffffff;
+    /*background-color: #999;*/
 }
 
 nav {
     display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+    gap: 30px;
     margin-bottom: 40px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ddd;
 }
 
 nav a {
@@ -22,6 +24,8 @@ nav a {
 
 nav a:hover {
     text-decoration: underline;
+    color: #cc0000;
+    transform: rotate(3deg) scale(1.1);
 }
 
 main {
@@ -100,6 +104,9 @@ button {
     height: auto;
     display: block;
     border-radius: 12px;
+    /*box-shadow: 0 5px 20px rgba(0,0,0,0.15);*/
+    border: 10px solid black;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 
 #algorithm-section {
