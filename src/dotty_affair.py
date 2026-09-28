@@ -7,7 +7,8 @@ def image_to_dots(img, grid_size=10, min_radius=0, max_radius=None, jitter=None,
     """Convert an image into a field of black dots (halftone style)."""
     # Define max_radius
     if not max_radius:
-        max_radius = grid_size / 2
+        # max_radius = grid_size / 2
+        max_radius = grid_size * .46
 
     # Convert to grayscale
     img_gray = img.convert("L")
@@ -52,7 +53,7 @@ def image_to_dots(img, grid_size=10, min_radius=0, max_radius=None, jitter=None,
             if fill:
                 fill_color = img.getpixel((sx, sy)) if color else "black"
                 draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=fill_color)
-                draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), outline="grey", width=outline_width)
+                # draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), outline="grey", width=outline_width)
             else:
                 draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), outline="grey", width=outline_width)
                 # draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), outline=(120, 120, 120), width=outline_width)
