@@ -21,16 +21,25 @@
             <a href="kunst.html">Kunsd</a>
             <a href="jouw_kunst.html">Jouw kunsd</a>
             <a href="muziek.html">Muziek</a>
+            <a href="contact.html">Contact</a>
         </nav>
     </header>
 
     <main>
+
         <h1>Jouw kunsd</h1>
 
         <p>
-            Upload een afbeelding en verander deze in kunsd.
-            Kies daarna welke Python-bewerking je wilt gebruiken.
+            Upload een afbeelding en ontdek wat mijn algoritmes ermee doen.
         </p>
+
+        <div class="info-box">
+            <strong>🚧 Experiment</strong><br>
+
+            Deze pagina is voortdurend in ontwikkeling.
+            Nieuwe algoritmes verschijnen regelmatig.
+            Feedback en ideeën zijn altijd welkom.
+        </div>
 
         <section class="upload-section">
             <label for="image-upload" class="upload-label">
@@ -42,33 +51,52 @@
 
         <section id="original-container" class="image-section hidden">
             <h2>Origineel</h2>
-            <img id="uploaded-image" class="uploaded-image" alt="Geüploade afbeelding">
+
+            <img
+                id="uploaded-image"
+                class="uploaded-image"
+                alt="Geüploade afbeelding"
+            >
         </section>
 
         <section id="algorithm-section" class="hidden">
+
             <h2>Kies een bewerking</h2>
 
             <div class="algorithm-buttons">
-                <button type="button" class="algorithm-button" data-settings="ranked-dots-settings">
+
+                <button
+                    type="button"
+                    class="algorithm-button"
+                    data-settings="ranked-dots-settings">
                     Ranked dots
                 </button>
 
-                <button type="button" class="algorithm-button" data-settings="dots-settings">
+                <button
+                    type="button"
+                    class="algorithm-button"
+                    data-settings="dots-settings">
                     Dots
                 </button>
+
             </div>
 
-            <div id="ranked-dots-settings" class="algorithm-settings hidden">
+            <div
+                id="ranked-dots-settings"
+                class="algorithm-settings hidden">
+
                 <h3>Ranked dots</h3>
 
-                <p>
-                    De kleuren van de punten worden bepaald door de helderheid
-                    van de originele afbeelding.
-                </p>
-
                 <div class="slider-header">
-                    <label for="ranked-grid-size-slider">Puntgrootte</label>
-                    <output id="ranked-grid-size-value" for="ranked-grid-size-slider">3%</output>
+                    <label for="ranked-grid-size-slider">
+                        Puntgrootte
+                    </label>
+
+                    <output
+                        id="ranked-grid-size-value"
+                        for="ranked-grid-size-slider">
+                        3%
+                    </output>
                 </div>
 
                 <input
@@ -86,22 +114,31 @@
                     <span>Groot</span>
                 </div>
 
-                <button type="button" id="ranked-dots-button" class="create-button">
+                <button
+                    type="button"
+                    id="ranked-dots-button"
+                    class="create-button">
                     Maak ranked dots
                 </button>
+
             </div>
 
-            <div id="dots-settings" class="algorithm-settings hidden">
+            <div
+                id="dots-settings"
+                class="algorithm-settings hidden">
+
                 <h3>Dots</h3>
 
-                <p>
-                    De grootte van iedere stip wordt bepaald door de helderheid
-                    van de originele afbeelding.
-                </p>
-
                 <div class="slider-header">
-                    <label for="dots-grid-size-slider">Puntgrootte</label>
-                    <output id="dots-grid-size-value" for="dots-grid-size-slider">3%</output>
+                    <label for="dots-grid-size-slider">
+                        Puntgrootte
+                    </label>
+
+                    <output
+                        id="dots-grid-size-value"
+                        for="dots-grid-size-slider">
+                        3%
+                    </output>
                 </div>
 
                 <input
@@ -119,35 +156,89 @@
                     <span>Groot</span>
                 </div>
 
-                <label class="switch-row" for="dots-fill">
+                <label
+                    class="switch-row"
+                    for="dots-fill">
+
                     <span>
                         <strong>Zelf inkleuren</strong>
-                        <small>Zet aan om alleen de contouren te zien.</small>
+
+                        <small>
+                            Zet aan om alleen de contouren te zien.
+                        </small>
                     </span>
 
                     <span class="switch">
-                        <input type="checkbox" id="dots-fill">
+                        <input
+                            type="checkbox"
+                            id="dots-fill">
+
                         <span class="switch-slider"></span>
                     </span>
+
                 </label>
 
-                <button type="button" id="dots-button" class="create-button">
+                <button
+                    type="button"
+                    id="dots-button"
+                    class="create-button">
                     Maak dots
                 </button>
+
             </div>
+
         </section>
 
-        <p id="status-message" class="status-message hidden"></p>
+        <details class="info-box">
 
-        <section id="result-container" class="image-section hidden">
+            <summary>
+                Meer informatie
+            </summary>
+
+            <p>
+                Deze pagina gebruikt algoritmes om foto's om te zetten in nieuwe vormen van kunst.
+            </p>
+
+            <p>
+                <strong>Ranked dots</strong><br>
+                Verandert een afbeelding in gekleurde stippen.
+            </p>
+
+            <p>
+                <strong>Dots</strong><br>
+                Verandert een afbeelding in zwarte stippen waarvan de grootte afhankelijk is van de helderheid.
+            </p>
+
+        </details>
+
+        <p
+            id="status-message"
+            class="status-message hidden">
+        </p>
+
+        <section
+            id="result-container"
+            class="image-section hidden">
+
             <h2>Resultaat</h2>
 
-            <img id="result-image" class="result-image" alt="Bewerkte afbeelding">
+            <img
+                id="result-image"
+                class="result-image"
+                alt="Bewerkte afbeelding">
 
-            <a id="download-button" class="download-button" href="#" download="mijn-kunsd.png">
+            <a
+                id="download-button"
+                class="download-button"
+                href="#"
+                download="mijn-kunsd.png">
+
                 Download afbeelding
+
             </a>
+
         </section>
+
     </main>
 
     <script src="js/jouw_kunst.js"></script>

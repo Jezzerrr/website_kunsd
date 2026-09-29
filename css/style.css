@@ -54,12 +54,17 @@ button {
 .gallery img {
     width: 100%;
     display: block;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 .featured-art img {
     width: 60%;
     max-width: 700px;
     display: block;
+    border: 10px solid black;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 
 .upload-section {
@@ -324,4 +329,15 @@ button {
     .switch-row {
         align-items: flex-start;
     }
+}
+
+.info-box {
+    margin: 20px 0;
+    padding: 20px;
+
+    background: #f4f4f4;
+
+    border-left: 6px solid black;
+
+    border-radius: 10px;
 }

@@ -1,13 +1,23 @@
-import os
-import io
 import base64
+import io
+import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-from flask import Flask, request, send_from_directory, jsonify
 from PIL import Image
+from flask import Flask, request, send_from_directory, jsonify
+from texts.email_templates import make_contact_email
 
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.helper_functions.color_helpers import get_palette
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+GMAIL_ADDRESS = os.environ["GMAIL_ADDRESS"]
+GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
 
 app = Flask(__name__)
 
@@ -71,6 +81,43 @@ def dots():
 @app.route("/<path:filename>")
 def serve_file(filename):
     return send_from_directory(".", filename)
+
+
+@app.route("/contact", methods=["POST"])
+def contact():
+    subject = request.form["subject"]
+    sender_email = request.form["email"]
+    message = request.form["message"]
+
+    email_message = MIMEMultipart()
+
+    email_message["Subject"] = f"[Kunsd Website] {subject}"
+    email_message["From"] = GMAIL_ADDRESS
+    email_message["To"] = GMAIL_ADDRESS
+
+    email_message.attach(
+        MIMEText(make_contact_email(subject, sender_email, message), "plain")
+    )
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com",587) as server:
+            server.starttls()
+
+            server.login(
+                GMAIL_ADDRESS,
+                GMAIL_APP_PASSWORD
+            )
+
+            server.send_message(email_message)
+
+        return """
+            <h1>Bedankt!</h1>
+            <p>Je bericht is verzonden.</p>
+            <a href="index.html">Terug naar home</a>
+        """
+    except Exception as error:
+        print(error)
+        return str(error)
 
 
 def get_grid_size(input_image):
