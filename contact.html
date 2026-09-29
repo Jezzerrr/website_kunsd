@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="over-mij.html">Over mij</a>
+        <a href="kunst.html">Kunsd</a>
+        <a href="jouw_kunst.html">Jouw kunsd</a>
+        <a href="muziek.html">Muziek</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+</header>
+
+<main>
+
+    <h1>Contact</h1>
+
+    <p>
+        Ideeën, feedback, vragen of opmerkingen zijn altijd welkom.
+    </p>
+
+    <form action="/contact" method="post">
+
+        <p>
+            <label for="subject">
+                Onderwerp
+            </label>
+            <br>
+            <input
+                type="text"
+                id="subject"
+                name="subject"
+                required
+            >
+        </p>
+
+        <p>
+            <label for="email">
+                Je e-mailadres
+            </label>
+            <br>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                required
+            >
+        </p>
+
+        <p>
+            <label for="message">
+                Bericht
+            </label>
+            <br>
+            <textarea
+                id="message"
+                name="message"
+                rows="10"
+                required
+            ></textarea>
+        </p>
+
+        <button type="submit" class="create-button">
+            Verzenden
+        </button>
+
+    </form>
+
+</main>
+
+</body>
+</html>
