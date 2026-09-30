@@ -79,8 +79,7 @@ button {
     opacity: 0;
 }
 
-.upload-label,
-.download-button {
+.upload-label {
     display: inline-block;
     padding: 12px 20px;
     color: white;
@@ -92,8 +91,7 @@ button {
     cursor: pointer;
 }
 
-.upload-label:hover,
-.download-button:hover {
+.upload-label:hover {
     color: #171717;
     background: white;
 }
@@ -269,6 +267,16 @@ button {
     transform: translateX(24px);
 }
 
+/* Rij met "Maak ..." en "Download afbeelding" naast elkaar */
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 28px;
+}
+
 .create-button {
     padding: 12px 20px;
     color: white;
@@ -288,6 +296,34 @@ button {
     opacity: 0.6;
 }
 
+/* Downloadknop: actief = zwart (zelfde als maakknop), uitgeschakeld = grijs */
+.download-button {
+    padding: 12px 20px;
+    color: white;
+    background: #171717;
+    border: 2px solid #171717;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.download-button:hover:not(:disabled) {
+    color: #171717;
+    background: white;
+}
+
+.download-button:disabled {
+    color: #9a9a9a;
+    background: #ececec;
+    border-color: #cfcfcf;
+    cursor: not-allowed;
+}
+
+.download-button:focus-visible,
+.create-button:focus-visible {
+    outline: 3px solid #cc0000;
+    outline-offset: 3px;
+}
+
 .status-message {
     max-width: 650px;
     margin-top: 25px;
@@ -295,10 +331,6 @@ button {
     color: #8a1c1c;
     background: #ffe8e8;
     border-radius: 10px;
-}
-
-.download-button {
-    margin-top: 20px;
 }
 
 @media (max-width: 700px) {
@@ -328,6 +360,11 @@ button {
 
     .switch-row {
         align-items: flex-start;
+    }
+
+    .button-row .create-button,
+    .button-row .download-button {
+        flex: 1 1 100%;
     }
 }
 
