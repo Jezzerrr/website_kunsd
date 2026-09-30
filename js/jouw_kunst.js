@@ -14,7 +14,15 @@ const dotsButton = document.getElementById("dots-button");
 const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
-const downloadButton = document.getElementById("download-button");
+
+// Er is een downloadknop bij elk algoritme; ze delen dezelfde status.
+const downloadButtons = document.querySelectorAll(".download-button");
+
+const DOWNLOAD_HINT_DISABLED = "Maak eerst een afbeelding om te kunnen downloaden";
+const DOWNLOAD_HINT_ENABLED = "Sla je kunsd op als afbeelding";
+
+// Bevat het laatste resultaat, of null als er (nog) niets te downloaden is.
+let resultSource = null;
 
 
 imageUpload.addEventListener("change", function () {
@@ -34,6 +42,8 @@ imageUpload.addEventListener("change", function () {
         resultContainer.classList.add("hidden");
         statusMessage.classList.add("hidden");
 
+        // Nieuwe foto: het vorige resultaat is niet meer van toepassing.
+        clearResult();
         closeAlgorithmSettings();
     };
 
@@ -90,6 +100,11 @@ dotsButton.addEventListener("click", async function () {
 });
 
 
+downloadButtons.forEach(function (button) {
+    button.addEventListener("click", downloadResult);
+});
+
+
 async function runPythonAlgorithm(url, gridSizePercent, fill, button) {
     const file = imageUpload.files[0];
 
@@ -128,7 +143,8 @@ async function runPythonAlgorithm(url, gridSizePercent, fill, button) {
 
 function showResult(imageSource) {
     resultImage.src = imageSource;
-    downloadButton.href = imageSource;
+    resultSource = imageSource;
+    setDownloadEnabled(true);
 
     statusMessage.classList.add("hidden");
     resultContainer.classList.remove("hidden");
@@ -146,13 +162,44 @@ function showError(message) {
 }
 
 
+function clearResult() {
+    resultSource = null;
+    resultImage.removeAttribute("src");
+    setDownloadEnabled(false);
+}
+
+
+function setDownloadEnabled(isEnabled) {
+    downloadButtons.forEach(function (button) {
+        button.disabled = !isEnabled;
+        button.title = isEnabled ? DOWNLOAD_HINT_ENABLED : DOWNLOAD_HINT_DISABLED;
+    });
+}
+
+
+function downloadResult() {
+    if (!resultSource) {
+        return;
+    }
+
+    const link = document.createElement("a");
+
+    link.href = resultSource;
+    link.download = "mijn-kunsd.png";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
+
 function setLoadingState(button, isLoading) {
     if (isLoading) {
         button.dataset.originalText = button.textContent;
         button.textContent = "Kunsd wordt gemaakt...";
         button.disabled = true;
         statusMessage.classList.add("hidden");
-        resultContainer.classList.add("hidden");
+//        resultContainer.classList.add("hidden");
     } else {
         button.textContent = button.dataset.originalText;
         button.disabled = false;
