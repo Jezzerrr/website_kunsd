@@ -16,8 +16,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GMAIL_ADDRESS = os.environ["GMAIL_ADDRESS"]
-GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
+GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
 app = Flask(__name__)
 
@@ -100,15 +100,33 @@ def contact():
     )
 
     try:
+        print("1")
         with smtplib.SMTP("smtp.gmail.com",587) as server:
             server.starttls()
+            print("2")
+
+            server.ehlo()
+
+            print("3")
+
+            server.starttls()
+
+            print("4")
+
+            server.ehlo()
+
+            print("5")
 
             server.login(
                 GMAIL_ADDRESS,
                 GMAIL_APP_PASSWORD
             )
 
+            print("6")
+
             server.send_message(email_message)
+
+            print("7")
 
         return """
             <h1>Bedankt!</h1>
