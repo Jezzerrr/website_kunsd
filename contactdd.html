@@ -33,34 +33,13 @@
         Ideeën, feedback, vragen of opmerkingen zijn altijd welkom.
     </p>
 
-    <form action="https://formsubmit.co/jjmetz0@gmail.com" method="POST">
-
-        <input
-            type="hidden"
-            name="_subject"
-            value="Nieuw bericht vanaf KUNSD website"
-        >
-
-        <input
-            type="hidden"
-            name="_captcha"
-            value="false"
-        >
-
-        <input
-            type="hidden"
-            name="_template"
-            value="table"
-        >
-<!--        <input type="text" name="_honey" style="display:none">-->
-<!--        <input type="hidden" name="_next" value="https://jouw-site.onrender.com/bedankt.html">-->
+    <form action="/contact" method="post">
 
         <p>
             <label for="subject">
                 Onderwerp
             </label>
             <br>
-
             <input
                 type="text"
                 id="subject"
@@ -74,7 +53,6 @@
                 Je e-mailadres
             </label>
             <br>
-
             <input
                 type="email"
                 id="email"
@@ -88,7 +66,6 @@
                 Bericht
             </label>
             <br>
-
             <textarea
                 id="message"
                 name="message"
@@ -97,10 +74,7 @@
             ></textarea>
         </p>
 
-        <button
-            type="submit"
-            class="create-button"
-        >
+        <button type="submit" class="create-button">
             Verzenden
         </button>
 

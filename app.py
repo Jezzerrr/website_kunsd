@@ -109,24 +109,16 @@ def contact():
 
             print("3")
 
-            server.starttls()
-
-            print("4")
-
-            server.ehlo()
-
-            print("5")
-
             server.login(
                 GMAIL_ADDRESS,
                 GMAIL_APP_PASSWORD
             )
 
-            print("6")
+            print("4")
 
             server.send_message(email_message)
 
-            print("7")
+            print("5")
 
         return """
             <h1>Bedankt!</h1>
