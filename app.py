@@ -100,25 +100,15 @@ def contact():
     )
 
     try:
-        print("1")
         with smtplib.SMTP("smtp.gmail.com",587) as server:
             server.starttls()
-            print("2")
-
-            server.ehlo()
-
-            print("3")
 
             server.login(
                 GMAIL_ADDRESS,
                 GMAIL_APP_PASSWORD
             )
 
-            print("4")
-
             server.send_message(email_message)
-
-            print("5")
 
         return """
             <h1>Bedankt!</h1>
