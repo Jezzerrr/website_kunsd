@@ -12,6 +12,15 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
+<script>
+    document.getElementById("contact-form").addEventListener("submit", function () {
+        const onderwerp = document.getElementById("onderwerp").value.trim();
+
+        document.getElementById("mail-subject").value =
+            "[Kunsd Website] " + onderwerp;
+    });
+</script>
+
 <body>
 
 <header>
@@ -37,44 +46,49 @@
         🚧 Dit werkt momenteel niet, dus als je me wilt bereiken kan je ook gewoon mailen: <span class="email-address">jjmetz0@gmail.com</span>
     </p>
 
-    <form action="https://formsubmit.co/jjmetz0@gmail.com" method="POST">
+    <form action="https://api.web3forms.com/submit" method="POST" id="contact-form">
 
+        <!-- Vervang dit door de access key die je per mail van Web3Forms krijgt -->
         <input
             type="hidden"
-            name="_subject"
-            value="Nieuw bericht vanaf KUNSD website"
+            name="access_key"
+            value="73e4fdaa-9b3e-40c7-add5-1553a9fb5971"
         >
 
+        <!-- Onderwerp van de mail die je zelf ontvangt -->
         <input
             type="hidden"
-            name="_captcha"
-            value="false"
+            id="mail-subject"
+            name="subject"
+            value="[Kunsd Website]"
         >
 
+        <!-- Bezoeker komt hierna op de bedankpagina terecht -->
         <input
             type="hidden"
-            name="_template"
-            value="table"
+            name="redirect"
+            value="https://jesses-kunsd.onrender.com/bedankt.html"
         >
-<!--        <input type="text" name="_honey" style="display:none">-->
-<!--        <input type="hidden" name="_next" value="https://jouw-site.onrender.com/bedankt.html">-->
-<!--        <input-->
-<!--            type="hidden"-->
-<!--            name="_next"-->
-<!--            value="https://jesses-kunsd.onrender.com/contact.html"-->
-<!--        >-->
 
+        <!-- Spamfilter: moet leeg blijven, bots vullen dit vaak wel in -->
+        <input
+            type="checkbox"
+            name="botcheck"
+            style="display: none;"
+            tabindex="-1"
+            autocomplete="off"
+        >
 
         <p>
-            <label for="subject">
+            <label for="onderwerp">
                 Onderwerp
             </label>
             <br>
 
             <input
                 type="text"
-                id="subject"
-                name="subject"
+                id="onderwerp"
+                name="onderwerp"
                 required
             >
         </p>

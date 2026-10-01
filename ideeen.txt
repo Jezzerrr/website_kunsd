@@ -1,0 +1,15 @@
+opties:
+- dots inkleuren
+	- density
+	- colors
+- rechte lijnen
+- puzzelstukjes
+- kleurplaat
+
+
+website urls:
+- www.artfrommyphoto.com
+- www.artfromyourphoto.com
+- www.artyourphoto.com
+- www.myportraitart.com
+- www.madefrommyphoto.com
