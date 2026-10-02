@@ -384,3 +384,92 @@ button {
     font-family: Consolas, Monaco, "Courier New", monospace;
     font-weight: 600;
 }
+
+/* ---------- Bijsnijden ---------- */
+
+.image-actions {
+    justify-content: flex-start;
+}
+
+.secondary-button {
+    padding: 12px 20px;
+    color: #171717;
+    background: white;
+    border: 2px solid #171717;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.secondary-button:hover {
+    color: white;
+    background: #171717;
+}
+
+.crop-stage {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    line-height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    cursor: crosshair;
+    touch-action: none;       /* anders scrolt de pagina mee op mobiel */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.crop-stage img {
+    display: block;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+}
+
+/* De rechthoek zelf; de enorme schaduw dimt de rest van de foto */
+.crop-box {
+    position: absolute;
+    box-sizing: border-box;
+    border: 2px solid white;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+    cursor: move;
+}
+
+.crop-handle {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+}
+
+.crop-handle::after {
+    content: "";
+    position: absolute;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    border: 4px solid white;
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.crop-handle[data-handle="nw"] { top: 0;    left: 0;  cursor: nwse-resize; }
+.crop-handle[data-handle="ne"] { top: 0;    right: 0; cursor: nesw-resize; }
+.crop-handle[data-handle="sw"] { bottom: 0; left: 0;  cursor: nesw-resize; }
+.crop-handle[data-handle="se"] { bottom: 0; right: 0; cursor: nwse-resize; }
+
+.crop-handle[data-handle="nw"]::after { top: 0;    left: 0;  border-right: 0; border-bottom: 0; }
+.crop-handle[data-handle="ne"]::after { top: 0;    right: 0; border-left: 0;  border-bottom: 0; }
+.crop-handle[data-handle="sw"]::after { bottom: 0; left: 0;  border-right: 0; border-top: 0; }
+.crop-handle[data-handle="se"]::after { bottom: 0; right: 0; border-left: 0;  border-top: 0; }
+
+.crop-hint {
+    max-width: 650px;
+    margin-top: 16px;
+    color: #666666;
+    line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+    .image-actions .create-button,
+    .image-actions .secondary-button {
+        flex: 1 1 100%;
+    }
+}
