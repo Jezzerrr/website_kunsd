@@ -55,11 +55,24 @@
         <section id="original-container" class="image-section hidden">
             <h2 id="original-title">Origineel</h2>
 
-            <img
-                id="uploaded-image"
-                class="uploaded-image"
-                alt="Geüploade afbeelding"
-            >
+            <!-- Zonder uitsnede: de foto zoals geüpload -->
+            <div id="original-view">
+                <img
+                    id="uploaded-image"
+                    class="uploaded-image"
+                    alt="Geüploade afbeelding"
+                >
+            </div>
+
+            <!-- Met uitsnede: alleen het gekozen stuk van dezelfde foto -->
+            <div id="cropped-preview" class="cropped-preview hidden">
+                <div id="cropped-preview-frame" class="cropped-preview-frame">
+                    <img
+                        id="cropped-preview-image"
+                        alt="Uitsnede van de geüploade afbeelding"
+                    >
+                </div>
+            </div>
 
             <div class="button-row image-actions">
                 <button
@@ -308,6 +321,8 @@
 
     </main>
 
+    <!-- Volgorde: eerst analytics.js, dan jouw_kunst.js -->
+    <script src="js/analytics.js"></script>
     <script src="js/jouw_kunst.js"></script>
 
     <script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

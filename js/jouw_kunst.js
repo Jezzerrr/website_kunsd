@@ -2,6 +2,10 @@ const imageUpload = document.getElementById("image-upload");
 const uploadedImage = document.getElementById("uploaded-image");
 const originalContainer = document.getElementById("original-container");
 const originalTitle = document.getElementById("original-title");
+const originalView = document.getElementById("original-view");
+const croppedPreview = document.getElementById("cropped-preview");
+const croppedPreviewFrame = document.getElementById("cropped-preview-frame");
+const croppedPreviewImage = document.getElementById("cropped-preview-image");
 const algorithmSection = document.getElementById("algorithm-section");
 const algorithmButtons = document.querySelectorAll(".algorithm-button");
 const algorithmSettings = document.querySelectorAll(".algorithm-settings");
@@ -35,23 +39,32 @@ const DOWNLOAD_HINT_ENABLED = "Sla je kunsd op als afbeelding";
 // Kleinste toegestane uitsnede, als fractie van de afbeelding (0.08 = 8%).
 const MIN_CROP_SIZE = 0.08;
 
-// Maximaal aantal pixels van een uitsnede (16 megapixel), voor telefoons.
-const MAX_CROP_PIXELS = 16000000;
+// De uitsnede als fracties van de afbeelding (0 t/m 1), zodat het
+// ook klopt als het scherm van grootte verandert.
+const DEFAULT_CROP = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
 
 // Bevat het laatste resultaat, of null als er (nog) niets te downloaden is.
 let resultSource = null;
 
-// Wat de gebruiker heeft geüpload.
+// Wat de gebruiker heeft geüpload. Dit gaat altijd ongewijzigd naar de server.
 let originalFile = null;
 let originalDataUrl = null;
 
-// Wat naar de algoritmes gaat: het origineel, of de uitsnede.
-let currentFile = null;
+// De gekozen uitsnede (of null als er niet is bijgesneden).
+// De server snijdt de foto zelf bij; de browser hoeft dus niets te bewerken.
+let appliedCrop = null;
 
-// De uitsnede als fracties van de afbeelding (0 t/m 1), zodat het
-// ook klopt als het scherm van grootte verandert.
-let cropRect = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
+// De rechthoek die nu in de bewerker staat.
+let cropRect = { ...DEFAULT_CROP };
 let dragState = null;
+
+
+// Tellen mag nooit iets stukmaken (bijv. als analytics.js niet laadt).
+function track(name) {
+    if (typeof trackEvent === "function") {
+        trackEvent(name);
+    }
+}
 
 
 imageUpload.addEventListener("change", function () {
@@ -61,12 +74,14 @@ imageUpload.addEventListener("change", function () {
         return;
     }
 
+    track("afbeelding-gekozen");
+
     const reader = new FileReader();
 
     reader.onload = function (event) {
         originalFile = file;
         originalDataUrl = event.target.result;
-        currentFile = file;
+        appliedCrop = null;
 
         uploadedImage.src = originalDataUrl;
         setCroppedState(false);
@@ -88,19 +103,17 @@ imageUpload.addEventListener("change", function () {
 
 /* ---------- Bijsnijden ---------- */
 
-uploadedImage.addEventListener("error", function () {
-    showError("De afbeelding kon niet worden getoond.");
-});
-
 cropStartButton.addEventListener("click", function () {
     if (!originalDataUrl) {
         return;
     }
 
+    track("bijsnijden-start");
+
     // We snijden altijd bij vanaf het origineel, zodat je een eerdere
     // uitsnede opnieuw kunt aanpassen.
     cropImage.src = originalDataUrl;
-    setCropRect({ x: 0.05, y: 0.05, w: 0.9, h: 0.9 });
+    setCropRect(appliedCrop ? { ...appliedCrop } : { ...DEFAULT_CROP });
 
     originalContainer.classList.add("hidden");
     algorithmSection.classList.add("hidden");
@@ -114,98 +127,35 @@ cropStartButton.addEventListener("click", function () {
 
 
 cropCancelButton.addEventListener("click", function () {
+    track("bijsnijden-annuleren");
     closeCropEditor();
 });
 
 
 cropOkButton.addEventListener("click", function () {
-    const sourceWidth = cropImage.naturalWidth;
-    const sourceHeight = cropImage.naturalHeight;
+    const naturalWidth = cropImage.naturalWidth;
+    const naturalHeight = cropImage.naturalHeight;
 
     // De foto is niet geladen: er valt niets bij te snijden.
-    if (!sourceWidth || !sourceHeight) {
+    if (!naturalWidth || !naturalHeight) {
         closeCropEditor();
         showError("Bijsnijden is mislukt. Probeer het opnieuw.");
         return;
     }
 
-    // Reken de fracties om naar echte pixels van de originele foto.
-    const sx = Math.round(cropRect.x * sourceWidth);
-    const sy = Math.round(cropRect.y * sourceHeight);
-    const sw = Math.max(1, Math.min(Math.round(cropRect.w * sourceWidth), sourceWidth - sx));
-    const sh = Math.max(1, Math.min(Math.round(cropRect.h * sourceHeight), sourceHeight - sy));
+    track("bijsnijden-ok");
 
-    // Heel grote uitsnedes verkleinen we iets, anders wordt het te traag
-    // (vooral op telefoons).
-    const scale = Math.min(1, Math.sqrt(MAX_CROP_PIXELS / (sw * sh)));
-    const outWidth = Math.max(1, Math.round(sw * scale));
-    const outHeight = Math.max(1, Math.round(sh * scale));
+    appliedCrop = { ...cropRect };
+    renderCroppedPreview(appliedCrop, naturalWidth, naturalHeight);
+    setCroppedState(true);
 
-    setCropBusy(true);
+    // Nieuwe invoer: het vorige resultaat hoort er niet meer bij.
+    clearResult();
+    resultContainer.classList.add("hidden");
+    statusMessage.classList.add("hidden");
 
-    // Even wachten, zodat de browser "Bezig..." kan tonen voordat het zware werk begint.
-    setTimeout(function () {
-        try {
-            const canvas = document.createElement("canvas");
-            canvas.width = outWidth;
-            canvas.height = outHeight;
-
-            const context = canvas.getContext("2d");
-
-            // Witte achtergrond, voor foto's met transparantie.
-            context.fillStyle = "#ffffff";
-            context.fillRect(0, 0, outWidth, outHeight);
-            context.drawImage(cropImage, sx, sy, sw, sh, 0, 0, outWidth, outHeight);
-
-            // JPEG is veel sneller en kleiner dan PNG en voor foto's ruim goed genoeg.
-            canvas.toBlob(function (blob) {
-                if (!blob) {
-                    failCrop();
-                    return;
-                }
-
-                const baseName = originalFile.name.replace(/\.[^.]+$/, "");
-                const croppedFile = new File([blob], baseName + "-uitsnede.jpg", { type: "image/jpeg" });
-
-                // Net als bij het uploaden: lees het bestand in als data-URL en toon die.
-                const reader = new FileReader();
-
-                reader.onload = function (event) {
-                    currentFile = croppedFile;
-                    uploadedImage.src = event.target.result;
-                    setCroppedState(true);
-
-                    // Nieuwe invoer: het vorige resultaat hoort er niet meer bij.
-                    clearResult();
-                    resultContainer.classList.add("hidden");
-                    statusMessage.classList.add("hidden");
-
-                    setCropBusy(false);
-                    closeCropEditor();
-                };
-
-                reader.onerror = failCrop;
-                reader.readAsDataURL(croppedFile);
-            }, "image/jpeg", 0.92);
-        } catch (error) {
-            failCrop();
-        }
-    }, 50);
-});
-
-
-function failCrop() {
-    setCropBusy(false);
     closeCropEditor();
-    showError("Bijsnijden is mislukt. Probeer het opnieuw.");
-}
-
-
-function setCropBusy(isBusy) {
-    cropOkButton.disabled = isBusy;
-    cropCancelButton.disabled = isBusy;
-    cropOkButton.textContent = isBusy ? "Bezig..." : "OK";
-}
+});
 
 
 cropResetButton.addEventListener("click", function () {
@@ -213,8 +163,9 @@ cropResetButton.addEventListener("click", function () {
         return;
     }
 
-    currentFile = originalFile;
-    uploadedImage.src = originalDataUrl;
+    track("bijsnijden-herstel");
+
+    appliedCrop = null;
     setCroppedState(false);
 
     clearResult();
@@ -237,8 +188,23 @@ function closeCropEditor() {
 }
 
 
+// Toont alleen het gekozen stuk van de foto, met gewone CSS-posities
+// (dus zonder canvas, dat sommige browsers of extensies blokkeren).
+function renderCroppedPreview(rect, naturalWidth, naturalHeight) {
+    const ratio = (rect.h * naturalHeight) / (rect.w * naturalWidth);
+
+    croppedPreviewImage.src = originalDataUrl;
+    croppedPreviewFrame.style.paddingBottom = `${ratio * 100}%`;
+    croppedPreviewImage.style.width = `${100 / rect.w}%`;
+    croppedPreviewImage.style.left = `${-(rect.x / rect.w) * 100}%`;
+    croppedPreviewImage.style.top = `${-(rect.y / rect.h) * 100}%`;
+}
+
+
 function setCroppedState(isCropped) {
     originalTitle.textContent = isCropped ? "Uitsnede" : "Origineel";
+    originalView.classList.toggle("hidden", isCropped);
+    croppedPreview.classList.toggle("hidden", !isCropped);
     cropResetButton.classList.toggle("hidden", !isCropped);
 }
 
@@ -401,6 +367,8 @@ algorithmButtons.forEach(function (button) {
         const settingsId = button.dataset.settings;
         const selectedSettings = document.getElementById(settingsId);
 
+        track("kies-" + settingsId);
+
         algorithmButtons.forEach(function (otherButton) {
             otherButton.classList.remove("active");
         });
@@ -426,6 +394,8 @@ dotsGridSizeSlider.addEventListener("input", function () {
 
 
 rankedDotsButton.addEventListener("click", async function () {
+    track("maak-ranked-dots");
+
     await runPythonAlgorithm(
         "/api/ranked-dots",
         rankedGridSizeSlider.value,
@@ -436,6 +406,8 @@ rankedDotsButton.addEventListener("click", async function () {
 
 
 dotsButton.addEventListener("click", async function () {
+    track("maak-dots");
+
     await runPythonAlgorithm(
         "/api/dots",
         dotsGridSizeSlider.value,
@@ -451,8 +423,8 @@ downloadButtons.forEach(function (button) {
 
 
 async function runPythonAlgorithm(url, gridSizePercent, fill, button) {
-    // Het origineel of de uitsnede, afhankelijk van wat de gebruiker koos.
-    const file = currentFile;
+    // Altijd het originele bestand; de uitsnede geven we apart mee.
+    const file = originalFile;
 
     if (!file) {
         return;
@@ -463,6 +435,13 @@ async function runPythonAlgorithm(url, gridSizePercent, fill, button) {
     formData.append("image", file);
     formData.append("grid_size_percent", gridSizePercent);
     formData.append("fill", fill);
+
+    if (appliedCrop) {
+        formData.append("crop_x", appliedCrop.x.toFixed(6));
+        formData.append("crop_y", appliedCrop.y.toFixed(6));
+        formData.append("crop_w", appliedCrop.w.toFixed(6));
+        formData.append("crop_h", appliedCrop.h.toFixed(6));
+    }
 
     setLoadingState(button, true);
 
@@ -527,6 +506,8 @@ function downloadResult() {
     if (!resultSource) {
         return;
     }
+
+    track("download");
 
     const link = document.createElement("a");
 

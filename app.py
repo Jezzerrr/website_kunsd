@@ -2,7 +2,7 @@ import base64
 import io
 import os
 
-from PIL import Image
+from PIL import Image, ImageOps
 from dotenv import load_dotenv
 from flask import Flask, request, send_from_directory, jsonify
 
@@ -28,7 +28,8 @@ def ranked_dots():
         return jsonify({"error": "Geen afbeelding ontvangen"}), 400
 
     try:
-        input_image = Image.open(request.files["image"]).convert("RGB")
+        # input_image = Image.open(request.files["image"]).convert("RGB")
+        input_image = load_input_image()
         grid_size = get_grid_size(input_image)
         colors = get_palette(
             "gist_heat",
@@ -56,7 +57,8 @@ def dots():
         return jsonify({"error": "Geen afbeelding ontvangen"}), 400
 
     try:
-        input_image = Image.open(request.files["image"]).convert("RGB")
+        # input_image = Image.open(request.files["image"]).convert("RGB")
+        input_image = load_input_image()
         grid_size = get_grid_size(input_image)
         fill = request.form.get("fill", "false").lower() == "true"
 
@@ -76,6 +78,41 @@ def dots():
 @app.route("/<path:filename>")
 def serve_file(filename):
     return send_from_directory(".", filename)
+
+
+def load_input_image():
+    image = Image.open(request.files["image"])
+
+    # Draai de foto zoals de browser hem toont (telefoonfoto's hebben vaak
+    # een rotatie-tag). Zo kloppen de coördinaten van de uitsnede.
+    image = ImageOps.exif_transpose(image)
+
+    return apply_crop(image.convert("RGB"))
+
+
+def apply_crop(image):
+    """Snijdt de foto bij als de browser een uitsnede heeft meegestuurd.
+
+    De uitsnede komt binnen als fracties van de foto (0 t/m 1):
+    crop_x en crop_y zijn de linkerbovenhoek, crop_w en crop_h de afmetingen.
+    """
+    if "crop_x" not in request.form:
+        return image
+
+    try:
+        x = float(request.form["crop_x"])
+        y = float(request.form["crop_y"])
+        w = float(request.form["crop_w"])
+        h = float(request.form["crop_h"])
+    except (KeyError, ValueError):
+        return image
+
+    left = max(0, min(image.width - 1, round(x * image.width)))
+    top = max(0, min(image.height - 1, round(y * image.height)))
+    right = max(left + 1, min(image.width, round((x + w) * image.width)))
+    bottom = max(top + 1, min(image.height, round((y + h) * image.height)))
+
+    return image.crop((left, top, right, bottom))
 
 
 def get_grid_size(input_image):
