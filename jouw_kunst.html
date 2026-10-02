@@ -51,14 +51,69 @@
             <input type="file" id="image-upload" accept="image/*">
         </section>
 
+        <!-- De foto zoals die naar de algoritmes gaat (origineel of uitsnede) -->
         <section id="original-container" class="image-section hidden">
-            <h2>Origineel</h2>
+            <h2 id="original-title">Origineel</h2>
 
             <img
                 id="uploaded-image"
                 class="uploaded-image"
                 alt="Geüploade afbeelding"
             >
+
+            <div class="button-row image-actions">
+                <button
+                    type="button"
+                    id="crop-start-button"
+                    class="secondary-button">
+                    Bijsnijden
+                </button>
+
+                <button
+                    type="button"
+                    id="crop-reset-button"
+                    class="secondary-button hidden">
+                    Originele foto herstellen
+                </button>
+            </div>
+        </section>
+
+        <!-- Bijsnijden: alleen zichtbaar na een klik op "Bijsnijden" -->
+        <section id="crop-container" class="image-section hidden">
+            <h2>Foto bijsnijden</h2>
+
+            <div id="crop-stage" class="crop-stage">
+                <img id="crop-image" alt="Foto om bij te snijden" draggable="false">
+
+                <div id="crop-box" class="crop-box">
+                    <span class="crop-handle" data-handle="nw"></span>
+                    <span class="crop-handle" data-handle="ne"></span>
+                    <span class="crop-handle" data-handle="sw"></span>
+                    <span class="crop-handle" data-handle="se"></span>
+                </div>
+            </div>
+
+            <p class="crop-hint">
+                Sleep de hoekjes om de uitsnede aan te passen. Je kunt ook de
+                rechthoek zelf verplaatsen, of over de foto slepen om een
+                nieuwe uitsnede te tekenen. Klik daarna op OK.
+            </p>
+
+            <div class="button-row image-actions">
+                <button
+                    type="button"
+                    id="crop-cancel-button"
+                    class="secondary-button">
+                    Annuleren
+                </button>
+
+                <button
+                    type="button"
+                    id="crop-ok-button"
+                    class="create-button">
+                    OK
+                </button>
+            </div>
         </section>
 
         <section id="algorithm-section" class="hidden">
