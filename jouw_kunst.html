@@ -149,6 +149,13 @@
                     Dots
                 </button>
 
+                <button
+                    type="button"
+                    class="algorithm-button"
+                    data-settings="color-page-settings">
+                    Kleurplaat
+                </button>
+
             </div>
 
             <div
@@ -277,6 +284,216 @@
 
             </div>
 
+
+            <div
+                id="color-page-settings"
+                class="algorithm-settings hidden">
+
+                <h3>Kleurplaat</h3>
+
+                <label
+                    class="switch-row"
+                    for="color-page-custom">
+
+                    <span>
+                        <strong>Eigen kleuren kiezen</strong>
+
+                        <small>
+                            Zet aan om zelf de kleuren te bepalen.
+                        </small>
+                    </span>
+
+                    <span class="switch">
+                        <input
+                            type="checkbox"
+                            id="color-page-custom">
+
+                        <span class="switch-slider"></span>
+                    </span>
+
+                </label>
+
+                <!-- Automatisch: aantal kleuren -->
+                <div id="color-page-auto-colors">
+
+                    <div class="slider-header">
+                        <label for="color-page-colors-slider">
+                            Aantal kleuren
+                        </label>
+
+                        <output
+                            id="color-page-colors-value"
+                            for="color-page-colors-slider">
+                            6
+                        </output>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="color-page-colors-slider"
+                        class="art-slider"
+                        min="2"
+                        max="12"
+                        step="1"
+                        value="6"
+                    >
+
+                    <div class="slider-scale">
+                        <span>Weinig</span>
+                        <span>Veel</span>
+                    </div>
+
+                </div>
+
+                <!-- Zelf kiezen: kleurvakjes met de kleurkiezer van je browser -->
+                <div id="color-page-custom-colors" class="hidden">
+
+                    <p class="palette-hint">
+                        Klik op een kleur om hem te veranderen. De kleurplaat gebruikt precies deze kleuren.
+                    </p>
+
+                    <div id="palette-list" class="palette-list"></div>
+
+                    <div class="button-row image-actions">
+                        <button
+                            type="button"
+                            id="palette-add-button"
+                            class="secondary-button">
+                            + Kleur toevoegen
+                        </button>
+
+                        <button
+                            type="button"
+                            id="palette-from-photo-button"
+                            class="secondary-button">
+                            Kleuren uit foto
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="slider-header">
+                    <label for="color-page-smoothness-slider">
+                        Gladheid van de randen
+                    </label>
+
+                    <output
+                        id="color-page-smoothness-value"
+                        for="color-page-smoothness-slider">
+                        1
+                    </output>
+                </div>
+
+                <input
+                    type="range"
+                    id="color-page-smoothness-slider"
+                    class="art-slider"
+                    min="0"
+                    max="5"
+                    step="0.5"
+                    value="1"
+                >
+
+                <div class="slider-scale">
+                    <span>Hoekig</span>
+                    <span>Glad</span>
+                </div>
+
+                <div class="slider-header">
+                    <label for="color-page-detail-slider">
+                        Details behouden
+                    </label>
+
+                    <output
+                        id="color-page-detail-value"
+                        for="color-page-detail-slider">
+                        0.6
+                    </output>
+                </div>
+
+                <input
+                    type="range"
+                    id="color-page-detail-slider"
+                    class="art-slider"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value="0.6"
+                >
+
+                <div class="slider-scale">
+                    <span>Weinig</span>
+                    <span>Veel</span>
+                </div>
+
+                <div class="slider-header">
+                    <label for="color-page-min-region-slider">
+                        Kleinste vlak
+                    </label>
+
+                    <output
+                        id="color-page-min-region-value"
+                        for="color-page-min-region-slider">
+                        0.1%
+                    </output>
+                </div>
+
+                <input
+                    type="range"
+                    id="color-page-min-region-slider"
+                    class="art-slider"
+                    min="0.05"
+                    max="1"
+                    step="0.05"
+                    value="0.1"
+                >
+
+                <div class="slider-scale">
+                    <span>Klein</span>
+                    <span>Groot</span>
+                </div>
+
+                <label
+                    class="switch-row"
+                    for="color-page-fill">
+
+                    <span>
+                        <strong>Zelf inkleuren</strong>
+
+                        <small>
+                            Zet aan voor een lege kleurplaat met nummers en een legenda.
+                        </small>
+                    </span>
+
+                    <span class="switch">
+                        <input
+                            type="checkbox"
+                            id="color-page-fill">
+
+                        <span class="switch-slider"></span>
+                    </span>
+
+                </label>
+
+                <div class="button-row">
+                    <button
+                        type="button"
+                        id="color-page-button"
+                        class="create-button">
+                        Maak kleurplaat
+                    </button>
+
+                    <button
+                        type="button"
+                        class="download-button"
+                        disabled
+                        title="Maak eerst een afbeelding om te kunnen downloaden">
+                        Download afbeelding
+                    </button>
+                </div>
+
+            </div>
+
         </section>
 
         <details class="info-box">
@@ -297,6 +514,13 @@
             <p>
                 <strong>Dots</strong><br>
                 Verandert een afbeelding in zwarte stippen waarvan de grootte afhankelijk is van de helderheid.
+            </p>
+
+            <p>
+                <strong>Kleurplaat</strong><br>
+                Verdeelt een afbeelding in vlakken van dezelfde kleur. Met "Zelf inkleuren" krijg je een
+                lege kleurplaat: in elk vlak staat een klein grijs nummer, en onderaan zie je welke kleur
+                bij welk nummer hoort.
             </p>
 
         </details>

@@ -16,6 +16,24 @@ const dotsGridSizeValue = document.getElementById("dots-grid-size-value");
 const dotsFill = document.getElementById("dots-fill");
 const rankedDotsButton = document.getElementById("ranked-dots-button");
 const dotsButton = document.getElementById("dots-button");
+const colorPageColorsSlider = document.getElementById("color-page-colors-slider");
+const colorPageColorsValue = document.getElementById("color-page-colors-value");
+const colorPageSmoothnessSlider = document.getElementById("color-page-smoothness-slider");
+const colorPageSmoothnessValue = document.getElementById("color-page-smoothness-value");
+const colorPageMinRegionSlider = document.getElementById("color-page-min-region-slider");
+const colorPageMinRegionValue = document.getElementById("color-page-min-region-value");
+const colorPageDetailSlider = document.getElementById("color-page-detail-slider");
+const colorPageDetailValue = document.getElementById("color-page-detail-value");
+const colorPageFill = document.getElementById("color-page-fill");
+const colorPageButton = document.getElementById("color-page-button");
+
+// Eigen kleuren kiezen
+const colorPageCustomSwitch = document.getElementById("color-page-custom");
+const colorPageAutoColors = document.getElementById("color-page-auto-colors");
+const colorPageCustomColors = document.getElementById("color-page-custom-colors");
+const paletteList = document.getElementById("palette-list");
+const paletteAddButton = document.getElementById("palette-add-button");
+const paletteFromPhotoButton = document.getElementById("palette-from-photo-button");
 const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
@@ -42,6 +60,12 @@ const MIN_CROP_SIZE = 0.08;
 // De uitsnede als fracties van de afbeelding (0 t/m 1), zodat het
 // ook klopt als het scherm van grootte verandert.
 const DEFAULT_CROP = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
+
+// Eigen kleuren voor de kleurplaat: minimaal en maximaal aantal, en een beginkeuze.
+const MIN_CUSTOM_COLORS = 2;
+const MAX_CUSTOM_COLORS = 12;
+const START_COLORS = ["#2b2d42", "#d62839", "#f9c22e", "#3a86ff", "#f4f1de"];
+const EXTRA_COLORS = ["#2a9d8f", "#f4a261", "#8ecae6", "#9b5de5", "#e76f51", "#6a994e"];
 
 // Bevat het laatste resultaat, of null als er (nog) niets te downloaden is.
 let resultSource = null;
@@ -393,13 +417,35 @@ dotsGridSizeSlider.addEventListener("input", function () {
 });
 
 
+colorPageColorsSlider.addEventListener("input", function () {
+    colorPageColorsValue.textContent = colorPageColorsSlider.value;
+});
+
+
+colorPageSmoothnessSlider.addEventListener("input", function () {
+    colorPageSmoothnessValue.textContent = colorPageSmoothnessSlider.value;
+});
+
+
+colorPageMinRegionSlider.addEventListener("input", function () {
+    colorPageMinRegionValue.textContent = `${colorPageMinRegionSlider.value}%`;
+});
+
+
+colorPageDetailSlider.addEventListener("input", function () {
+    colorPageDetailValue.textContent = colorPageDetailSlider.value;
+});
+
+
 rankedDotsButton.addEventListener("click", async function () {
     track("maak-ranked-dots");
 
     await runPythonAlgorithm(
         "/api/ranked-dots",
-        rankedGridSizeSlider.value,
-        false,
+        {
+            grid_size_percent: rankedGridSizeSlider.value,
+            fill: false
+        },
         rankedDotsButton
     );
 });
@@ -410,11 +456,161 @@ dotsButton.addEventListener("click", async function () {
 
     await runPythonAlgorithm(
         "/api/dots",
-        dotsGridSizeSlider.value,
-        !dotsFill.checked,
+        {
+            grid_size_percent: dotsGridSizeSlider.value,
+            fill: !dotsFill.checked
+        },
         dotsButton
     );
 });
+
+
+colorPageButton.addEventListener("click", async function () {
+    track("maak-kleurplaat");
+
+    const fields = {
+        smoothness: colorPageSmoothnessSlider.value,
+        min_region_size: colorPageMinRegionSlider.value,
+        detail: colorPageDetailSlider.value,
+        fill: !colorPageFill.checked
+    };
+
+    if (colorPageCustomSwitch.checked) {
+        const colors = getPaletteColors();
+
+        if (colors.length < MIN_CUSTOM_COLORS) {
+            showError("Kies minstens 2 kleuren.");
+            return;
+        }
+
+        fields.colors = colors.join(",");
+    } else {
+        fields.n_colors = colorPageColorsSlider.value;
+    }
+
+    await runPythonAlgorithm("/api/color-page", fields, colorPageButton);
+});
+
+
+/* ---------- Eigen kleuren kiezen (kleurplaat) ---------- */
+
+colorPageCustomSwitch.addEventListener("change", function () {
+    const isCustom = colorPageCustomSwitch.checked;
+
+    colorPageAutoColors.classList.toggle("hidden", isCustom);
+    colorPageCustomColors.classList.toggle("hidden", !isCustom);
+
+    // De eerste keer beginnen met een handvol kleuren, zodat je iets hebt om aan te passen.
+    if (isCustom && getPaletteColors().length === 0) {
+        setPaletteColors(START_COLORS);
+    }
+
+    track(isCustom ? "kleurplaat-eigen-kleuren-aan" : "kleurplaat-eigen-kleuren-uit");
+});
+
+
+paletteAddButton.addEventListener("click", function () {
+    const count = getPaletteColors().length;
+
+    if (count >= MAX_CUSTOM_COLORS) {
+        return;
+    }
+
+    addPaletteColor(EXTRA_COLORS[count % EXTRA_COLORS.length]);
+    updatePaletteButtons();
+});
+
+
+// Laat de server de kleuren uit de foto (of uitsnede) halen, als beginpunt om zelf aan te passen.
+paletteFromPhotoButton.addEventListener("click", async function () {
+    if (!originalFile) {
+        return;
+    }
+
+    const count = clamp(getPaletteColors().length || 6, MIN_CUSTOM_COLORS, MAX_CUSTOM_COLORS);
+    const originalText = paletteFromPhotoButton.textContent;
+
+    paletteFromPhotoButton.textContent = "Bezig...";
+    paletteFromPhotoButton.disabled = true;
+
+    try {
+        const response = await fetch("/api/color-page-palette", {
+            method: "POST",
+            body: buildFormData({ n_colors: count })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "De kleuren ophalen is mislukt.");
+        }
+
+        setPaletteColors(data.colors);
+        track("kleurplaat-kleuren-uit-foto");
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        paletteFromPhotoButton.textContent = originalText;
+        paletteFromPhotoButton.disabled = false;
+    }
+});
+
+
+function getPaletteColors() {
+    return Array.from(paletteList.querySelectorAll('input[type="color"]')).map(function (input) {
+        return input.value;
+    });
+}
+
+
+function setPaletteColors(colors) {
+    paletteList.textContent = "";
+
+    colors.slice(0, MAX_CUSTOM_COLORS).forEach(addPaletteColor);
+    updatePaletteButtons();
+}
+
+
+// Eén kleurvakje: de kleurkiezer van de browser, plus een kruisje om hem te verwijderen.
+function addPaletteColor(hex) {
+    const swatch = document.createElement("div");
+    swatch.className = "palette-swatch";
+
+    const input = document.createElement("input");
+    input.type = "color";
+    input.value = hex;
+    input.setAttribute("aria-label", "Kies een kleur");
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "palette-remove";
+    removeButton.textContent = "×";
+    removeButton.title = "Verwijder deze kleur";
+    removeButton.setAttribute("aria-label", "Verwijder deze kleur");
+
+    removeButton.addEventListener("click", function () {
+        if (getPaletteColors().length <= MIN_CUSTOM_COLORS) {
+            return;
+        }
+
+        swatch.remove();
+        updatePaletteButtons();
+    });
+
+    swatch.append(input, removeButton);
+    paletteList.appendChild(swatch);
+}
+
+
+function updatePaletteButtons() {
+    const count = getPaletteColors().length;
+
+    paletteAddButton.disabled = count >= MAX_CUSTOM_COLORS;
+
+    paletteList.querySelectorAll(".palette-remove").forEach(function (button) {
+        button.disabled = count <= MIN_CUSTOM_COLORS;
+    });
+}
 
 
 downloadButtons.forEach(function (button) {
@@ -422,19 +618,15 @@ downloadButtons.forEach(function (button) {
 });
 
 
-async function runPythonAlgorithm(url, gridSizePercent, fill, button) {
-    // Altijd het originele bestand; de uitsnede geven we apart mee.
-    const file = originalFile;
-
-    if (!file) {
-        return;
-    }
-
+// Het originele bestand, de instellingen van het gekozen algoritme en (als die er is) de uitsnede.
+function buildFormData(fields) {
     const formData = new FormData();
 
-    formData.append("image", file);
-    formData.append("grid_size_percent", gridSizePercent);
-    formData.append("fill", fill);
+    formData.append("image", originalFile);
+
+    Object.entries(fields).forEach(function ([name, value]) {
+        formData.append(name, value);
+    });
 
     if (appliedCrop) {
         formData.append("crop_x", appliedCrop.x.toFixed(6));
@@ -442,6 +634,20 @@ async function runPythonAlgorithm(url, gridSizePercent, fill, button) {
         formData.append("crop_w", appliedCrop.w.toFixed(6));
         formData.append("crop_h", appliedCrop.h.toFixed(6));
     }
+
+    return formData;
+}
+
+
+async function runPythonAlgorithm(url, fields, button) {
+    // Altijd het originele bestand; de uitsnede geven we apart mee.
+    const file = originalFile;
+
+    if (!file) {
+        return;
+    }
+
+    const formData = buildFormData(fields);
 
     setLoadingState(button, true);
 

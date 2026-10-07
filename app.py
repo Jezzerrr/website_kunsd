@@ -1,11 +1,13 @@
 import base64
 import io
 import os
+import re
 
 from PIL import Image, ImageOps
 from dotenv import load_dotenv
 from flask import Flask, request, send_from_directory, jsonify
 
+from src.color_page import image_to_color_page, suggest_palette
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.helper_functions.color_helpers import get_palette
 
@@ -15,6 +17,8 @@ GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
 app = Flask(__name__)
+
+HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 
 
 @app.route("/")
@@ -75,6 +79,59 @@ def dots():
         return jsonify({"error": str(error)}), 500
 
 
+@app.route("/api/color-page", methods=["POST"])
+def color_page():
+    if "image" not in request.files:
+        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
+
+    try:
+        input_image = load_input_image()
+
+        n_colors = int(read_number("n_colors", 6, 2, 12))
+        smoothness = read_number("smoothness", 1, 0, 5)
+        min_region_size = read_number("min_region_size", 0.1, 0.05, 1)
+        detail = read_number("detail", 0.6, 0, 1)
+
+        # Eigen kleuren (bijv. "#ff0000,#00aa55"); anders bepaalt het algoritme ze zelf
+        colors = read_colors()
+
+        if "colors" in request.form and len(colors) < 2:
+            return jsonify({"error": "Kies minstens 2 kleuren."}), 400
+
+        fill = request.form.get("fill", "true").lower() == "true"
+
+        result_image = image_to_color_page(
+            input_image,
+            n_colors=n_colors,
+            colors=colors or None,
+            smoothness=smoothness,
+            min_region_size=min_region_size,
+            detail=detail,
+            fill=fill,
+            legend=not fill
+        )
+
+        return image_to_json(result_image)
+
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
+
+
+@app.route("/api/color-page-palette", methods=["POST"])
+def color_page_palette():
+    if "image" not in request.files:
+        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
+
+    try:
+        input_image = load_input_image()
+        n_colors = int(read_number("n_colors", 6, 2, 12))
+
+        return jsonify({"colors": suggest_palette(input_image, n_colors)})
+
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
+
+
 @app.route("/<path:filename>")
 def serve_file(filename):
     return send_from_directory(".", filename)
@@ -113,6 +170,24 @@ def apply_crop(image):
     bottom = max(top + 1, min(image.height, round((y + h) * image.height)))
 
     return image.crop((left, top, right, bottom))
+
+
+def read_colors():
+    """Leest de gekozen kleuren ("#rrggbb", gescheiden door komma's); onbruikbare delen worden genegeerd."""
+    parts = request.form.get("colors", "").split(",")
+    colors = [part.strip() for part in parts if HEX_COLOR.fullmatch(part.strip())]
+
+    return colors[:12]
+
+
+def read_number(name, default, minimum, maximum):
+    """Leest een getal uit het formulier en houdt het binnen de grenzen."""
+    try:
+        value = float(request.form.get(name, default))
+    except ValueError:
+        value = default
+
+    return max(minimum, min(maximum, value))
 
 
 def get_grid_size(input_image):
