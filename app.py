@@ -9,6 +9,7 @@ from flask import Flask, request, send_from_directory, jsonify
 
 from src.color_page import image_to_color_page, suggest_palette
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
+from src.shape_division import SHAPES, image_to_shapes
 from src.helper_functions.color_helpers import get_palette
 
 load_dotenv()
@@ -19,6 +20,9 @@ GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 app = Flask(__name__)
 
 HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
+
+# Langste zijde (in pixels) van het resultaat bij Shape division. Houdt het snel en de download klein.
+MAX_SHAPE_SIZE = 2000
 
 
 @app.route("/")
@@ -70,6 +74,40 @@ def dots():
             input_image,
             grid_size=grid_size,
             color=False,
+            fill=fill
+        )
+
+        return image_to_json(result_image)
+
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
+
+
+@app.route("/api/shape-division", methods=["POST"])
+def shape_division():
+    if "image" not in request.files:
+        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
+
+    shape = request.form.get("shape", "squares")
+
+    if shape not in SHAPES:
+        return jsonify({"error": "Onbekende vorm"}), 400
+
+    try:
+        input_image = limit_size(load_input_image(), MAX_SHAPE_SIZE)
+
+        # Grootte van de vormen als percentage van de breedte, zoals bij Dots
+        grid_size_percent = read_number("grid_size_percent", 4, 1, 10)
+        grid_size = input_image.width * grid_size_percent / 100
+
+        max_colors = int(read_number("max_colors", 16, 2, 32))
+        fill = request.form.get("fill", "true").lower() == "true"
+
+        result_image = image_to_shapes(
+            input_image,
+            grid_size=grid_size,
+            max_colors=max_colors,
+            shape=shape,
             fill=fill
         )
 
@@ -145,6 +183,19 @@ def load_input_image():
     image = ImageOps.exif_transpose(image)
 
     return apply_crop(image.convert("RGB"))
+
+
+def limit_size(image, max_side):
+    """Verkleint de foto zodat de langste zijde hoogstens max_side pixels is."""
+    longest = max(image.size)
+
+    if longest <= max_side:
+        return image
+
+    scale = max_side / longest
+    new_size = (max(1, round(image.width * scale)), max(1, round(image.height * scale)))
+
+    return image.resize(new_size, Image.Resampling.LANCZOS)
 
 
 def apply_crop(image):

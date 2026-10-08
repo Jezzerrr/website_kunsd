@@ -145,6 +145,13 @@
                 <button
                     type="button"
                     class="algorithm-button"
+                    data-settings="shape-division-settings">
+                    Shape division
+                </button>
+
+                <button
+                    type="button"
+                    class="algorithm-button"
                     data-settings="dots-settings">
                     Dots
                 </button>
@@ -197,6 +204,127 @@
                         id="ranked-dots-button"
                         class="create-button">
                         Maak ranked dots
+                    </button>
+
+                    <button
+                        type="button"
+                        class="download-button"
+                        disabled
+                        title="Maak eerst een afbeelding om te kunnen downloaden">
+                        Download afbeelding
+                    </button>
+                </div>
+
+            </div>
+
+            <div
+                id="shape-division-settings"
+                class="algorithm-settings hidden">
+
+                <h3>Shape division</h3>
+
+                <div class="slider-header">
+                    <label for="shape-select">
+                        Vorm
+                    </label>
+                </div>
+
+                <select id="shape-select" class="art-select">
+                    <option value="squares">Vierkanten</option>
+                    <option value="brick">Bakstenen</option>
+                    <option value="triangles">Driehoeken</option>
+                    <option value="hexagons">Zeshoeken</option>
+                    <option value="rhombi">Ruiten</option>
+                    <option value="cubes">Kubussen</option>
+                    <option value="octagons_squares">Achthoeken en vierkanten</option>
+                    <option value="crosses">Kruisen</option>
+                    <option value="arrows">Pijlen</option>
+                    <option value="truchet">Truchet (bogen)</option>
+                    <option value="fish_scales">Vissenschubben</option>
+                </select>
+
+                <div class="slider-header">
+                    <label for="shape-grid-size-slider">
+                        Grootte van de vormen
+                    </label>
+
+                    <output
+                        id="shape-grid-size-value"
+                        for="shape-grid-size-slider">
+                        4%
+                    </output>
+                </div>
+
+                <input
+                    type="range"
+                    id="shape-grid-size-slider"
+                    class="art-slider"
+                    min="1"
+                    max="10"
+                    step="0.5"
+                    value="4"
+                >
+
+                <div class="slider-scale">
+                    <span>Klein</span>
+                    <span>Groot</span>
+                </div>
+
+                <div class="slider-header">
+                    <label for="shape-colors-slider">
+                        Aantal kleuren
+                    </label>
+
+                    <output
+                        id="shape-colors-value"
+                        for="shape-colors-slider">
+                        16
+                    </output>
+                </div>
+
+                <input
+                    type="range"
+                    id="shape-colors-slider"
+                    class="art-slider"
+                    min="2"
+                    max="32"
+                    step="1"
+                    value="16"
+                >
+
+                <div class="slider-scale">
+                    <span>Weinig</span>
+                    <span>Veel</span>
+                </div>
+
+                <label
+                    class="switch-row"
+                    for="shape-fill">
+
+                    <span>
+                        <strong>Zelf inkleuren</strong>
+
+                        <small>
+                            Zet aan om alleen de contouren te zien.
+                        </small>
+                    </span>
+
+                    <span class="switch">
+                        <input
+                            type="checkbox"
+                            id="shape-fill">
+
+                        <span class="switch-slider"></span>
+                    </span>
+
+                </label>
+
+                <div class="button-row">
+                    <button
+                        type="button"
+                        id="shape-button"
+                        class="create-button">
+                        Maak vormen
                     </button>
 
                     <button
@@ -509,6 +637,13 @@
             <p>
                 <strong>Ranked dots</strong><br>
                 Verandert een afbeelding in gekleurde stippen.
+            </p>
+
+            <p>
+                <strong>Shape division</strong><br>
+                Verdeelt een afbeelding in vormen (zoals zeshoeken, kubussen of vissenschubben) en geeft
+                elke vorm de gemiddelde kleur van dat stuk van de foto. Met "Zelf inkleuren" krijg je alleen
+                de contouren.
             </p>
 
             <p>

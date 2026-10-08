@@ -14,6 +14,13 @@ const rankedGridSizeValue = document.getElementById("ranked-grid-size-value");
 const dotsGridSizeSlider = document.getElementById("dots-grid-size-slider");
 const dotsGridSizeValue = document.getElementById("dots-grid-size-value");
 const dotsFill = document.getElementById("dots-fill");
+const shapeSelect = document.getElementById("shape-select");
+const shapeGridSizeSlider = document.getElementById("shape-grid-size-slider");
+const shapeGridSizeValue = document.getElementById("shape-grid-size-value");
+const shapeColorsSlider = document.getElementById("shape-colors-slider");
+const shapeColorsValue = document.getElementById("shape-colors-value");
+const shapeFill = document.getElementById("shape-fill");
+const shapeButton = document.getElementById("shape-button");
 const rankedDotsButton = document.getElementById("ranked-dots-button");
 const dotsButton = document.getElementById("dots-button");
 const colorPageColorsSlider = document.getElementById("color-page-colors-slider");
@@ -434,6 +441,37 @@ colorPageMinRegionSlider.addEventListener("input", function () {
 
 colorPageDetailSlider.addEventListener("input", function () {
     colorPageDetailValue.textContent = colorPageDetailSlider.value;
+});
+
+
+shapeGridSizeSlider.addEventListener("input", function () {
+    shapeGridSizeValue.textContent = `${shapeGridSizeSlider.value}%`;
+});
+
+
+shapeColorsSlider.addEventListener("input", function () {
+    shapeColorsValue.textContent = shapeColorsSlider.value;
+});
+
+
+shapeSelect.addEventListener("change", function () {
+    track("kies-vorm-" + shapeSelect.value);
+});
+
+
+shapeButton.addEventListener("click", async function () {
+    track("maak-shape-division");
+
+    await runPythonAlgorithm(
+        "/api/shape-division",
+        {
+            shape: shapeSelect.value,
+            grid_size_percent: shapeGridSizeSlider.value,
+            max_colors: shapeColorsSlider.value,
+            fill: !shapeFill.checked
+        },
+        shapeButton
+    );
 });
 
 
