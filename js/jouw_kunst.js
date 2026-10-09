@@ -33,14 +33,6 @@ const colorPageDetailSlider = document.getElementById("color-page-detail-slider"
 const colorPageDetailValue = document.getElementById("color-page-detail-value");
 const colorPageFill = document.getElementById("color-page-fill");
 const colorPageButton = document.getElementById("color-page-button");
-
-// Eigen kleuren kiezen
-const colorPageCustomSwitch = document.getElementById("color-page-custom");
-const colorPageAutoColors = document.getElementById("color-page-auto-colors");
-const colorPageCustomColors = document.getElementById("color-page-custom-colors");
-const paletteList = document.getElementById("palette-list");
-const paletteAddButton = document.getElementById("palette-add-button");
-const paletteFromPhotoButton = document.getElementById("palette-from-photo-button");
 const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
@@ -272,14 +264,14 @@ cropStage.addEventListener("pointerdown", function (event) {
         return;
     }
 
-    const handle = event.target.closest(".crop-handle");
+    const handle = event.target.closest(".crop-handle, .crop-edge");
     const insideBox = event.target.closest("#crop-box");
     const point = getPointerFraction(event);
 
     let mode;
 
     if (handle) {
-        mode = handle.dataset.handle;   // "nw", "ne", "sw" of "se"
+        mode = handle.dataset.handle;   // hoek: "nw", "ne", "sw", "se"; zijkant: "n", "e", "s", "w"
     } else if (insideBox) {
         mode = "move";
     } else {
@@ -341,7 +333,7 @@ cropStage.addEventListener("pointermove", function (event) {
         return;
     }
 
-    // Een hoekje verslepen: de tegenoverliggende hoek blijft staan.
+    // Een hoekje of zijkant verslepen: de tegenoverliggende hoek (of zijkant) blijft staan.
     let left = start.x;
     let top = start.y;
     let right = start.x + start.w;
@@ -462,16 +454,26 @@ shapeSelect.addEventListener("change", function () {
 shapeButton.addEventListener("click", async function () {
     track("maak-shape-division");
 
-    await runPythonAlgorithm(
-        "/api/shape-division",
-        {
-            shape: shapeSelect.value,
-            grid_size_percent: shapeGridSizeSlider.value,
-            max_colors: shapeColorsSlider.value,
-            fill: !shapeFill.checked
-        },
-        shapeButton
-    );
+    const fields = {
+        shape: shapeSelect.value,
+        grid_size_percent: shapeGridSizeSlider.value,
+        fill: !shapeFill.checked
+    };
+
+    if (shapePalette.isCustom()) {
+        const colors = shapePalette.getColors();
+
+        if (colors.length < MIN_CUSTOM_COLORS) {
+            showError("Kies minstens 2 kleuren.");
+            return;
+        }
+
+        fields.colors = colors.join(",");
+    } else {
+        fields.max_colors = shapeColorsSlider.value;
+    }
+
+    await runPythonAlgorithm("/api/shape-division", fields, shapeButton);
 });
 
 
@@ -513,8 +515,8 @@ colorPageButton.addEventListener("click", async function () {
         fill: !colorPageFill.checked
     };
 
-    if (colorPageCustomSwitch.checked) {
-        const colors = getPaletteColors();
+    if (colorPagePalette.isCustom()) {
+        const colors = colorPagePalette.getColors();
 
         if (colors.length < MIN_CUSTOM_COLORS) {
             showError("Kies minstens 2 kleuren.");
@@ -530,125 +532,189 @@ colorPageButton.addEventListener("click", async function () {
 });
 
 
-/* ---------- Eigen kleuren kiezen (kleurplaat) ---------- */
+/* ---------- Eigen kleuren kiezen (kleurplaat en Shape division) ---------- */
 
-colorPageCustomSwitch.addEventListener("change", function () {
-    const isCustom = colorPageCustomSwitch.checked;
+// Maakt de kleurkiezer van één paneel: schakelaar, kleurvakjes, "+ Kleur toevoegen"
+// en "Kleuren uit foto". Het geeft twee functies terug: isCustom() en getColors().
+function createPaletteEditor(config) {
+    const customSwitch = document.getElementById(config.switchId);
+    const autoColors = document.getElementById(config.autoId);
+    const customColors = document.getElementById(config.customId);
+    const list = document.getElementById(config.listId);
+    const addButton = document.getElementById(config.addId);
+    const photoButton = document.getElementById(config.photoId);
+    const defaultButton = document.getElementById(config.defaultId);
 
-    colorPageAutoColors.classList.toggle("hidden", isCustom);
-    colorPageCustomColors.classList.toggle("hidden", !isCustom);
+    customSwitch.addEventListener("change", function () {
+        const isCustom = customSwitch.checked;
 
-    // De eerste keer beginnen met een handvol kleuren, zodat je iets hebt om aan te passen.
-    if (isCustom && getPaletteColors().length === 0) {
-        setPaletteColors(START_COLORS);
-    }
+        autoColors.classList.toggle("hidden", isCustom);
+        customColors.classList.toggle("hidden", !isCustom);
 
-    track(isCustom ? "kleurplaat-eigen-kleuren-aan" : "kleurplaat-eigen-kleuren-uit");
-});
-
-
-paletteAddButton.addEventListener("click", function () {
-    const count = getPaletteColors().length;
-
-    if (count >= MAX_CUSTOM_COLORS) {
-        return;
-    }
-
-    addPaletteColor(EXTRA_COLORS[count % EXTRA_COLORS.length]);
-    updatePaletteButtons();
-});
-
-
-// Laat de server de kleuren uit de foto (of uitsnede) halen, als beginpunt om zelf aan te passen.
-paletteFromPhotoButton.addEventListener("click", async function () {
-    if (!originalFile) {
-        return;
-    }
-
-    const count = clamp(getPaletteColors().length || 6, MIN_CUSTOM_COLORS, MAX_CUSTOM_COLORS);
-    const originalText = paletteFromPhotoButton.textContent;
-
-    paletteFromPhotoButton.textContent = "Bezig...";
-    paletteFromPhotoButton.disabled = true;
-
-    try {
-        const response = await fetch("/api/color-page-palette", {
-            method: "POST",
-            body: buildFormData({ n_colors: count })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "De kleuren ophalen is mislukt.");
+        // De eerste keer beginnen met een handvol kleuren, zodat je iets hebt om aan te passen.
+        if (isCustom && getColors().length === 0) {
+            setColors(START_COLORS);
         }
 
-        setPaletteColors(data.colors);
-        track("kleurplaat-kleuren-uit-foto");
-    } catch (error) {
-        showError(error.message);
-    } finally {
-        paletteFromPhotoButton.textContent = originalText;
-        paletteFromPhotoButton.disabled = false;
-    }
-});
-
-
-function getPaletteColors() {
-    return Array.from(paletteList.querySelectorAll('input[type="color"]')).map(function (input) {
-        return input.value;
+        track(config.trackName + (isCustom ? "-eigen-kleuren-aan" : "-eigen-kleuren-uit"));
     });
-}
 
 
-function setPaletteColors(colors) {
-    paletteList.textContent = "";
+    addButton.addEventListener("click", function () {
+        const count = getColors().length;
 
-    colors.slice(0, MAX_CUSTOM_COLORS).forEach(addPaletteColor);
-    updatePaletteButtons();
-}
-
-
-// Eén kleurvakje: de kleurkiezer van de browser, plus een kruisje om hem te verwijderen.
-function addPaletteColor(hex) {
-    const swatch = document.createElement("div");
-    swatch.className = "palette-swatch";
-
-    const input = document.createElement("input");
-    input.type = "color";
-    input.value = hex;
-    input.setAttribute("aria-label", "Kies een kleur");
-
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.className = "palette-remove";
-    removeButton.textContent = "×";
-    removeButton.title = "Verwijder deze kleur";
-    removeButton.setAttribute("aria-label", "Verwijder deze kleur");
-
-    removeButton.addEventListener("click", function () {
-        if (getPaletteColors().length <= MIN_CUSTOM_COLORS) {
+        if (count >= MAX_CUSTOM_COLORS) {
             return;
         }
 
-        swatch.remove();
-        updatePaletteButtons();
+        addColor(EXTRA_COLORS[count % EXTRA_COLORS.length]);
+        updateButtons();
     });
 
-    swatch.append(input, removeButton);
-    paletteList.appendChild(swatch);
+
+    // Terug naar de vijf kleuren waarmee je begon.
+    defaultButton.addEventListener("click", function () {
+        setColors(START_COLORS);
+        track(config.trackName + "-standaardkleuren");
+    });
+
+
+    // Laat de server de kleuren uit de foto (of uitsnede) halen, als beginpunt om zelf aan te passen.
+    photoButton.addEventListener("click", async function () {
+        if (!originalFile) {
+            return;
+        }
+
+        const count = clamp(getColors().length || 6, MIN_CUSTOM_COLORS, MAX_CUSTOM_COLORS);
+        const originalText = photoButton.textContent;
+
+        photoButton.textContent = "Bezig...";
+        photoButton.disabled = true;
+
+        try {
+            const fields = { n_colors: count };
+
+            if (config.extraFields) {
+                Object.assign(fields, config.extraFields());
+            }
+
+            const response = await fetch(config.paletteUrl, {
+                method: "POST",
+                body: buildFormData(fields)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "De kleuren ophalen is mislukt.");
+            }
+
+            setColors(data.colors);
+            track(config.trackName + "-kleuren-uit-foto");
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            photoButton.textContent = originalText;
+            photoButton.disabled = false;
+        }
+    });
+
+
+    function getColors() {
+        return Array.from(list.querySelectorAll('input[type="color"]')).map(function (input) {
+            return input.value;
+        });
+    }
+
+
+    function setColors(colors) {
+        list.textContent = "";
+
+        colors.slice(0, MAX_CUSTOM_COLORS).forEach(addColor);
+        updateButtons();
+    }
+
+
+    // Eén kleurvakje: de kleurkiezer van de browser, plus een kruisje om hem te verwijderen.
+    function addColor(hex) {
+        const swatch = document.createElement("div");
+        swatch.className = "palette-swatch";
+
+        const input = document.createElement("input");
+        input.type = "color";
+        input.value = hex;
+        input.setAttribute("aria-label", "Kies een kleur");
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "palette-remove";
+        removeButton.textContent = "×";
+        removeButton.title = "Verwijder deze kleur";
+        removeButton.setAttribute("aria-label", "Verwijder deze kleur");
+
+        removeButton.addEventListener("click", function () {
+            if (getColors().length <= MIN_CUSTOM_COLORS) {
+                return;
+            }
+
+            swatch.remove();
+            updateButtons();
+        });
+
+        swatch.append(input, removeButton);
+        list.appendChild(swatch);
+    }
+
+
+    function updateButtons() {
+        const count = getColors().length;
+
+        addButton.disabled = count >= MAX_CUSTOM_COLORS;
+
+        list.querySelectorAll(".palette-remove").forEach(function (button) {
+            button.disabled = count <= MIN_CUSTOM_COLORS;
+        });
+    }
+
+
+    return {
+        isCustom: function () {
+            return customSwitch.checked;
+        },
+        getColors: getColors
+    };
 }
 
 
-function updatePaletteButtons() {
-    const count = getPaletteColors().length;
+const colorPagePalette = createPaletteEditor({
+    switchId: "color-page-custom",
+    autoId: "color-page-auto-colors",
+    customId: "color-page-custom-colors",
+    listId: "palette-list",
+    addId: "palette-add-button",
+    photoId: "palette-from-photo-button",
+    defaultId: "palette-default-button",
+    trackName: "kleurplaat",
+    paletteUrl: "/api/color-page-palette"
+});
 
-    paletteAddButton.disabled = count >= MAX_CUSTOM_COLORS;
-
-    paletteList.querySelectorAll(".palette-remove").forEach(function (button) {
-        button.disabled = count <= MIN_CUSTOM_COLORS;
-    });
-}
+const shapePalette = createPaletteEditor({
+    switchId: "shape-custom",
+    autoId: "shape-auto-colors",
+    customId: "shape-custom-colors",
+    listId: "shape-palette-list",
+    addId: "shape-palette-add-button",
+    photoId: "shape-palette-from-photo-button",
+    defaultId: "shape-palette-default-button",
+    trackName: "shape-division",
+    paletteUrl: "/api/shape-division-palette",
+    extraFields: function () {
+        return {
+            shape: shapeSelect.value,
+            grid_size_percent: shapeGridSizeSlider.value
+        };
+    }
+});
 
 
 downloadButtons.forEach(function (button) {

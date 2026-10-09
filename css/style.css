@@ -1,11 +1,43 @@
+/* ==========================================================================
+   style.css
+
+   Inhoud
+   1. Variabelen (kleuren en afmetingen)
+   2. Basis: pagina, navigatie, tekst
+   3. Galerij en uitgelicht werk
+   4. Knoppen
+   5. Foto uploaden, tonen en bijsnijden
+   6. Kies een bewerking: groepen, knoppen en instellingen
+   7. Formulierelementen: slider, schakelaar, keuzelijst, kleurvakjes
+   8. Meldingen en infokaders
+   9. Kleine schermen (alle aanpassingen voor mobiel staan hier bij elkaar)
+   ========================================================================== */
+
+
+/* ---------- 1. Variabelen ---------- */
+:root {
+    --ink: #171717;            /* tekst, knoppen, lijnen */
+    --muted: #666666;          /* bijschriften */
+    --panel: #f4f4f4;          /* achtergrond van kaders */
+    --line: #dddddd;
+    --accent: #cc0000;         /* hover en focus */
+
+    --radius-s: 10px;
+    --radius-m: 12px;
+    --radius-l: 16px;
+
+    --shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+
+/* ---------- 2. Basis ---------- */
 body {
-    font-family: "Syne", sans-serif;
     max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
-    color: #171717;
+    color: var(--ink);
     background: #ffffff;
-    /*background-color: #999;*/
+    font-family: "Syne", sans-serif;
 }
 
 nav {
@@ -13,18 +45,18 @@ nav {
     gap: 30px;
     margin-bottom: 40px;
     padding-bottom: 15px;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid var(--line);
 }
 
 nav a {
-    color: #171717;
-    text-decoration: none;
+    color: var(--ink);
     font-weight: 600;
+    text-decoration: none;
 }
 
 nav a:hover {
+    color: var(--accent);
     text-decoration: underline;
-    color: #cc0000;
     transform: rotate(3deg) scale(1.1);
 }
 
@@ -45,6 +77,8 @@ button {
     display: none;
 }
 
+
+/* ---------- 3. Galerij en uitgelicht werk ---------- */
 .gallery {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -52,243 +86,73 @@ button {
 }
 
 .gallery img {
-    width: 100%;
     display: block;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    width: 100%;
+    border-radius: var(--radius-s);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .featured-art img {
+    box-sizing: border-box;         /* de zwarte rand telt mee in de breedte, anders steekt hij op mobiel uit */
+    display: block;
     width: 60%;
     max-width: 700px;
-    display: block;
     border: 10px solid black;
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow);
 }
 
-.upload-section {
-    margin: 30px 0;
+
+/* ---------- 4. Knoppen ---------- */
+/* Gemeenschappelijke vorm van alle rechthoekige knoppen */
+.upload-label,
+.create-button,
+.download-button,
+.secondary-button {
+    padding: 12px 20px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-s);
+    font-weight: 700;
 }
 
-#image-upload {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    opacity: 0;
+/* Donkere knoppen: wit op zwart, bij hover omgekeerd */
+.upload-label,
+.create-button,
+.download-button {
+    color: white;
+    background: var(--ink);
+}
+
+.upload-label:hover,
+.create-button:hover,
+.download-button:hover:not(:disabled) {
+    color: var(--ink);
+    background: white;
+}
+
+/* Lichte knoppen: zwart op wit, bij hover omgekeerd */
+.secondary-button {
+    color: var(--ink);
+    background: white;
+}
+
+.secondary-button:hover:not(:disabled) {
+    color: white;
+    background: var(--ink);
+}
+
+/* Uitgeschakeld (bijv. "+ Kleur toevoegen" bij 12 kleuren): grijs, ook bij hover */
+.secondary-button:disabled {
+    color: #9a9a9a;
+    background: #ececec;
+    border-color: #cfcfcf;
+    cursor: not-allowed;
 }
 
 .upload-label {
     display: inline-block;
-    padding: 12px 20px;
-    color: white;
-    background: #171717;
-    border: 2px solid #171717;
-    border-radius: 10px;
     text-decoration: none;
-    font-weight: 700;
     cursor: pointer;
-}
-
-.upload-label:hover {
-    color: #171717;
-    background: white;
-}
-
-.image-section {
-    margin-top: 35px;
-}
-
-.uploaded-image,
-.result-image {
-    width: 100%;
-    max-width: 800px;
-    height: auto;
-    display: block;
-    border-radius: 12px;
-    /*box-shadow: 0 5px 20px rgba(0,0,0,0.15);*/
-    border: 10px solid black;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-}
-
-#algorithm-section {
-    margin-top: 40px;
-}
-
-.algorithm-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.algorithm-button {
-    padding: 12px 22px;
-    color: #171717;
-    background: white;
-    border: 2px solid #171717;
-    border-radius: 999px;
-    font-weight: 700;
-}
-
-.algorithm-button:hover,
-.algorithm-button.active {
-    color: white;
-    background: #171717;
-}
-
-.algorithm-settings {
-    max-width: 650px;
-    margin-top: 20px;
-    padding: 24px;
-    background: #f4f4f4;
-    border-radius: 16px;
-}
-
-.algorithm-settings h3 {
-    margin-top: 0;
-}
-
-.slider-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    margin-top: 25px;
-}
-
-.slider-header label {
-    font-weight: 700;
-}
-
-.slider-header output {
-    min-width: 50px;
-    padding: 4px 10px;
-    text-align: center;
-    color: white;
-    background: #171717;
-    border-radius: 999px;
-    font-weight: 700;
-}
-
-.art-slider {
-    width: 100%;
-    height: 8px;
-    margin: 18px 0 4px;
-    background: #d4d4d4;
-    border-radius: 999px;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-}
-
-.art-slider::-webkit-slider-thumb {
-    width: 24px;
-    height: 24px;
-    background: #171717;
-    border: 4px solid white;
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px #171717;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-}
-
-.art-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: #171717;
-    border: 4px solid white;
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px #171717;
-    cursor: pointer;
-}
-
-.slider-scale {
-    display: flex;
-    justify-content: space-between;
-    color: #666666;
-    font-size: 0.85rem;
-}
-
-.switch-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
-    margin: 28px 0;
-    cursor: pointer;
-}
-
-.switch-row small {
-    display: block;
-    margin-top: 3px;
-    color: #666666;
-}
-
-.switch {
-    position: relative;
-    flex: 0 0 auto;
-    width: 54px;
-    height: 30px;
-}
-
-.switch input {
-    width: 0;
-    height: 0;
-    opacity: 0;
-}
-
-.switch-slider {
-    position: absolute;
-    inset: 0;
-    background: #bdbdbd;
-    border-radius: 999px;
-    transition: 0.2s;
-}
-
-.switch-slider::before {
-    position: absolute;
-    content: "";
-    width: 22px;
-    height: 22px;
-    left: 4px;
-    top: 4px;
-    background: white;
-    border-radius: 50%;
-    transition: 0.2s;
-}
-
-.switch input:checked + .switch-slider {
-    background: #171717;
-}
-
-.switch input:checked + .switch-slider::before {
-    transform: translateX(24px);
-}
-
-/* Rij met "Maak ..." en "Download afbeelding" naast elkaar */
-.button-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 28px;
-}
-
-.create-button {
-    padding: 12px 20px;
-    color: white;
-    background: #171717;
-    border: 2px solid #171717;
-    border-radius: 10px;
-    font-weight: 700;
-}
-
-.create-button:hover {
-    color: #171717;
-    background: white;
 }
 
 .create-button:disabled {
@@ -296,21 +160,7 @@ button {
     opacity: 0.6;
 }
 
-/* Downloadknop: actief = zwart (zelfde als maakknop), uitgeschakeld = grijs */
-.download-button {
-    padding: 12px 20px;
-    color: white;
-    background: #171717;
-    border: 2px solid #171717;
-    border-radius: 10px;
-    font-weight: 700;
-}
-
-.download-button:hover:not(:disabled) {
-    color: #171717;
-    background: white;
-}
-
+/* Downloadknop: uitgeschakeld = grijs */
 .download-button:disabled {
     color: #9a9a9a;
     background: #ececec;
@@ -320,100 +170,66 @@ button {
 
 .download-button:focus-visible,
 .create-button:focus-visible {
-    outline: 3px solid #cc0000;
+    outline: 3px solid var(--accent);
     outline-offset: 3px;
 }
 
-.status-message {
-    max-width: 650px;
-    margin-top: 25px;
-    padding: 14px 18px;
-    color: #8a1c1c;
-    background: #ffe8e8;
-    border-radius: 10px;
+/* Rij met knoppen, bijvoorbeeld "Maak ..." en "Download afbeelding" */
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 28px;
 }
 
-@media (max-width: 700px) {
-    body {
-        padding: 16px;
-    }
-
-    nav {
-        gap: 12px;
-    }
-
-    .gallery {
-        grid-template-columns: 1fr;
-    }
-
-    .featured-art img {
-        width: 100%;
-    }
-
-    .algorithm-settings {
-        padding: 18px;
-    }
-
-    .algorithm-button {
-        width: 100%;
-    }
-
-    .switch-row {
-        align-items: flex-start;
-    }
-
-    .button-row .create-button,
-    .button-row .download-button {
-        flex: 1 1 100%;
-    }
-}
-
-.info-box {
-    margin: 20px 0;
-    padding: 20px;
-
-    background: #f4f4f4;
-
-    border-left: 6px solid black;
-
-    border-radius: 10px;
-}
-
-/*Not in use now.*/
-.email-address {
-    font-family: Consolas, Monaco, "Courier New", monospace;
-    font-weight: 600;
-}
-
-/* ---------- Bijsnijden ---------- */
-
+/* Rij met knoppen links uitgelijnd (onder een foto) */
 .image-actions {
     justify-content: flex-start;
 }
 
-.secondary-button {
-    padding: 12px 20px;
-    color: #171717;
-    background: white;
-    border: 2px solid #171717;
-    border-radius: 10px;
-    font-weight: 700;
+
+/* ---------- 5. Foto uploaden, tonen en bijsnijden ---------- */
+.upload-section {
+    margin: 30px 0;
 }
 
-.secondary-button:hover {
-    color: white;
-    background: #171717;
+/* Het echte bestandsveld is onzichtbaar; het label ziet eruit als een knop */
+#image-upload {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
 }
 
+.image-section {
+    margin-top: 35px;
+}
+
+.uploaded-image,
+.result-image {
+    box-sizing: border-box;         /* idem: rand telt mee in de breedte */
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    border: 10px solid black;
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow);
+}
+
+/* Bijsnijden: het veld met de foto */
 .crop-stage {
     position: relative;
     width: 100%;
     max-width: 800px;
-    line-height: 0;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: var(--radius-m);
+    line-height: 0;
     cursor: crosshair;
-    touch-action: none;       /* anders scrolt de pagina mee op mobiel */
+    touch-action: none;             /* anders scrolt de pagina mee op mobiel */
     user-select: none;
     -webkit-user-select: none;
 }
@@ -434,6 +250,7 @@ button {
     cursor: move;
 }
 
+/* Hoekjes */
 .crop-handle {
     position: absolute;
     width: 32px;
@@ -460,18 +277,63 @@ button {
 .crop-handle[data-handle="sw"]::after { bottom: 0; left: 0;  border-right: 0; border-top: 0; }
 .crop-handle[data-handle="se"]::after { bottom: 0; right: 0; border-left: 0;  border-top: 0; }
 
+/* Zijkanten: ruime, onzichtbare grijpvlakken met een klein wit streepje als aanwijzing */
+.crop-edge {
+    position: absolute;
+    z-index: 1;
+    touch-action: none;
+}
+
+.crop-edge::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: white;
+    border: 1px solid var(--ink);
+    border-radius: 3px;
+    transform: translate(-50%, -50%);
+}
+
+.crop-edge-n,
+.crop-edge-s {
+    left: 18px;
+    right: 18px;
+    height: 20px;
+    cursor: ns-resize;
+}
+
+.crop-edge-n { top: -10px; }
+.crop-edge-s { bottom: -10px; }
+
+.crop-edge-n::after,
+.crop-edge-s::after {
+    width: 28px;
+    height: 6px;
+}
+
+.crop-edge-e,
+.crop-edge-w {
+    top: 18px;
+    bottom: 18px;
+    width: 20px;
+    cursor: ew-resize;
+}
+
+.crop-edge-e { right: -10px; }
+.crop-edge-w { left: -10px; }
+
+.crop-edge-e::after,
+.crop-edge-w::after {
+    width: 6px;
+    height: 28px;
+}
+
 .crop-hint {
     max-width: 650px;
     margin-top: 16px;
-    color: #666666;
+    color: var(--muted);
     line-height: 1.5;
-}
-
-@media (max-width: 700px) {
-    .image-actions .create-button,
-    .image-actions .secondary-button {
-        flex: 1 1 100%;
-    }
 }
 
 /* Voorvertoning van de uitsnede */
@@ -479,16 +341,16 @@ button {
     box-sizing: border-box;
     width: 100%;
     max-width: 800px;
-    border: 10px solid black;
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     overflow: hidden;
+    border: 10px solid black;
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow);
 }
 
 .cropped-preview-frame {
     position: relative;
     width: 100%;
-    height: 0;          /* de hoogte wordt door het script ingesteld */
+    height: 0;                      /* de hoogte wordt door het script ingesteld */
     overflow: hidden;
 }
 
@@ -499,18 +361,217 @@ button {
     height: auto;
 }
 
-/* START ---------- Shape division: keuzelijst voor de vorm ---------- */
+
+/* ---------- 6. Kies een bewerking ---------- */
+#algorithm-section {
+    margin-top: 40px;
+}
+
+.algorithm-group {
+    margin-top: 18px;
+}
+
+.algorithm-group-title {
+    margin: 0 0 10px;
+    color: var(--ink);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.algorithm-group-title span {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.algorithm-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.algorithm-button {
+    padding: 12px 22px;
+    color: var(--ink);
+    background: white;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.algorithm-button:hover,
+.algorithm-button.active {
+    color: white;
+    background: var(--ink);
+}
+
+/* "Doe-het-zelf": alles waarmee je zelf aan de slag kunt, krijgt een gestippelde rand */
+.algorithm-group-diy,
+.switch-row-diy {
+    border: 2px dashed var(--ink);
+    border-radius: var(--radius-l);
+}
+
+.algorithm-group-diy {
+    padding: 14px 16px 16px;
+}
+
+.algorithm-settings {
+    max-width: 650px;
+    margin-top: 20px;
+    padding: 24px;
+    background: var(--panel);
+    border-radius: var(--radius-l);
+}
+
+.algorithm-settings h3 {
+    margin-top: 0;
+}
+
+
+/* ---------- 7. Formulierelementen ---------- */
+/* Slider met titel en waarde */
+.slider-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 25px;
+}
+
+.slider-header label {
+    font-weight: 700;
+}
+
+.slider-header output {
+    min-width: 50px;
+    padding: 4px 10px;
+    color: white;
+    background: var(--ink);
+    border-radius: 999px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.art-slider {
+    width: 100%;
+    height: 8px;
+    margin: 18px 0 4px;
+    background: #d4d4d4;
+    border-radius: 999px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.art-slider::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    background: var(--ink);
+    border: 4px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--ink);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.art-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--ink);
+    border: 4px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--ink);
+    cursor: pointer;
+}
+
+.slider-scale {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+/* Schakelaar (aan/uit) met uitleg ernaast */
+.switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    margin: 28px 0;
+    cursor: pointer;
+}
+
+.switch-row small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+}
+
+/* Schakelaar die het resultaat in een doe-het-zelf-versie verandert */
+.switch-row-diy {
+    padding: 14px 16px;
+}
+
+.switch {
+    position: relative;
+    flex: 0 0 auto;
+    width: 54px;
+    height: 30px;
+}
+
+.switch input {
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
+.switch-slider {
+    position: absolute;
+    inset: 0;
+    background: #bdbdbd;
+    border-radius: 999px;
+    transition: 0.2s;
+}
+
+.switch-slider::before {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    content: "";
+    transition: 0.2s;
+}
+
+.switch input:checked + .switch-slider {
+    background: var(--ink);
+}
+
+.switch input:checked + .switch-slider::before {
+    transform: translateX(24px);
+}
+
+/* Keuzelijst (bijvoorbeeld de vorm bij Shape division) */
 .art-select {
     width: 100%;
     margin-top: 12px;
     padding: 12px 44px 12px 16px;
-    color: #171717;
+    color: var(--ink);
     background-color: white;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.5l6 6 6-6' fill='none' stroke='%23171717' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 16px center;
-    border: 2px solid #171717;
-    border-radius: 10px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-s);
     font: inherit;
     font-weight: 700;
     cursor: pointer;
@@ -524,7 +585,148 @@ button {
 }
 
 .art-select:focus-visible {
-    outline: 3px solid #cc0000;
+    outline: 3px solid var(--accent);
     outline-offset: 3px;
 }
-/* END ---------- Shape division: keuzelijst voor de vorm ---------- */
+
+/* Eigen kleuren kiezen: kleurvakjes */
+.palette-hint {
+    margin: 24px 0 14px;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.palette-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 4px;
+}
+
+.palette-swatch {
+    position: relative;
+    width: 52px;
+    height: 52px;
+}
+
+.palette-swatch input[type="color"] {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    background: none;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-m);
+    cursor: pointer;
+}
+
+.palette-swatch input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.palette-swatch input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 9px;
+}
+
+.palette-swatch input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 9px;
+}
+
+/* Kruisje om een kleur te verwijderen */
+.palette-remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    color: white;
+    background: var(--ink);
+    border: 2px solid white;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.palette-remove:hover:not(:disabled) {
+    background: var(--accent);
+}
+
+.palette-remove:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* ---------- 8. Meldingen en infokaders ---------- */
+.status-message {
+    max-width: 650px;
+    margin-top: 25px;
+    padding: 14px 18px;
+    color: #8a1c1c;
+    background: #ffe8e8;
+    border-radius: var(--radius-s);
+}
+
+/* Not in use now. */
+.email-address {
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-weight: 600;
+}
+
+.info-box {
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--panel);
+    border-left: 6px solid black;
+    border-radius: var(--radius-s);
+}
+
+
+/* ---------- 9. Kleine schermen ---------- */
+@media (max-width: 700px) {
+    body {
+        padding: 16px;
+    }
+
+    /* Titels schalen mee met de breedte van het scherm, zodat een titel als
+       "De Portrettenparade" op elke telefoon op één regel past (op een brede telefoon blijft
+       het 2rem, de gewone grootte). Het getal 11,5 is ongeveer de breedte van die titel in
+       letterhoogtes; heb je ooit een langere titel op één regel nodig, maak het getal groter. */
+    h1 {
+        font-size: min(2rem, calc((100vw - 32px) / 11.5));
+    }
+
+    /* Menu mag op een smal scherm over twee regels, in plaats van buiten het scherm te vallen */
+    nav {
+        flex-wrap: wrap;
+        gap: 8px 14px;
+    }
+
+    .gallery {
+        grid-template-columns: 1fr;
+    }
+
+    .featured-art img {
+        width: 100%;
+    }
+
+    .algorithm-settings {
+        padding: 18px;
+    }
+
+    .algorithm-button {
+        width: 100%;
+    }
+
+    .switch-row {
+        align-items: flex-start;
+    }
+
+    .button-row .create-button,
+    .button-row .download-button,
+    .image-actions .secondary-button {
+        flex: 1 1 100%;
+    }
+}

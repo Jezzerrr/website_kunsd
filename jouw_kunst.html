@@ -99,6 +99,10 @@
                 <img id="crop-image" alt="Foto om bij te snijden" draggable="false">
 
                 <div id="crop-box" class="crop-box">
+                    <span class="crop-edge crop-edge-n" data-handle="n"></span>
+                    <span class="crop-edge crop-edge-e" data-handle="e"></span>
+                    <span class="crop-edge crop-edge-s" data-handle="s"></span>
+                    <span class="crop-edge crop-edge-w" data-handle="w"></span>
                     <span class="crop-handle" data-handle="nw"></span>
                     <span class="crop-handle" data-handle="ne"></span>
                     <span class="crop-handle" data-handle="sw"></span>
@@ -107,7 +111,7 @@
             </div>
 
             <p class="crop-hint">
-                Sleep de hoekjes om de uitsnede aan te passen. Je kunt ook de
+                Sleep de hoekjes of de zijkanten om de uitsnede aan te passen. Je kunt ook de
                 rechthoek zelf verplaatsen, of over de foto slepen om een
                 nieuwe uitsnede te tekenen. Klik daarna op OK.
             </p>
@@ -133,43 +137,54 @@
 
             <h2>Kies een bewerking</h2>
 
-            <div class="algorithm-buttons">
+            <div class="algorithm-group">
+                <p class="algorithm-group-title">Alleen een mooi plaatje</p>
 
-                <button
-                    type="button"
-                    class="algorithm-button"
-                    data-settings="ranked-dots-settings">
-                    Ranked dots
-                </button>
+                <div class="algorithm-buttons">
+                    <button
+                        type="button"
+                        class="algorithm-button"
+                        data-settings="ranked-dots-settings">
+                        RedBlack Dots
+                    </button>
+                </div>
+            </div>
 
-                <button
-                    type="button"
-                    class="algorithm-button"
-                    data-settings="shape-division-settings">
-                    Shape division
-                </button>
+            <div class="algorithm-group algorithm-group-diy">
+                <p class="algorithm-group-title">
+                    Print je resultaat en doe zelf mee
+                    <span>Met een lege versie met nummers om zelf in te kleuren</span>
+                </p>
 
-                <button
-                    type="button"
-                    class="algorithm-button"
-                    data-settings="dots-settings">
-                    Dots
-                </button>
+                <div class="algorithm-buttons">
+                    <button
+                        type="button"
+                        class="algorithm-button"
+                        data-settings="dots-settings">
+                        Coloring Dots
+                    </button>
 
-                <button
-                    type="button"
-                    class="algorithm-button"
-                    data-settings="color-page-settings">
-                    Kleurplaat
-                </button>
+                    <button
+                        type="button"
+                        class="algorithm-button"
+                        data-settings="shape-division-settings">
+                        Shape Division
+                    </button>
 
+                    <button
+                        type="button"
+                        class="algorithm-button"
+                        data-settings="color-page-settings">
+                        Coloring Page
+                    </button>
+                </div>
             </div>
 
             <div
                 id="ranked-dots-settings"
                 class="algorithm-settings hidden">
 
-                <h3>Ranked dots</h3>
+                <h3>RedBlack Dots</h3>
 
                 <div class="slider-header">
                     <label for="ranked-grid-size-slider">
@@ -203,7 +218,7 @@
                         type="button"
                         id="ranked-dots-button"
                         class="create-button">
-                        Maak ranked dots
+                        Maak RedBlack Dots
                     </button>
 
                     <button
@@ -221,7 +236,95 @@
                 id="shape-division-settings"
                 class="algorithm-settings hidden">
 
-                <h3>Shape division</h3>
+                <h3>Shape Division</h3>
+
+                <label
+                    class="switch-row"
+                    for="shape-custom">
+
+                    <span>
+                        <strong>Eigen kleuren kiezen</strong>
+
+                        <small>
+                            Zet aan om zelf de kleuren te bepalen.
+                        </small>
+                    </span>
+
+                    <span class="switch">
+                        <input
+                            type="checkbox"
+                            id="shape-custom">
+
+                        <span class="switch-slider"></span>
+                    </span>
+
+                </label>
+
+                <!-- Automatisch: aantal kleuren -->
+                <div id="shape-auto-colors">
+
+                    <div class="slider-header">
+                        <label for="shape-colors-slider">
+                            Aantal kleuren
+                        </label>
+
+                        <output
+                            id="shape-colors-value"
+                            for="shape-colors-slider">
+                            8
+                        </output>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="shape-colors-slider"
+                        class="art-slider"
+                        min="2"
+                        max="12"
+                        step="1"
+                        value="8"
+                    >
+
+                    <div class="slider-scale">
+                        <span>Weinig</span>
+                        <span>Veel</span>
+                    </div>
+
+                </div>
+
+                <!-- Zelf kiezen: kleurvakjes met de kleurkiezer van je browser -->
+                <div id="shape-custom-colors" class="hidden">
+
+                    <p class="palette-hint">
+                        Klik op een kleur om hem te veranderen. Elke vorm krijgt de kleur uit dit rijtje die het dichtst bij de foto ligt.
+                    </p>
+
+                    <div id="shape-palette-list" class="palette-list"></div>
+
+                    <div class="button-row image-actions">
+                        <button
+                            type="button"
+                            id="shape-palette-add-button"
+                            class="secondary-button">
+                            + Kleur toevoegen
+                        </button>
+
+                        <button
+                            type="button"
+                            id="shape-palette-from-photo-button"
+                            class="secondary-button">
+                            Kleuren uit foto
+                        </button>
+
+                        <button
+                            type="button"
+                            id="shape-palette-default-button"
+                            class="secondary-button">
+                            Standaardkleuren
+                        </button>
+                    </div>
+
+                </div>
 
                 <div class="slider-header">
                     <label for="shape-select">
@@ -230,17 +333,12 @@
                 </div>
 
                 <select id="shape-select" class="art-select">
-                    <option value="squares">Vierkanten</option>
+                    <option value="hexagons">Zeshoeken</option>
                     <option value="brick">Bakstenen</option>
                     <option value="triangles">Driehoeken</option>
-                    <option value="hexagons">Zeshoeken</option>
-                    <option value="rhombi">Ruiten</option>
                     <option value="cubes">Kubussen</option>
                     <option value="octagons_squares">Achthoeken en vierkanten</option>
-                    <option value="crosses">Kruisen</option>
-                    <option value="arrows">Pijlen</option>
-                    <option value="truchet">Truchet (bogen)</option>
-                    <option value="fish_scales">Vissenschubben</option>
+                    <option value="crosses">Plussen</option>
                 </select>
 
                 <div class="slider-header">
@@ -259,7 +357,7 @@
                     type="range"
                     id="shape-grid-size-slider"
                     class="art-slider"
-                    min="1"
+                    min="1.5"
                     max="10"
                     step="0.5"
                     value="4"
@@ -270,42 +368,15 @@
                     <span>Groot</span>
                 </div>
 
-                <div class="slider-header">
-                    <label for="shape-colors-slider">
-                        Aantal kleuren
-                    </label>
-
-                    <output
-                        id="shape-colors-value"
-                        for="shape-colors-slider">
-                        16
-                    </output>
-                </div>
-
-                <input
-                    type="range"
-                    id="shape-colors-slider"
-                    class="art-slider"
-                    min="2"
-                    max="32"
-                    step="1"
-                    value="16"
-                >
-
-                <div class="slider-scale">
-                    <span>Weinig</span>
-                    <span>Veel</span>
-                </div>
-
                 <label
-                    class="switch-row"
+                    class="switch-row switch-row-diy"
                     for="shape-fill">
 
                     <span>
                         <strong>Zelf inkleuren</strong>
 
                         <small>
-                            Zet aan om alleen de contouren te zien.
+                            Zet aan voor een lege versie met nummers en een legenda.
                         </small>
                     </span>
 
@@ -342,7 +413,7 @@
                 id="dots-settings"
                 class="algorithm-settings hidden">
 
-                <h3>Dots</h3>
+                <h3>Coloring Dots</h3>
 
                 <div class="slider-header">
                     <label for="dots-grid-size-slider">
@@ -372,7 +443,7 @@
                 </div>
 
                 <label
-                    class="switch-row"
+                    class="switch-row switch-row-diy"
                     for="dots-fill">
 
                     <span>
@@ -398,7 +469,7 @@
                         type="button"
                         id="dots-button"
                         class="create-button">
-                        Maak dots
+                        Maak Coloring Dots
                     </button>
 
                     <button
@@ -417,7 +488,7 @@
                 id="color-page-settings"
                 class="algorithm-settings hidden">
 
-                <h3>Kleurplaat</h3>
+                <h3>Coloring Page</h3>
 
                 <label
                     class="switch-row"
@@ -477,7 +548,7 @@
                 <div id="color-page-custom-colors" class="hidden">
 
                     <p class="palette-hint">
-                        Klik op een kleur om hem te veranderen. De kleurplaat gebruikt precies deze kleuren.
+                        Klik op een kleur om hem te veranderen. De Coloring Page gebruikt precies deze kleuren.
                     </p>
 
                     <div id="palette-list" class="palette-list"></div>
@@ -495,6 +566,13 @@
                             id="palette-from-photo-button"
                             class="secondary-button">
                             Kleuren uit foto
+                        </button>
+
+                        <button
+                            type="button"
+                            id="palette-default-button"
+                            class="secondary-button">
+                            Standaardkleuren
                         </button>
                     </div>
 
@@ -582,7 +660,7 @@
                 </div>
 
                 <label
-                    class="switch-row"
+                    class="switch-row switch-row-diy"
                     for="color-page-fill">
 
                     <span>
@@ -608,7 +686,7 @@
                         type="button"
                         id="color-page-button"
                         class="create-button">
-                        Maak kleurplaat
+                        Maak Coloring Page
                     </button>
 
                     <button
@@ -635,24 +713,25 @@
             </p>
 
             <p>
-                <strong>Ranked dots</strong><br>
+                <strong>RedBlack Dots</strong><br>
                 Verandert een afbeelding in gekleurde stippen.
             </p>
 
             <p>
-                <strong>Shape division</strong><br>
-                Verdeelt een afbeelding in vormen (zoals zeshoeken, kubussen of vissenschubben) en geeft
-                elke vorm de gemiddelde kleur van dat stuk van de foto. Met "Zelf inkleuren" krijg je alleen
-                de contouren.
-            </p>
-
-            <p>
-                <strong>Dots</strong><br>
+                <strong>Coloring Dots</strong><br>
                 Verandert een afbeelding in zwarte stippen waarvan de grootte afhankelijk is van de helderheid.
             </p>
 
             <p>
-                <strong>Kleurplaat</strong><br>
+                <strong>Shape Division</strong><br>
+                Verdeelt een afbeelding in vormen (zoals zeshoeken, kubussen of plussen) en geeft
+                elke vorm de gemiddelde kleur van dat stuk van de foto. Met "Zelf inkleuren" krijg je een
+                lege versie: in elke vorm staat een klein grijs nummer, en onderaan zie je welke kleur
+                bij welk nummer hoort.
+            </p>
+
+            <p>
+                <strong>Coloring Page</strong><br>
                 Verdeelt een afbeelding in vlakken van dezelfde kleur. Met "Zelf inkleuren" krijg je een
                 lege kleurplaat: in elk vlak staat een klein grijs nummer, en onderaan zie je welke kleur
                 bij welk nummer hoort.

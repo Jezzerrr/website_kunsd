@@ -79,8 +79,17 @@ def image_to_color_page(
     else:
         palette, palette_lab = _palette_from_image(rgb, lab, n_colors, seed)
 
-    # 2. Elke pixel krijgt de dichtstbijzijnde kleur
-    raw = _nearest_color(lab, palette_lab)
+    # 2. Elke pixel krijgt de dichtstbijzijnde kleur. Bij eigen kleuren zorgen we er ook voor
+    #    dat elke gekozen kleur voldoende voorkomt (ook als hij niet in de foto zit).
+    bias = None
+
+    if colors:
+        flat_lab = lab.reshape(-1, 3)
+        rng = np.random.default_rng(seed)
+        sample = rng.choice(len(flat_lab), size=min(len(flat_lab), 40000), replace=False)
+        bias = balanced_color_bias(flat_lab[sample], palette_lab)
+
+    raw = _nearest_color(lab, palette_lab, bias)
 
     # 3. Gladstrijken en opruimen. Zie de uitleg bovenaan dit bestand.
     sigma = smoothness * 0.005 * longest
@@ -115,6 +124,13 @@ def image_to_color_page(
         # Lichte ronde: maakt de randen van teruggehaalde vormen weer mooi rond
         labels = _smooth_labels(labels, max(1.0, sigma / 3))
         labels = _remove_small_regions(labels, min_area, protect)
+
+    # Te smalle stukken weghalen: anders lopen de lijntjes aan weerszijden van een smal vlak
+    # in elkaar over en lijkt een vlak in tweeën gesplitst. Geldt voor beide varianten,
+    # zodat de ingekleurde en de lege versie bij elkaar passen.
+    outline = line_width if line_width is not None else max(2.0, longest * 0.002)
+    labels = _remove_thin_parts(labels, radius=max(2.0, outline * 1.25))
+    labels = _remove_small_regions(labels, min_area, protect)
 
     # 4. Alleen gebruikte kleuren houden, donkerste eerst (nummer 1 = donkerste)
     labels, palette = _renumber_by_darkness(labels, palette)
@@ -222,18 +238,80 @@ def _nearest_color_flat(points, centers):
     return distances.argmin(axis=1)
 
 
-def _nearest_color(lab, palette_lab):
-    """Geef elke pixel het nummer van de dichtstbijzijnde kleur (zonder een groot 3D-blok in het geheugen)."""
+def _nearest_color(lab, palette_lab, bias=None):
+    """Geef elke pixel het nummer van de dichtstbijzijnde kleur (zonder een groot 3D-blok in het geheugen).
+
+    Met bias (een getal per kleur) wordt de afstand tot die kleur kleiner of groter gemaakt,
+    zodat een kleur vaker of minder vaak gekozen wordt. Zie balanced_color_bias().
+    """
     best_distance = np.full(lab.shape[:2], np.inf, dtype=np.float32)
     labels = np.zeros(lab.shape[:2], dtype=np.int32)
 
     for index, color in enumerate(palette_lab):
         distance = ((lab - color) ** 2).sum(axis=2)
+
+        if bias is not None:
+            distance = distance + bias[index]
+
         closer = distance < best_distance
         best_distance[closer] = distance[closer]
         labels[closer] = index
 
     return labels
+
+
+# Elke eigen gekozen kleur komt minstens voor in dit deel van "een eerlijk aandeel"
+# (1 / aantal kleuren). 0,7 betekent: bij 5 kleuren heeft elke kleur minstens 14% van de plaat.
+MIN_COLOR_SHARE = 0.7
+
+
+def balanced_color_bias(points_lab, palette_lab, min_share=MIN_COLOR_SHARE):
+    """Zorgt dat bij eigen kleuren elke kleur echt gebruikt wordt.
+
+    Met alleen "de dichtstbijzijnde kleur" blijven kleuren die niet in de foto zitten (een felgroen
+    in een foto zonder groen) ongebruikt. Hier krijgt elke kleur een kleine bonus, precies groot
+    genoeg dat hij op minstens min_share / aantal_kleuren van de punten wint. De punten waar
+    dat het meest op lijkt (het dichtst bij die kleur) krijgen hem. Het resultaat volgt dus nog
+    steeds de contouren van de foto, maar wijkt bewust af van de originele kleuren.
+
+    Args:
+        points_lab: (N, 3) Lab-kleuren van pixels of vormen (een steekproef is genoeg).
+        palette_lab: (K, 3) Lab-kleuren van het palet.
+
+    Returns:
+        (K,) getallen om op de kwadratische afstand op te tellen (zie _nearest_color).
+    """
+    points = np.asarray(points_lab, dtype=np.float32)
+    count = len(palette_lab)
+    bias = np.zeros(count, dtype=np.float32)
+
+    if count < 2 or len(points) == 0:
+        return bias
+
+    floor = min_share / count
+    needed = max(1, int(math.ceil(floor * len(points))))
+    needed = min(needed, len(points))
+
+    distance = np.stack([((points - color) ** 2).sum(axis=1) for color in palette_lab], axis=1)
+
+    for _ in range(80):
+        cost = distance + bias
+        shares = np.bincount(cost.argmin(axis=1), minlength=count) / len(points)
+        under = np.nonzero(shares < floor - 1e-9)[0]
+
+        if len(under) == 0:
+            break
+
+        for index in under:
+            others = np.delete(cost, index, axis=1).min(axis=1)
+            margin = cost[:, index] - others
+
+            # Het "needed"-na dichtstbijzijnde punt bepaalt hoeveel bonus nodig is
+            threshold = np.partition(margin, needed - 1)[needed - 1]
+            bias[index] -= threshold + 1e-3
+            cost[:, index] = distance[:, index] + bias[index]
+
+    return bias
 
 
 def _parse_color(color):
@@ -403,6 +481,32 @@ def _remove_small_regions(labels, min_area, protect=None):
         labels = np.where(remove_mask, targets, labels)
 
     return labels
+
+
+def _remove_thin_parts(labels, radius):
+    """Haal delen weg die dunner zijn dan twee keer radius (een 'opening' per kleur).
+
+    Dunne streepjes, smalle uitsteeksels en smalle halzen tussen twee delen van één vlak
+    verdwijnen; de pixels gaan naar de dichtstbijzijnde buur. Brede vlakken blijven zoals ze zijn.
+    """
+    keep = np.zeros(labels.shape, dtype=bool)
+
+    for index in np.unique(labels):
+        mask = labels == index
+
+        core = ndimage.distance_transform_edt(mask) > radius
+        opened = ndimage.distance_transform_edt(~core) <= radius
+
+        keep |= opened & mask
+
+    removed = ~keep
+
+    if not removed.any() or not keep.any():
+        return labels
+
+    nearest = ndimage.distance_transform_edt(removed, return_distances=False, return_indices=True)
+
+    return labels[nearest[0], nearest[1]]
 
 
 def _restore_details(raw, smoothed, palette_lab, threshold, floor_area, min_thickness):
