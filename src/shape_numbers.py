@@ -1,7 +1,7 @@
 """Shape division: eigen kleuren, gelijke grootte per vorm en de lege kleurplaat met nummers.
 
 Dit bestand gebruikt de functies uit shape_division.py (zelfde vormen en zelfde kleuren als de
-ingekleurde variant) en de nummers, de legenda en de kleurfuncties uit color_page.py (zoals bij
+ingekleurde variant) en de nummers, de legenda en de kleurfuncties uit helper_functions (zoals bij
 de Kleurplaat). shape_division.py zelf blijft ongewijzigd.
 
 Wat hier staat:
@@ -15,15 +15,8 @@ import math
 import numpy as np
 from PIL import Image, ImageDraw
 
-from src.color_page import (
-    LINE_COLOR,
-    NUMBER_COLOR,
-    _add_legend,
-    balanced_color_bias,
-    _get_font,
-    _parse_color,
-    _rgb_to_lab,
-)
+from src.helper_functions.drawing import LINE_COLOR, NUMBER_COLOR, add_legend, get_font
+from src.helper_functions.lab_colors import balanced_color_bias, parse_color, rgb_to_lab
 from src.shape_division import (
     SHAPES,
     create_polygons,
@@ -139,10 +132,10 @@ def image_to_numbered_shapes(
         if font_size is None:
             continue    # een heel klein randstukje waar geen nummer in past
 
-        draw.text((x, y), number, fill=NUMBER_COLOR, font=_get_font(font_size), anchor="mm")
+        draw.text((x, y), number, fill=NUMBER_COLOR, font=get_font(font_size), anchor="mm")
 
     if legend:
-        image = _add_legend(image, palette)
+        image = add_legend(image, palette)
 
     return image
 
@@ -192,15 +185,15 @@ def _nearest_palette_colors(average_colors, colors):
     if len(average_colors) == 0:
         return []
 
-    palette = np.array([_parse_color(c) for c in colors], dtype=np.float32)
+    palette = np.array([parse_color(c) for c in colors], dtype=np.float32)
     averages = np.array(average_colors, dtype=np.float32)
 
-    palette_lab = _rgb_to_lab(palette[None, :, :])[0]
-    averages_lab = _rgb_to_lab(averages[None, :, :])[0]
+    palette_lab = rgb_to_lab(palette[None, :, :])[0]
+    averages_lab = rgb_to_lab(averages[None, :, :])[0]
 
     distances = ((averages_lab[:, None, :] - palette_lab[None, :, :]) ** 2).sum(axis=2)
 
-    # Elke gekozen kleur moet echt voorkomen, ook als hij niet in de foto zit (zie color_page.py)
+    # Elke gekozen kleur moet echt voorkomen, ook als hij niet in de foto zit (zie helper_functions/lab_colors.py)
     distances = distances + balanced_color_bias(averages_lab, palette_lab)
     nearest = distances.argmin(axis=1)
 

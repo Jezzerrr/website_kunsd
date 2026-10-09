@@ -19,17 +19,12 @@ Hoe het werkt:
 Nodig: numpy, scipy en Pillow (scipy zit ook in scikit-image).
 """
 
-import math
-import os
-
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from scipy import ndimage
 
-LINE_COLOR = (70, 70, 70)
-NUMBER_COLOR = (140, 140, 140)
-LEGEND_TEXT_COLOR = (90, 90, 90)
-
+from src.helper_functions.drawing import LINE_COLOR, NUMBER_COLOR, add_legend, get_font
+from src.helper_functions.lab_colors import balanced_color_bias, parse_color, rgb_to_lab
 
 def image_to_color_page(
         img,
@@ -74,8 +69,8 @@ def image_to_color_page(
 
     # 1. Kleuren kiezen
     if colors:
-        palette = np.array([_parse_color(c) for c in colors], dtype=np.float32)
-        palette_lab = _rgb_to_lab(palette[None, :, :])[0]
+        palette = np.array([parse_color(c) for c in colors], dtype=np.float32)
+        palette_lab = rgb_to_lab(palette[None, :, :])[0]
     else:
         palette, palette_lab = _palette_from_image(rgb, lab, n_colors, seed)
 
@@ -162,7 +157,7 @@ def _prepare(img, max_size):
     rgb = np.asarray(img, dtype=np.float32)
     rgb = ndimage.gaussian_filter(rgb, sigma=(1, 1, 0), mode="nearest")
 
-    return img, rgb, _rgb_to_lab(rgb)
+    return img, rgb, rgb_to_lab(rgb)
 
 
 # ---------------------------------------------------------------------------
@@ -260,100 +255,10 @@ def _nearest_color(lab, palette_lab, bias=None):
     return labels
 
 
-# Elke eigen gekozen kleur komt minstens voor in dit deel van "een eerlijk aandeel"
-# (1 / aantal kleuren). 0,7 betekent: bij 5 kleuren heeft elke kleur minstens 14% van de plaat.
-MIN_COLOR_SHARE = 0.7
-
-
-def balanced_color_bias(points_lab, palette_lab, min_share=MIN_COLOR_SHARE):
-    """Zorgt dat bij eigen kleuren elke kleur echt gebruikt wordt.
-
-    Met alleen "de dichtstbijzijnde kleur" blijven kleuren die niet in de foto zitten (een felgroen
-    in een foto zonder groen) ongebruikt. Hier krijgt elke kleur een kleine bonus, precies groot
-    genoeg dat hij op minstens min_share / aantal_kleuren van de punten wint. De punten waar
-    dat het meest op lijkt (het dichtst bij die kleur) krijgen hem. Het resultaat volgt dus nog
-    steeds de contouren van de foto, maar wijkt bewust af van de originele kleuren.
-
-    Args:
-        points_lab: (N, 3) Lab-kleuren van pixels of vormen (een steekproef is genoeg).
-        palette_lab: (K, 3) Lab-kleuren van het palet.
-
-    Returns:
-        (K,) getallen om op de kwadratische afstand op te tellen (zie _nearest_color).
-    """
-    points = np.asarray(points_lab, dtype=np.float32)
-    count = len(palette_lab)
-    bias = np.zeros(count, dtype=np.float32)
-
-    if count < 2 or len(points) == 0:
-        return bias
-
-    floor = min_share / count
-    needed = max(1, int(math.ceil(floor * len(points))))
-    needed = min(needed, len(points))
-
-    distance = np.stack([((points - color) ** 2).sum(axis=1) for color in palette_lab], axis=1)
-
-    for _ in range(80):
-        cost = distance + bias
-        shares = np.bincount(cost.argmin(axis=1), minlength=count) / len(points)
-        under = np.nonzero(shares < floor - 1e-9)[0]
-
-        if len(under) == 0:
-            break
-
-        for index in under:
-            others = np.delete(cost, index, axis=1).min(axis=1)
-            margin = cost[:, index] - others
-
-            # Het "needed"-na dichtstbijzijnde punt bepaalt hoeveel bonus nodig is
-            threshold = np.partition(margin, needed - 1)[needed - 1]
-            bias[index] -= threshold + 1e-3
-            cost[:, index] = distance[:, index] + bias[index]
-
-    return bias
-
-
-def _parse_color(color):
-    if isinstance(color, str):
-        text = color.strip().lstrip("#")
-
-        if len(text) == 3:
-            text = "".join(letter * 2 for letter in text)
-
-        return tuple(int(text[i:i + 2], 16) for i in (0, 2, 4))
-
-    return tuple(int(value) for value in color[:3])
-
-
 def _lab_center_to_rgb_fallback(center):
     # Alleen voor een leeg k-means-groepje: grijs met de juiste helderheid
     gray = int(np.clip(center[0] * 2.55, 0, 255))
     return np.array([gray, gray, gray], dtype=np.float32)
-
-
-def _rgb_to_lab(rgb):
-    """RGB (0-255) naar Lab. Werkt op elke vorm zolang de laatste as 3 is."""
-    srgb = np.asarray(rgb, dtype=np.float32) / 255.0
-    linear = np.where(srgb <= 0.04045, srgb / 12.92, ((srgb + 0.055) / 1.055) ** 2.4)
-
-    matrix = np.array([
-        [0.4124564, 0.3575761, 0.1804375],
-        [0.2126729, 0.7151522, 0.0721750],
-        [0.0193339, 0.1191920, 0.9503041],
-    ], dtype=np.float32)
-
-    xyz = linear @ matrix.T
-    xyz = xyz / np.array([0.95047, 1.0, 1.08883], dtype=np.float32)
-
-    delta = 6 / 29
-    f = np.where(xyz > delta ** 3, np.cbrt(xyz), xyz / (3 * delta ** 2) + 4 / 29)
-
-    lightness = 116 * f[..., 1] - 16
-    a = 500 * (f[..., 0] - f[..., 1])
-    b = 200 * (f[..., 1] - f[..., 2])
-
-    return np.stack([lightness, a, b], axis=-1).astype(np.float32)
 
 
 # ---------------------------------------------------------------------------
@@ -614,93 +519,12 @@ def _draw_empty_page(labels, palette, legend, line_width):
         number = int(labels[y, x]) + 1
         font_size = int(max(7, min(base_font, radius * 1.5)))
 
-        draw.text((x, y), str(number), fill=NUMBER_COLOR, font=_get_font(font_size), anchor="mm")
+        draw.text((x, y), str(number), fill=NUMBER_COLOR, font=get_font(font_size), anchor="mm")
 
     if legend:
-        image = _add_legend(image, palette)
+        image = add_legend(image, palette)
 
     return image
-
-
-def _add_legend(image, palette):
-    """Plak onderaan een legenda: elk nummer met zijn kleur."""
-    width, height = image.size
-    longest = max(width, height)
-
-    swatch = max(18, round(longest * 0.035))
-    gap = round(swatch * 0.5)
-    margin = round(swatch * 0.7)
-    cell_width = round(swatch * 2.6)
-    font = _get_font(max(10, round(swatch * 0.55)))
-
-    per_row = max(1, (width - 2 * margin) // cell_width)
-    rows = math.ceil(len(palette) / per_row)
-    band_height = 2 * margin + rows * swatch + (rows - 1) * gap
-
-    result = Image.new("RGB", (width, height + band_height), "white")
-    result.paste(image, (0, 0))
-    draw = ImageDraw.Draw(result)
-
-    for index, color in enumerate(palette):
-        row, column = divmod(index, per_row)
-
-        items_in_row = min(per_row, len(palette) - row * per_row)
-        row_width = items_in_row * cell_width
-        x0 = (width - row_width) // 2 + column * cell_width
-        y0 = height + margin + row * (swatch + gap)
-
-        draw.rectangle(
-            (x0, y0, x0 + swatch, y0 + swatch),
-            fill=tuple(int(v) for v in color),
-            outline=LINE_COLOR,
-            width=1,
-        )
-        draw.text(
-            (x0 + swatch + swatch * 0.25, y0 + swatch / 2),
-            str(index + 1),
-            fill=LEGEND_TEXT_COLOR,
-            font=font,
-            anchor="lm",
-        )
-
-    return result
-
-
-_font_cache = {}
-
-
-def _get_font(size):
-    """Zoek een lettertype dat op elke server werkt."""
-    if size in _font_cache:
-        return _font_cache[size]
-
-    candidates = []
-
-    try:
-        import matplotlib
-        candidates.append(os.path.join(matplotlib.get_data_path(), "fonts", "ttf", "DejaVuSans.ttf"))
-    except Exception:
-        pass
-
-    candidates += ["DejaVuSans.ttf", "arial.ttf", "Arial.ttf"]
-
-    font = None
-
-    for path in candidates:
-        try:
-            font = ImageFont.truetype(path, size)
-            break
-        except (OSError, ValueError):
-            continue
-
-    if font is None:
-        try:
-            font = ImageFont.load_default(size)   # Pillow 10.1 of nieuwer
-        except TypeError:
-            font = ImageFont.load_default()
-
-    _font_cache[size] = font
-    return font
 
 
 def _limit_size(img, max_size):
