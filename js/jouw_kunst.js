@@ -10,27 +10,19 @@ const algorithmSection = document.getElementById("algorithm-section");
 const algorithmButtons = document.querySelectorAll(".algorithm-button");
 const algorithmSettings = document.querySelectorAll(".algorithm-settings");
 const rankedGridSizeSlider = document.getElementById("ranked-grid-size-slider");
-const rankedGridSizeValue = document.getElementById("ranked-grid-size-value");
 const dotsGridSizeSlider = document.getElementById("dots-grid-size-slider");
-const dotsGridSizeValue = document.getElementById("dots-grid-size-value");
 const dotsFill = document.getElementById("dots-fill");
 const shapeSelect = document.getElementById("shape-select");
 const shapeGridSizeSlider = document.getElementById("shape-grid-size-slider");
-const shapeGridSizeValue = document.getElementById("shape-grid-size-value");
 const shapeColorsSlider = document.getElementById("shape-colors-slider");
-const shapeColorsValue = document.getElementById("shape-colors-value");
 const shapeFill = document.getElementById("shape-fill");
 const shapeButton = document.getElementById("shape-button");
 const rankedDotsButton = document.getElementById("ranked-dots-button");
 const dotsButton = document.getElementById("dots-button");
 const colorPageColorsSlider = document.getElementById("color-page-colors-slider");
-const colorPageColorsValue = document.getElementById("color-page-colors-value");
 const colorPageSmoothnessSlider = document.getElementById("color-page-smoothness-slider");
-const colorPageSmoothnessValue = document.getElementById("color-page-smoothness-value");
 const colorPageMinRegionSlider = document.getElementById("color-page-min-region-slider");
-const colorPageMinRegionValue = document.getElementById("color-page-min-region-value");
 const colorPageDetailSlider = document.getElementById("color-page-detail-slider");
-const colorPageDetailValue = document.getElementById("color-page-detail-value");
 const colorPageFill = document.getElementById("color-page-fill");
 const colorPageButton = document.getElementById("color-page-button");
 const statusMessage = document.getElementById("status-message");
@@ -60,7 +52,7 @@ const MIN_CROP_SIZE = 0.08;
 // ook klopt als het scherm van grootte verandert.
 const DEFAULT_CROP = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
 
-// Eigen kleuren voor de kleurplaat: minimaal en maximaal aantal, en een beginkeuze.
+// Eigen kleuren (Coloring Page en Shape Division): minimaal en maximaal aantal, en een beginkeuze.
 const MIN_CUSTOM_COLORS = 2;
 const MAX_CUSTOM_COLORS = 12;
 const START_COLORS = ["#2b2d42", "#d62839", "#f9c22e", "#3a86ff", "#f4f1de"];
@@ -406,43 +398,14 @@ algorithmButtons.forEach(function (button) {
 });
 
 
-rankedGridSizeSlider.addEventListener("input", function () {
-    rankedGridSizeValue.textContent = `${rankedGridSizeSlider.value}%`;
-});
+// Elke slider laat zijn waarde zien in het bijbehorende <output> (met een % als daar al een % staat).
+document.querySelectorAll(".art-slider").forEach(function (slider) {
+    const output = document.querySelector(`output[for="${slider.id}"]`);
+    const unit = output.textContent.trim().endsWith("%") ? "%" : "";
 
-
-dotsGridSizeSlider.addEventListener("input", function () {
-    dotsGridSizeValue.textContent = `${dotsGridSizeSlider.value}%`;
-});
-
-
-colorPageColorsSlider.addEventListener("input", function () {
-    colorPageColorsValue.textContent = colorPageColorsSlider.value;
-});
-
-
-colorPageSmoothnessSlider.addEventListener("input", function () {
-    colorPageSmoothnessValue.textContent = colorPageSmoothnessSlider.value;
-});
-
-
-colorPageMinRegionSlider.addEventListener("input", function () {
-    colorPageMinRegionValue.textContent = `${colorPageMinRegionSlider.value}%`;
-});
-
-
-colorPageDetailSlider.addEventListener("input", function () {
-    colorPageDetailValue.textContent = colorPageDetailSlider.value;
-});
-
-
-shapeGridSizeSlider.addEventListener("input", function () {
-    shapeGridSizeValue.textContent = `${shapeGridSizeSlider.value}%`;
-});
-
-
-shapeColorsSlider.addEventListener("input", function () {
-    shapeColorsValue.textContent = shapeColorsSlider.value;
+    slider.addEventListener("input", function () {
+        output.textContent = slider.value + unit;
+    });
 });
 
 
@@ -460,17 +423,8 @@ shapeButton.addEventListener("click", async function () {
         fill: !shapeFill.checked
     };
 
-    if (shapePalette.isCustom()) {
-        const colors = shapePalette.getColors();
-
-        if (colors.length < MIN_CUSTOM_COLORS) {
-            showError("Kies minstens 2 kleuren.");
-            return;
-        }
-
-        fields.colors = colors.join(",");
-    } else {
-        fields.max_colors = shapeColorsSlider.value;
+    if (!addColorFields(fields, shapePalette, "max_colors", shapeColorsSlider)) {
+        return;
     }
 
     await runPythonAlgorithm("/api/shape-division", fields, shapeButton);
@@ -515,24 +469,35 @@ colorPageButton.addEventListener("click", async function () {
         fill: !colorPageFill.checked
     };
 
-    if (colorPagePalette.isCustom()) {
-        const colors = colorPagePalette.getColors();
-
-        if (colors.length < MIN_CUSTOM_COLORS) {
-            showError("Kies minstens 2 kleuren.");
-            return;
-        }
-
-        fields.colors = colors.join(",");
-    } else {
-        fields.n_colors = colorPageColorsSlider.value;
+    if (!addColorFields(fields, colorPagePalette, "n_colors", colorPageColorsSlider)) {
+        return;
     }
 
     await runPythonAlgorithm("/api/color-page", fields, colorPageButton);
 });
 
 
-/* ---------- Eigen kleuren kiezen (kleurplaat en Shape division) ---------- */
+/* ---------- Eigen kleuren kiezen (Coloring Page en Shape Division) ---------- */
+
+// Zet de kleurkeuze van een paneel in de velden die naar de server gaan: de eigen kleuren
+// als die zijn aangezet, anders het aantal kleuren van de slider (onder de naam countField).
+// Geeft false terug (met een melding) als er te weinig eigen kleuren zijn.
+function addColorFields(fields, palette, countField, countSlider) {
+    if (!palette.isCustom()) {
+        fields[countField] = countSlider.value;
+        return true;
+    }
+
+    const colors = palette.getColors();
+
+    if (colors.length < MIN_CUSTOM_COLORS) {
+        showError("Kies minstens 2 kleuren.");
+        return false;
+    }
+
+    fields.colors = colors.join(",");
+    return true;
+}
 
 // Maakt de kleurkiezer van één paneel: schakelaar, kleurvakjes, "+ Kleur toevoegen"
 // en "Kleuren uit foto". Het geeft twee functies terug: isCustom() en getColors().
@@ -836,7 +801,6 @@ function setLoadingState(button, isLoading) {
         button.textContent = "Kunsd wordt gemaakt...";
         button.disabled = true;
         statusMessage.classList.add("hidden");
-//        resultContainer.classList.add("hidden");
     } else {
         button.textContent = button.dataset.originalText;
         button.disabled = false;

@@ -2,13 +2,15 @@ import base64
 import io
 import os
 import re
+from functools import wraps
+from pathlib import PurePosixPath
 
 from PIL import Image, ImageOps
-from dotenv import load_dotenv
-from flask import Flask, request, send_from_directory, jsonify
+from flask import Flask, abort, jsonify, request, send_from_directory
 
 from src.color_page import image_to_color_page, suggest_palette
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
+from src.helper_functions.color_helpers import get_palette
 from src.shape_division import image_to_shapes
 from src.shape_numbers import (
     image_to_numbered_shapes,
@@ -16,235 +18,214 @@ from src.shape_numbers import (
     side_for_equal_area,
     suggest_shape_palette,
 )
-from src.helper_functions.color_helpers import get_palette
-
-load_dotenv()
-
-GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
 app = Flask(__name__)
 
 HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 
-# Langste zijde (in pixels) van het resultaat bij Shape division. Houdt het snel en de download klein.
-MAX_SHAPE_SIZE = 2000
-
-# Kleine foto's (bijv. een klein stukje uit een grote foto) worden opgeschaald tot minstens dit
-# aantal pixels op de langste zijde, zodat het resultaat altijd scherp is.
+# Foto's worden opgeschaald tot minstens MIN_IMAGE_SIZE pixels op de langste zijde (een klein
+# stukje uit een grote foto geeft anders een grof resultaat) en verkleind tot hoogstens
+# MAX_IMAGE_SIZE (houdt het snel en het geheugen van de server beperkt).
 MIN_IMAGE_SIZE = 1600
+MAX_IMAGE_SIZE = 3000
+
+# Langste zijde van het resultaat bij Shape Division: houdt het snel en de download klein.
+MAX_SHAPE_SIZE = 2000
 
 # De vormen die de website aanbiedt (shape_division.py kan er meer, maar die tonen we niet)
 SHAPE_CHOICES = {"brick", "triangles", "hexagons", "cubes", "octagons_squares", "crosses"}
 
+# Wat de server als bestand mag uitleveren. Alles anders (app.py, src/, .env, .git, ...) niet.
+STATIC_FOLDERS = {"css", "js", "mijn_kunsd"}
+STATIC_EXTENSIONS = {".css", ".js", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico"}
+
+
+# ---------------------------------------------------------------------------
+# Pagina's en bestanden
+# ---------------------------------------------------------------------------
 
 @app.route("/")
 def home():
     return send_from_directory(".", "index.html")
 
 
-@app.route("/api/ranked-dots", methods=["POST"])
-def ranked_dots():
-    if "image" not in request.files:
-        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
-
-    try:
-        # input_image = Image.open(request.files["image"]).convert("RGB")
-        input_image = load_input_image()
-        input_image, grid_size = snap_to_dot_grid(input_image, get_grid_size(input_image))
-        colors = get_palette(
-            "gist_heat",
-            3,
-            add_white=True,
-            sort_by_darkness=True
-        )
-
-        result_image = image_to_ranked_dots(
-            input_image,
-            colors=colors,
-            grid_size=grid_size,
-            balance=0.5
-        )
-
-        return image_to_json(result_image)
-
-    except Exception as error:
-        return jsonify({"error": str(error)}), 500
-
-
-@app.route("/api/dots", methods=["POST"])
-def dots():
-    if "image" not in request.files:
-        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
-
-    try:
-        # input_image = Image.open(request.files["image"]).convert("RGB")
-        input_image = load_input_image()
-        input_image, grid_size = snap_to_dot_grid(input_image, get_grid_size(input_image))
-        fill = request.form.get("fill", "false").lower() == "true"
-
-        result_image = image_to_dots(
-            input_image,
-            grid_size=grid_size,
-            color=False,
-            fill=fill
-        )
-
-        return image_to_json(result_image)
-
-    except Exception as error:
-        return jsonify({"error": str(error)}), 500
-
-
-@app.route("/api/shape-division", methods=["POST"])
-def shape_division():
-    if "image" not in request.files:
-        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
-
-    shape = request.form.get("shape", "hexagons")
-
-    if shape not in SHAPE_CHOICES:
-        return jsonify({"error": "Onbekende vorm"}), 400
-
-    # Eigen kleuren (bijv. "#ff0000,#00aa55"); anders komen de kleuren uit de foto
-    colors = read_colors()
-
-    if "colors" in request.form and len(colors) < 2:
-        return jsonify({"error": "Kies minstens 2 kleuren."}), 400
-
-    try:
-        input_image = limit_size(load_input_image(), MAX_SHAPE_SIZE)
-
-        # De grootte is de zijde van een vierkant (als percentage van de breedte) met dezelfde
-        # oppervlakte als één vorm. Zo is elke vorm bij dezelfde instelling even gedetailleerd.
-        grid_size_percent = read_number("grid_size_percent", 4, 1.5, 10)
-        square_side = input_image.width * grid_size_percent / 100
-        grid_size = side_for_equal_area(shape, square_side)
-
-        max_colors = int(read_number("max_colors", 8, 2, 12))
-        fill = request.form.get("fill", "true").lower() == "true"
-
-        if not fill:
-            # Lege variant: lijntjes, een nummer in elke vorm en een legenda
-            result_image = image_to_numbered_shapes(
-                input_image,
-                grid_size=grid_size,
-                max_colors=max_colors,
-                shape=shape,
-                legend=True,
-                colors=colors or None
-            )
-        elif colors:
-            result_image = image_to_palette_shapes(
-                input_image,
-                grid_size=grid_size,
-                shape=shape,
-                colors=colors
-            )
-        else:
-            result_image = image_to_shapes(
-                input_image,
-                grid_size=grid_size,
-                max_colors=max_colors,
-                shape=shape,
-                fill=True
-            )
-
-        return image_to_json(result_image)
-
-    except Exception as error:
-        return jsonify({"error": str(error)}), 500
-
-
-@app.route("/api/shape-division-palette", methods=["POST"])
-def shape_division_palette():
-    if "image" not in request.files:
-        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
-
-    shape = request.form.get("shape", "hexagons")
-
-    if shape not in SHAPE_CHOICES:
-        return jsonify({"error": "Onbekende vorm"}), 400
-
-    try:
-        input_image = limit_size(load_input_image(), MAX_SHAPE_SIZE)
-
-        square_side = input_image.width * read_number("grid_size_percent", 4, 1.5, 10) / 100
-        grid_size = side_for_equal_area(shape, square_side)
-        n_colors = int(read_number("n_colors", 6, 2, 12))
-
-        return jsonify({"colors": suggest_shape_palette(input_image, grid_size, shape, n_colors)})
-
-    except Exception as error:
-        return jsonify({"error": str(error)}), 500
-
-
-@app.route("/api/color-page", methods=["POST"])
-def color_page():
-    if "image" not in request.files:
-        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
-
-    try:
-        input_image = load_input_image()
-
-        n_colors = int(read_number("n_colors", 6, 2, 12))
-        smoothness = read_number("smoothness", 1, 0, 5)
-        min_region_size = read_number("min_region_size", 0.1, 0.05, 1)
-        detail = read_number("detail", 0.6, 0, 1)
-
-        # Eigen kleuren (bijv. "#ff0000,#00aa55"); anders bepaalt het algoritme ze zelf
-        colors = read_colors()
-
-        if "colors" in request.form and len(colors) < 2:
-            return jsonify({"error": "Kies minstens 2 kleuren."}), 400
-
-        fill = request.form.get("fill", "true").lower() == "true"
-
-        result_image = image_to_color_page(
-            input_image,
-            n_colors=n_colors,
-            colors=colors or None,
-            smoothness=smoothness,
-            min_region_size=min_region_size,
-            detail=detail,
-            fill=fill,
-            legend=not fill
-        )
-
-        return image_to_json(result_image)
-
-    except Exception as error:
-        return jsonify({"error": str(error)}), 500
-
-
-@app.route("/api/color-page-palette", methods=["POST"])
-def color_page_palette():
-    if "image" not in request.files:
-        return jsonify({"error": "Geen afbeelding ontvangen"}), 400
-
-    try:
-        input_image = load_input_image()
-        n_colors = int(read_number("n_colors", 6, 2, 12))
-
-        return jsonify({"colors": suggest_palette(input_image, n_colors)})
-
-    except Exception as error:
-        return jsonify({"error": str(error)}), 500
-
-
 @app.route("/<path:filename>")
 def serve_file(filename):
+    parts = PurePosixPath(filename).parts
+    suffix = PurePosixPath(filename).suffix.lower()
+
+    is_hidden = any(part.startswith(".") for part in parts)
+    is_page = len(parts) == 1 and suffix in {".html", ".ico"}
+    is_asset = len(parts) > 1 and parts[0] in STATIC_FOLDERS and suffix in STATIC_EXTENSIONS
+
+    if is_hidden or not (is_page or is_asset):
+        abort(404)
+
     return send_from_directory(".", filename)
 
 
+# ---------------------------------------------------------------------------
+# De algoritmes
+# ---------------------------------------------------------------------------
+
+class UserError(Exception):
+    """Een fout door wat de bezoeker heeft ingevuld; de tekst wordt aan hem getoond."""
+
+
+def image_endpoint(function):
+    """Gemeenschappelijk voor alle routes die een foto bewerken: controle op de foto en foutafhandeling."""
+
+    @wraps(function)
+    def wrapper():
+        if "image" not in request.files:
+            return jsonify({"error": "Geen afbeelding ontvangen"}), 400
+
+        try:
+            return function()
+        except UserError as error:
+            return jsonify({"error": str(error)}), 400
+        except Exception as error:
+            return jsonify({"error": str(error)}), 500
+
+    return wrapper
+
+
+@app.route("/api/ranked-dots", methods=["POST"])
+@image_endpoint
+def ranked_dots():
+    input_image, grid_size = snap_to_dot_grid(load_input_image())
+    colors = get_palette("gist_heat", 3, add_white=True, sort_by_darkness=True)
+
+    return image_to_json(image_to_ranked_dots(
+        input_image,
+        colors=colors,
+        grid_size=grid_size,
+        balance=0.5
+    ))
+
+
+@app.route("/api/dots", methods=["POST"])
+@image_endpoint
+def dots():
+    input_image, grid_size = snap_to_dot_grid(load_input_image())
+
+    return image_to_json(image_to_dots(
+        input_image,
+        grid_size=grid_size,
+        color=False,
+        fill=read_flag("fill", default=False)
+    ))
+
+
+@app.route("/api/shape-division", methods=["POST"])
+@image_endpoint
+def shape_division():
+    shape = read_shape()
+    colors = read_custom_colors()
+    input_image = limit_size(load_input_image(), MAX_SHAPE_SIZE)
+    grid_size = shape_grid_size(input_image, shape)
+    max_colors = int(read_number("max_colors", 8, 2, 12))
+
+    if not read_flag("fill", default=True):
+        # Lege variant: lijntjes, een nummer in elke vorm en een legenda
+        result = image_to_numbered_shapes(
+            input_image,
+            grid_size=grid_size,
+            max_colors=max_colors,
+            shape=shape,
+            legend=True,
+            colors=colors or None
+        )
+    elif colors:
+        result = image_to_palette_shapes(input_image, grid_size=grid_size, shape=shape, colors=colors)
+    else:
+        result = image_to_shapes(
+            input_image,
+            grid_size=grid_size,
+            max_colors=max_colors,
+            shape=shape,
+            fill=True
+        )
+
+    return image_to_json(result)
+
+
+@app.route("/api/shape-division-palette", methods=["POST"])
+@image_endpoint
+def shape_division_palette():
+    shape = read_shape()
+    input_image = limit_size(load_input_image(), MAX_SHAPE_SIZE)
+    n_colors = int(read_number("n_colors", 6, 2, 12))
+
+    return jsonify({
+        "colors": suggest_shape_palette(input_image, shape_grid_size(input_image, shape), shape, n_colors)
+    })
+
+
+@app.route("/api/color-page", methods=["POST"])
+@image_endpoint
+def color_page():
+    colors = read_custom_colors()
+    fill = read_flag("fill", default=True)
+
+    return image_to_json(image_to_color_page(
+        load_input_image(),
+        n_colors=int(read_number("n_colors", 6, 2, 12)),
+        colors=colors or None,
+        smoothness=read_number("smoothness", 1, 0, 5),
+        min_region_size=read_number("min_region_size", 0.1, 0.05, 1),
+        detail=read_number("detail", 0.6, 0, 1),
+        fill=fill,
+        legend=not fill
+    ))
+
+
+@app.route("/api/color-page-palette", methods=["POST"])
+@image_endpoint
+def color_page_palette():
+    n_colors = int(read_number("n_colors", 6, 2, 12))
+
+    return jsonify({"colors": suggest_palette(load_input_image(), n_colors)})
+
+
+# ---------------------------------------------------------------------------
+# De foto en de instellingen inlezen
+# ---------------------------------------------------------------------------
+
 def load_input_image():
+    """De geüploade foto, bijgesneden als de bezoeker dat wilde, en op een bruikbare grootte gebracht."""
     image = Image.open(request.files["image"])
 
     # Draai de foto zoals de browser hem toont (telefoonfoto's hebben vaak
     # een rotatie-tag). Zo kloppen de coördinaten van de uitsnede.
-    image = ImageOps.exif_transpose(image)
+    image = ImageOps.exif_transpose(image).convert("RGB")
 
-    return ensure_min_size(apply_crop(image.convert("RGB")), MIN_IMAGE_SIZE)
+    image = apply_crop(image)
+    image = limit_size(image, MAX_IMAGE_SIZE)
+
+    return ensure_min_size(image, MIN_IMAGE_SIZE)
+
+
+def apply_crop(image):
+    """Snijdt de foto bij als de browser een uitsnede heeft meegestuurd.
+
+    De uitsnede komt binnen als fracties van de foto (0 t/m 1):
+    crop_x en crop_y zijn de linkerbovenhoek, crop_w en crop_h de afmetingen.
+    """
+    if "crop_x" not in request.form:
+        return image
+
+    try:
+        x, y, w, h = (float(request.form[name]) for name in ("crop_x", "crop_y", "crop_w", "crop_h"))
+    except (KeyError, ValueError):
+        return image
+
+    left = max(0, min(image.width - 1, round(x * image.width)))
+    top = max(0, min(image.height - 1, round(y * image.height)))
+    right = max(left + 1, min(image.width, round((x + w) * image.width)))
+    bottom = max(top + 1, min(image.height, round((y + h) * image.height)))
+
+    return image.crop((left, top, right, bottom))
 
 
 def ensure_min_size(image, min_side):
@@ -259,9 +240,11 @@ def ensure_min_size(image, min_side):
         return image
 
     scale = min_side / longest
-    new_size = (round(image.width * scale), round(image.height * scale))
 
-    return image.resize(new_size, Image.Resampling.BICUBIC)
+    return image.resize(
+        (round(image.width * scale), round(image.height * scale)),
+        Image.Resampling.BICUBIC
+    )
 
 
 def limit_size(image, max_side):
@@ -272,42 +255,11 @@ def limit_size(image, max_side):
         return image
 
     scale = max_side / longest
-    new_size = (max(1, round(image.width * scale)), max(1, round(image.height * scale)))
 
-    return image.resize(new_size, Image.Resampling.LANCZOS)
-
-
-def apply_crop(image):
-    """Snijdt de foto bij als de browser een uitsnede heeft meegestuurd.
-
-    De uitsnede komt binnen als fracties van de foto (0 t/m 1):
-    crop_x en crop_y zijn de linkerbovenhoek, crop_w en crop_h de afmetingen.
-    """
-    if "crop_x" not in request.form:
-        return image
-
-    try:
-        x = float(request.form["crop_x"])
-        y = float(request.form["crop_y"])
-        w = float(request.form["crop_w"])
-        h = float(request.form["crop_h"])
-    except (KeyError, ValueError):
-        return image
-
-    left = max(0, min(image.width - 1, round(x * image.width)))
-    top = max(0, min(image.height - 1, round(y * image.height)))
-    right = max(left + 1, min(image.width, round((x + w) * image.width)))
-    bottom = max(top + 1, min(image.height, round((y + h) * image.height)))
-
-    return image.crop((left, top, right, bottom))
-
-
-def read_colors():
-    """Leest de gekozen kleuren ("#rrggbb", gescheiden door komma's); onbruikbare delen worden genegeerd."""
-    parts = request.form.get("colors", "").split(",")
-    colors = [part.strip() for part in parts if HEX_COLOR.fullmatch(part.strip())]
-
-    return colors[:12]
+    return image.resize(
+        (max(1, round(image.width * scale)), max(1, round(image.height * scale))),
+        Image.Resampling.LANCZOS
+    )
 
 
 def read_number(name, default, minimum, maximum):
@@ -320,7 +272,46 @@ def read_number(name, default, minimum, maximum):
     return max(minimum, min(maximum, value))
 
 
-def snap_to_dot_grid(image, grid_size):
+def read_flag(name, default):
+    """Leest een ja/nee-keuze ("true" of "false") uit het formulier."""
+    return request.form.get(name, str(default)).lower() == "true"
+
+
+def read_shape():
+    shape = request.form.get("shape", "hexagons")
+
+    if shape not in SHAPE_CHOICES:
+        raise UserError("Onbekende vorm")
+
+    return shape
+
+
+def read_custom_colors():
+    """Eigen kleuren ("#rrggbb", gescheiden door komma's); een lege lijst als de bezoeker er geen koos.
+
+    Onbruikbare delen worden genegeerd. Wie kleuren meestuurt moet er minstens 2 hebben.
+    """
+    parts = request.form.get("colors", "").split(",")
+    colors = [part.strip() for part in parts if HEX_COLOR.fullmatch(part.strip())][:12]
+
+    if "colors" in request.form and len(colors) < 2:
+        raise UserError("Kies minstens 2 kleuren.")
+
+    return colors
+
+
+def shape_grid_size(image, shape):
+    """De zijde van een vorm bij Shape Division.
+
+    De slider geeft de oppervlakte van één vorm: die van een vierkant waarvan de zijde dit
+    percentage van de breedte is. Zo is elke vorm bij dezelfde instelling even gedetailleerd.
+    """
+    percent = read_number("grid_size_percent", 4, 1.5, 10)
+
+    return side_for_equal_area(shape, image.width * percent / 100)
+
+
+def snap_to_dot_grid(image):
     """Maakt van de foto een rooster van precies gelijke hokjes, voor de stippen-algoritmes.
 
     De algoritmes verdelen de foto in hokjes en zetten in elk hokje een stip. Als de foto
@@ -330,12 +321,16 @@ def snap_to_dot_grid(image, grid_size):
 
     Daarom: hokjes van een heel aantal pixels, en de foto net zo veel uitgerekt of ingekrompen
     (hoogstens een halve hokjesbreedte) dat er precies een heel aantal hokjes in past.
-    """
-    cell = max(2, round(grid_size))
-    columns = max(1, round(image.width / cell))
-    rows = max(1, round(image.height / cell))
 
-    size = (columns * cell, rows * cell)
+    Geeft de bijgestelde foto en de hokjesgrootte (in pixels) terug.
+    """
+    percent = read_number("grid_size_percent", 3, 0.5, 5)
+    cell = max(2, round(image.width * percent / 100))
+
+    size = (
+        max(1, round(image.width / cell)) * cell,
+        max(1, round(image.height / cell)) * cell,
+    )
 
     if size != image.size:
         image = image.resize(size, Image.Resampling.LANCZOS)
@@ -343,22 +338,13 @@ def snap_to_dot_grid(image, grid_size):
     return image, cell
 
 
-def get_grid_size(input_image):
-    grid_size_percent = float(request.form.get("grid_size_percent", 3))
-    grid_size_percent = max(0.5, min(5, grid_size_percent))
-    return input_image.width * grid_size_percent / 100
-
-
 def image_to_json(image):
     output = io.BytesIO()
     image.save(output, format="PNG")
-    output.seek(0)
 
-    image_base64 = base64.b64encode(output.read()).decode("utf-8")
+    image_base64 = base64.b64encode(output.getvalue()).decode("utf-8")
 
-    return jsonify({
-        "image": f"data:image/png;base64,{image_base64}"
-    })
+    return jsonify({"image": f"data:image/png;base64,{image_base64}"})
 
 
 if __name__ == "__main__":
@@ -367,5 +353,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port,
-        debug=True
+        debug=os.environ.get("FLASK_DEBUG") == "1"
     )
