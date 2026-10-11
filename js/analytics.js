@@ -5,6 +5,7 @@
 //   - elk paginabezoek (doet count.js zelf, na de instelling hieronder);
 //   - elke klik op een knop: met een eigen naam als een script trackEvent() aanroept,
 //     anders automatisch met de id of tekst van de knop;
+//   - elke klik op een link met een data-track="naam"-attribuut (bijv. de uitnodiging onderaan);
 //   - elk verstuurd formulier (het contactformulier).
 
 
@@ -53,15 +54,18 @@ function slugify(text) {
     return text
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
+        .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
 }
 
-// De naam van een knop: data-track, anders de id, anders zijn label of tekst.
+// De naam van een knop: data-track, anders "knop-" + de id, anders zijn label of tekst.
 function buttonName(button) {
-    const name = button.dataset.track
-        || button.id
+    if (button.dataset.track) {
+        return button.dataset.track;
+    }
+
+    const name = button.id
         || slugify(button.getAttribute("aria-label") || button.title || button.textContent);
 
     return "knop-" + (name || "onbekend");
@@ -70,13 +74,13 @@ function buttonName(button) {
 // Eerst (in de capture-fase) vergeten we de vorige klik. Als de knop zelf trackEvent() aanroept,
 // weten we daarna dat hij al geteld is en tellen we hem hieronder niet nog eens.
 document.addEventListener("click", function (event) {
-    if (event.target.closest("button")) {
+    if (event.target.closest("button, a[data-track]")) {
         countedThisClick = false;
     }
 }, true);
 
 document.addEventListener("click", function (event) {
-    const button = event.target.closest("button");
+    const button = event.target.closest("button, a[data-track]");
 
     // Verzendknoppen tellen we bij het versturen van het formulier (zie hieronder).
     if (!button || button.disabled || button.type === "submit") {

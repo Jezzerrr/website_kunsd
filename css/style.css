@@ -3,7 +3,7 @@
 
    Inhoud
    1. Variabelen (kleuren en afmetingen)
-   2. Basis: pagina, navigatie, tekst
+   2. Basis: pagina, navigatie, tekst, voettekst
    3. Galerij en uitgelicht werk
    4. Knoppen
    5. Foto uploaden, tonen en bijsnijden
@@ -62,6 +62,31 @@ nav a:hover {
 
 main {
     line-height: 1.6;
+}
+
+/* Uitnodiging onderaan elke pagina: aanwezig, maar bescheiden */
+.site-footer {
+    margin-top: 60px;
+    padding-top: 15px;
+    border-top: 2px solid var(--line);
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.site-footer p {
+    margin: 0;
+}
+
+.site-footer a {
+    color: var(--ink);
+    font-weight: 600;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+
+.site-footer a:hover {
+    color: var(--accent);
 }
 
 button,
