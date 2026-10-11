@@ -546,6 +546,8 @@ function createPaletteEditor(config) {
 
     // Laat de server de kleuren uit de foto (of uitsnede) halen, als beginpunt om zelf aan te passen.
     photoButton.addEventListener("click", async function () {
+        track(config.trackName + "-kleuren-uit-foto");
+
         if (!originalFile) {
             return;
         }
@@ -575,7 +577,6 @@ function createPaletteEditor(config) {
             }
 
             setColors(data.colors);
-            track(config.trackName + "-kleuren-uit-foto");
         } catch (error) {
             showError(error.message);
         } finally {
