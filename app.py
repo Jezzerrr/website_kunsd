@@ -3,7 +3,7 @@ import io
 import os
 import re
 from functools import wraps
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 from PIL import Image, ImageOps
 from flask import Flask, abort, jsonify, request, send_from_directory
@@ -37,7 +37,11 @@ SHAPE_CHOICES = {"brick", "triangles", "hexagons", "cubes", "octagons_squares", 
 
 # Wat de server als bestand mag uitleveren. Alles anders (app.py, src/, .env, .git, ...) niet.
 STATIC_FOLDERS = {"css", "js", "mijn_kunsd"}
-STATIC_EXTENSIONS = {".css", ".js", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
+STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico"}
+
+# De map met foto's voor de diavoorstelling op "Over mij"
+SLIDE_SHOW_FOLDER = "mijn_kunsd/slide_show"
 
 
 # ---------------------------------------------------------------------------
@@ -62,6 +66,22 @@ def serve_file(filename):
         abort(404)
 
     return send_from_directory(".", filename)
+
+
+@app.route("/api/slide-show")
+def slide_show():
+    """De foto's in de map slide_show. Een nieuwe foto in die map verschijnt vanzelf op de site."""
+    folder = Path(app.root_path) / SLIDE_SHOW_FOLDER
+
+    if not folder.is_dir():
+        return jsonify([])
+
+    names = sorted(
+        path.name for path in folder.iterdir()
+        if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
+    )
+
+    return jsonify([f"{SLIDE_SHOW_FOLDER}/{name}" for name in names])
 
 
 # ---------------------------------------------------------------------------
@@ -353,5 +373,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port,
-        debug=os.environ.get("FLASK_DEBUG") == "1"
+        debug=True      # herstart de server vanzelf als je een .py-bestand opslaat (alleen lokaal; Render gebruikt gunicorn)
     )

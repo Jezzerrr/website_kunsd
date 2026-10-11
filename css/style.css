@@ -103,6 +103,45 @@ button {
 }
 
 
+/* Over mij: tekst met een knop erboven, twee willekeurige foto's naast elkaar eronder.
+   Samen even breed als de grote foto erboven (.featured-art img). */
+.slide-show {
+    width: 60%;
+    max-width: 700px;
+    margin-top: 30px;
+}
+
+.slide-show-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.slide-show-header p {
+    margin: 0;
+}
+
+.slide-show-photos {
+    display: flex;
+    gap: 12px;
+}
+
+.slide-show-photos img {
+    box-sizing: border-box;
+    flex: 1 1 0;
+    min-width: 0;                   /* anders worden de foto's niet smaller dan hun eigen formaat */
+    aspect-ratio: 1;                /* twee even grote vakken, ook als een foto anders van vorm is */
+    object-fit: contain;
+    background: black;
+    border: 8px solid black;
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow);
+}
+
+
 /* ---------- 4. Knoppen ---------- */
 /* Gemeenschappelijke vorm van alle rechthoekige knoppen */
 .upload-label,
@@ -708,8 +747,13 @@ button {
         grid-template-columns: 1fr;
     }
 
-    .featured-art img {
+    .featured-art img,
+    .slide-show {
         width: 100%;
+    }
+
+    .slide-show-photos img {
+        border-width: 5px;
     }
 
     .algorithm-settings {
