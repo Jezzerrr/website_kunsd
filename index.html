@@ -20,46 +20,76 @@
             <a href="over-mij.html">Over mij</a>
             <a href="kunst.html">Kunsd</a>
             <a href="jouw_kunst.html">Jouw kunsd</a>
-            <a href="muziek.html">Muziek</a>
             <a href="contact.html">Contact</a>
         </nav>
     </header>
 
     <main>
 
-        <h1>Jesses website voor de KUNSD</h1>
+        <!-- Bovenaan: wat je hier kunt doen, met twee knoppen -->
+        <section class="hero">
+            <h1>Jesses website voor de KUNSD</h1>
 
-        <p>
-            Generatieve kunst gemaakt met zelfgeschreven algoritmes.
-        </p>
+            <p class="hero-text">
+                Maak kunst van je eigen foto's, met algoritmes die ik zelf in Python heb geschreven.
+                Stippen, vormen, kleurplaten: upload een foto, kies een bewerking en download het resultaat.
+            </p>
 
-        <p>
-            Ik gebruik Python om foto's om te zetten in nieuwe vormen van kunst:
-            stippen, patronen, segmenten, kleuren en andere experimenten.
-        </p>
-
-        <section class="featured-art">
-            <img src="mijn_kunsd/dots_family/EmLuJes_dots.jpg">
+            <div class="hero-buttons">
+                <a href="jouw_kunst.html" class="create-button link-button" data-track="home-maak-kunst">Maak Je Eigen Kunsd</a>
+                <a href="kunst.html" class="secondary-button link-button" data-track="home-bekijk-werk">Bekijk Mijn Werk</a>
+            </div>
         </section>
 
-        <div class="info-box">
+        <section class="featured-art">
+            <img
+                src="mijn_kunsd/dots_family/EmLuJes_dots.jpg"
+                alt="Familiefoto omgezet in gekleurde stippen"
+                width="1200"
+                height="900">
+        </section>
 
-            <strong>Werk in ontwikkeling</strong>
+        <!-- In drie stappen van foto naar kunst -->
+        <section class="home-section">
+            <h2>Zo Werkt Het</h2>
+
+            <ol class="steps">
+                <li>
+                    <strong>Kies Een Foto</strong>
+                    Upload een foto en snijd hem eventueel bij. Een portret of een kleurrijke foto werkt het best.
+                </li>
+                <li>
+                    <strong>Kies Een Bewerking</strong>
+                    Alleen een mooi plaatje, of iets om na het printen zelf mee aan de slag te gaan,
+                    zoals een kleurplaat met nummers.
+                </li>
+                <li>
+                    <strong>Download En Print</strong>
+                    Bekijk het resultaat, speel met de instellingen en download je eigen kunstwerk.
+                </li>
+            </ol>
+        </section>
+
+        <!-- Uitleg dat de site een project in ontwikkeling is -->
+        <section class="home-section project-note">
+            <h2>Altijd In Ontwikkeling</h2>
 
             <p>
-                Deze website is een voortdurend experiment.
-                Nieuwe algoritmes verschijnen regelmatig en bestaande ideeën veranderen voortdurend.
+                KUNSD is mijn hobbyproject en groeit stap voor stap. Ik ben data scientist en vind het mooi
+                om met code iets te maken dat je kunt ophangen of inkleuren. Elk algoritme begint als een
+                experiment op mijn laptop; de beste komen hier terecht, zodat jij ze ook kunt gebruiken.
             </p>
 
             <p>
-                Feedback, opmerkingen en nieuwe ideeën zijn altijd welkom. Zie de <strong>Contact</strong>-pagina.
+                Er komen dus regelmatig nieuwe bewerkingen bij, en bestaande worden beter.
+                Op mijn lijstje staan onder andere rechte lijnen en puzzelstukjes.
             </p>
 
-        </div>
-
-        <p>
-            Bekijk mijn werk bij <strong>Kunsd</strong> of experimenteer zelf met je eigen foto's op de pagina <strong>Jouw kunsd</strong>.
-        </p>
+            <p>
+                Werkt iets niet zoals je verwacht, of heb je een idee voor een nieuwe bewerking?
+                Dan hoor ik dat graag via de <a href="contact.html" data-track="home-contact">contactpagina</a>.
+            </p>
+        </section>
 
     </main>
 

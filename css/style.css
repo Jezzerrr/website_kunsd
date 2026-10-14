@@ -4,7 +4,7 @@
    Inhoud
    1. Variabelen (kleuren en afmetingen)
    2. Basis: pagina, navigatie, tekst, voettekst
-   3. Galerij en uitgelicht werk
+   3. Homepage, galerij en uitgelicht werk (met vergroting)
    4. Knoppen
    5. Foto uploaden, tonen en bijsnijden
    6. Kies een bewerking: groepen, knoppen en instellingen
@@ -103,7 +103,81 @@ button {
 }
 
 
-/* ---------- 3. Galerij en uitgelicht werk ---------- */
+/* ---------- 3. Homepage, galerij en uitgelicht werk ---------- */
+/* Homepage: titel, korte uitleg en twee knoppen */
+.hero {
+    margin-bottom: 36px;
+}
+
+.hero-text {
+    max-width: 640px;
+    font-size: 1.15rem;
+}
+
+.hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* Een link die eruitziet als knop (bijv. "Maak Je Eigen Kunsd") */
+.link-button {
+    display: inline-block;
+    text-decoration: none;
+}
+
+.home-section {
+    margin-top: 56px;
+}
+
+/* Drie genummerde stappen naast elkaar, op mobiel onder elkaar */
+.steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: stap;
+}
+
+.steps li {
+    padding: 20px;
+    background: var(--panel);
+    border-radius: var(--radius-l);
+    counter-increment: stap;
+}
+
+.steps li::before {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    content: counter(stap);
+}
+
+.steps strong {
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* "Altijd In Ontwikkeling": lopende tekst met een smalle kolom, prettig leesbaar */
+.project-note p {
+    max-width: 680px;
+}
+
+.project-note a {
+    color: var(--ink);
+    font-weight: 600;
+    text-underline-offset: 3px;
+}
+
+.project-note a:hover {
+    color: var(--accent);
+}
+
 .gallery {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -113,6 +187,7 @@ button {
 .gallery img {
     display: block;
     width: 100%;
+    height: auto;
     border-radius: var(--radius-s);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
@@ -121,10 +196,94 @@ button {
     box-sizing: border-box;         /* de zwarte rand telt mee in de breedte, anders steekt hij op mobiel uit */
     display: block;
     width: 60%;
+    height: auto;
     max-width: 700px;
     border: 10px solid black;
     border-radius: var(--radius-m);
     box-shadow: var(--shadow);
+}
+
+
+/* Vergroting (js/lightbox.js): klik op een werk en het opent schermvullend */
+.zoomable {
+    cursor: zoom-in;
+}
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 64px;
+    background: rgba(0, 0, 0, 0.92);
+}
+
+.lightbox.hidden {
+    display: none;
+}
+
+.lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-s);
+}
+
+.lightbox-button {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    color: white;
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: 50%;
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.lightbox-button:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.lightbox-button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.lightbox-close {
+    top: 12px;
+    right: 12px;
+}
+
+.lightbox-prev,
+.lightbox-next {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lightbox-prev {
+    left: 8px;
+}
+
+.lightbox-next {
+    right: 8px;
+}
+
+.lightbox-counter {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    color: #cccccc;
+    font-size: 0.9rem;
+    transform: translateX(-50%);
+}
+
+/* Geen scrollen van de pagina achter de vergroting */
+body.lightbox-open {
+    overflow: hidden;
 }
 
 
@@ -768,8 +927,38 @@ button {
         gap: 8px 14px;
     }
 
-    .gallery {
+    .gallery,
+    .steps {
         grid-template-columns: 1fr;
+    }
+
+    .hero-buttons .link-button {
+        flex: 1 1 100%;
+        text-align: center;
+    }
+
+    .home-section {
+        margin-top: 40px;
+    }
+
+    /* Vergroting: foto zo groot mogelijk, pijlen onderaan zodat ze niet over de foto vallen */
+    .lightbox {
+        padding: 64px 8px 80px;
+    }
+
+    .lightbox-prev,
+    .lightbox-next {
+        top: auto;
+        bottom: 12px;
+        transform: none;
+    }
+
+    .lightbox-prev {
+        left: 16px;
+    }
+
+    .lightbox-next {
+        right: 16px;
     }
 
     .featured-art img,
