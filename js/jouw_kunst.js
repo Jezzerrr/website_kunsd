@@ -570,15 +570,11 @@ function createPaletteEditor(config) {
                 body: buildFormData(fields)
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || "De kleuren ophalen is mislukt.");
-            }
+            const data = await readServerAnswer(response, "De kleuren ophalen is mislukt.");
 
             setColors(data.colors);
         } catch (error) {
-            showError(error.message);
+            showError(friendlyError(error));
         } finally {
             photoButton.textContent = originalText;
             photoButton.disabled = false;
@@ -727,18 +723,55 @@ async function runPythonAlgorithm(url, fields, button) {
             body: formData
         });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "De bewerking is mislukt.");
-        }
+        const data = await readServerAnswer(response, "De bewerking is mislukt.");
 
         showResult(data.image);
     } catch (error) {
-        showError(error.message);
+        showError(friendlyError(error));
     } finally {
         setLoadingState(button, false);
     }
+}
+
+
+// Leest het antwoord van de server. Normaal is dat JSON, maar als de server vastloopt
+// (bijv. te lang bezig op Render) komt er een HTML-foutpagina terug. Dan tonen we een
+// begrijpelijke melding in plaats van "Unexpected token '<' ... is not valid JSON".
+async function readServerAnswer(response, fallbackMessage) {
+    let data = null;
+
+    try {
+        data = await response.json();
+    } catch (error) {
+        data = null;
+    }
+
+    if (response.ok && data) {
+        return data;
+    }
+
+    if (data && data.error) {
+        throw new Error(data.error);
+    }
+
+    if ([502, 503, 504].includes(response.status) || !data) {
+        throw new Error(
+            "De server deed er te lang over of had het even te druk. " +
+            "Probeer het nog eens, eventueel met een kleinere uitsnede."
+        );
+    }
+
+    throw new Error(fallbackMessage);
+}
+
+
+// Netwerkfouten (geen internet, server onbereikbaar) geven een Engelse browsermelding.
+function friendlyError(error) {
+    if (error instanceof TypeError) {
+        return "Er is geen verbinding met de server. Controleer je internet en probeer het opnieuw.";
+    }
+
+    return error.message;
 }
 
 
