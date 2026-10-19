@@ -11,10 +11,11 @@
 
 // ---------- Instelling voor count.js ----------
 
-// "/" en "/index.html" zijn dezelfde pagina: tel ze onder één naam.
+// Oude adressen (/kunst.html, /index.html) en nette adressen (/kunst, /) zijn dezelfde pagina:
+// tel ze onder één naam, de nette.
 window.goatcounter = window.goatcounter || {};
 window.goatcounter.path = function (path) {
-    return path.replace(/\/index\.html$/, "/");
+    return path.replace(/\/index(\.html)?$/, "/").replace(/\.html$/, "");
 };
 
 

@@ -6,7 +6,7 @@ from functools import wraps
 from pathlib import Path, PurePosixPath
 
 from PIL import Image, ImageOps
-from flask import Flask, abort, jsonify, request, send_from_directory
+from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 
 from src.color_page import image_to_color_page, suggest_palette
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
@@ -40,6 +40,9 @@ STATIC_FOLDERS = {"css", "js", "mijn_kunsd"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico"}
 
+# De pagina's met een net adres: /kunst toont kunst.html. De homepagina (index.html) staat op /.
+PAGES = {"over-mij", "kunst", "jouw_kunst", "muziek", "contact", "bedankt"}
+
 # De map met foto's voor de diavoorstelling op "Over mij"
 SLIDE_SHOW_FOLDER = "mijn_kunsd/slide_show"
 
@@ -55,17 +58,41 @@ def home():
 
 @app.route("/<path:filename>")
 def serve_file(filename):
-    parts = PurePosixPath(filename).parts
-    suffix = PurePosixPath(filename).suffix.lower()
+    path = PurePosixPath(filename)
+    parts = path.parts
+    suffix = path.suffix.lower()
+    name = str(path).lower()
 
+    # Een pagina met een net adres, zoals /kunst
+    if filename in PAGES:
+        return send_from_directory(".", f"{filename}.html")
+
+    # Bijna goede adressen doorsturen naar het nette adres: /Kunst, /kunst/, /kunst.html en /index.
+    # Code 301 betekent "permanent verhuisd": browsers, Google en oude gedeelde links gaan zo
+    # vanzelf goed.
+    stem = name.removesuffix(".html")
+    if stem in PAGES:
+        return redirect(f"/{stem}", code=301)
+    if stem == "index":
+        return redirect("/", code=301)
+
+    # Bestanden: favicon.ico en alles in css/, js/ en mijn_kunsd/ met een toegestane extensie.
+    # Bestaat zo'n bestand niet, dan geeft send_from_directory een 404.
     is_hidden = any(part.startswith(".") for part in parts)
-    is_page = len(parts) == 1 and suffix in {".html", ".ico"}
+    is_icon = name == "favicon.ico"
     is_asset = len(parts) > 1 and parts[0] in STATIC_FOLDERS and suffix in STATIC_EXTENSIONS
 
-    if is_hidden or not (is_page or is_asset):
+    if is_icon or (is_asset and not is_hidden):
+        return send_from_directory(".", filename)
+
+    # Een ontbrekend plaatje of script blijft een 404 (een doorverwijzing naar de homepagina
+    # zou daar een html-pagina teruggeven in plaats van een plaatje).
+    if parts and parts[0] in STATIC_FOLDERS:
         abort(404)
 
-    return send_from_directory(".", filename)
+    # Al het andere (bijv. een verkeerd getypt adres): naar de homepagina. Code 302 betekent
+    # "tijdelijk": zoekmachines onthouden die doorverwijzing niet als het echte adres.
+    return redirect("/", code=302)
 
 
 @app.route("/api/slide-show")
