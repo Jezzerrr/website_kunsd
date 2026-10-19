@@ -11,7 +11,7 @@
 
 // ---------- Instelling voor count.js ----------
 
-// Oude adressen (/kunst.html, /index.html) en nette adressen (/kunst, /) zijn dezelfde pagina:
+// Oude adressen (/contact.html, /index.html) en nette adressen (/contact, /) zijn dezelfde pagina:
 // tel ze onder één naam, de nette.
 window.goatcounter = window.goatcounter || {};
 window.goatcounter.path = function (path) {

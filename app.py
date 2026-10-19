@@ -40,10 +40,13 @@ STATIC_FOLDERS = {"css", "js", "mijn_kunsd"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico"}
 
-# De pagina's met een net adres: /kunst toont kunst.html. De homepagina (index.html) staat op /.
-PAGES = {"over-mij", "kunst", "jouw_kunst", "muziek", "contact", "bedankt"}
+# De pagina's met een net adres: /mijn_kunst toont mijn_kunst.html. De homepagina (index.html) staat op /.
+PAGES = {"mijn_kunst", "jouw_kunst", "muziek", "contact", "bedankt"}
 
-# De map met foto's voor de diavoorstelling op "Over mij"
+# Verhuisde pagina's: oud adres -> nieuw adres. "Over mij" en "Kunsd" zijn samen "Mijn Kunsd" geworden.
+MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
+
+# De map met foto's voor de diavoorstelling op "Mijn Kunsd"
 SLIDE_SHOW_FOLDER = "mijn_kunsd/slide_show"
 
 
@@ -67,10 +70,13 @@ def serve_file(filename):
     if filename in PAGES:
         return send_from_directory(".", f"{filename}.html")
 
-    # Bijna goede adressen doorsturen naar het nette adres: /Kunst, /kunst/, /kunst.html en /index.
+    # Bijna goede adressen doorsturen naar het nette adres: /Contact, /contact.html en /index.
+    # Oude adressen van verhuisde pagina's (/over-mij, /kunst.html, ...) naar hun nieuwe adres.
     # Code 301 betekent "permanent verhuisd": browsers, Google en oude gedeelde links gaan zo
     # vanzelf goed.
     stem = name.removesuffix(".html")
+    if stem in MOVED_PAGES:
+        return redirect(f"/{MOVED_PAGES[stem]}", code=301)
     if stem in PAGES:
         return redirect(f"/{stem}", code=301)
     if stem == "index":

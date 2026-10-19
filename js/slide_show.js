@@ -1,4 +1,4 @@
-// Diavoorstelling op "Over mij": twee willekeurige foto's uit mijn_kunsd/slide_show.
+// Diavoorstelling op "Mijn Kunsd": twee willekeurige foto's uit mijn_kunsd/slide_show.
 // De lijst met foto's komt van de server (/api/slide-show), dus een nieuwe foto in die map
 // doet vanzelf mee. Elke foto komt één keer langs voordat de eerste opnieuw komt.
 
