@@ -101,7 +101,7 @@ function track(name) {
 }
 
 
-imageUpload.addEventListener("change", function () {
+imageUpload.addEventListener("change", async function () {
     const file = imageUpload.files[0];
 
     if (!file) {
@@ -110,43 +110,56 @@ imageUpload.addEventListener("change", function () {
 
     track("afbeelding-gekozen");
 
-    const reader = new FileReader();
+    await showPhoto(file);
 
-    reader.onload = function (event) {
-        originalFile = file;
-        originalDataUrl = event.target.result;
-        appliedCrop = null;
+    // Nieuwe foto: het vorige resultaat en de bewerking zijn niet meer van toepassing.
+    clearResult();
+    closeAlgorithmSettings();
 
-        uploadedImage.src = originalDataUrl;
-        setCroppedState(false);
+    if (pendingAlgorithm) {
+        selectAlgorithm(pendingAlgorithm);
+        pendingAlgorithm = null;
+    }
 
-        cropContainer.classList.add("hidden");
-        originalContainer.classList.remove("hidden");
-        algorithmSection.classList.remove("hidden");
-        resultContainer.classList.add("hidden");
-        statusMessage.classList.add("hidden");
+    tryHint.classList.add("hidden");
+    mainUploadLabel.classList.remove("attention");
 
-        // Nieuwe foto: het vorige resultaat is niet meer van toepassing.
-        clearResult();
-        closeAlgorithmSettings();
+    saveProgress();
 
-        if (pendingAlgorithm) {
-            selectAlgorithm(pendingAlgorithm);
-            pendingAlgorithm = null;
-        }
-
-        tryHint.classList.add("hidden");
-        mainUploadLabel.classList.remove("attention");
-
-        // De knop bovenaan de pagina staat ver weg van de foto: scroll ernaartoe.
-        originalContainer.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-    };
-
-    reader.readAsDataURL(file);
+    // De knop bovenaan de pagina staat ver weg van de foto: scroll ernaartoe.
+    originalContainer.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
 });
+
+
+// Toont een foto (net gekozen, of teruggezet uit de bewaarde voortgang) zonder uitsnede.
+function showPhoto(file) {
+    return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+            originalFile = file;
+            originalDataUrl = event.target.result;
+            appliedCrop = null;
+
+            uploadedImage.src = originalDataUrl;
+            setCroppedState(false);
+
+            cropContainer.classList.add("hidden");
+            originalContainer.classList.remove("hidden");
+            algorithmSection.classList.remove("hidden");
+            resultContainer.classList.add("hidden");
+            statusMessage.classList.add("hidden");
+
+            resolve();
+        };
+
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
 
 
 /* ---------- Bijsnijden ---------- */
@@ -203,6 +216,7 @@ cropOkButton.addEventListener("click", function () {
     statusMessage.classList.add("hidden");
 
     closeCropEditor();
+    saveProgress();
 });
 
 
@@ -219,6 +233,7 @@ cropResetButton.addEventListener("click", function () {
     clearResult();
     resultContainer.classList.add("hidden");
     statusMessage.classList.add("hidden");
+    saveProgress();
 });
 
 
@@ -427,6 +442,8 @@ function selectAlgorithm(settingsId) {
     algorithmSettings.forEach(function (settings) {
         settings.classList.toggle("hidden", settings.id !== settingsId);
     });
+
+    saveProgress();
 }
 
 
@@ -597,6 +614,21 @@ printButton.addEventListener("click", function () {
 });
 
 
+// Vlak voor het printen (via de knop of Ctrl+P): A4 staand of liggend, net als het resultaat,
+// en het resultaat nooit hoger dan de pagina. Zo past het altijd op één pagina.
+const printPageStyle = document.createElement("style");
+document.head.appendChild(printPageStyle);
+
+window.addEventListener("beforeprint", function () {
+    const isLandscape = resultImage.naturalWidth > resultImage.naturalHeight;
+
+    // A4 is 210 x 297 mm; min 2 x 10 mm marge, en nog wat speling
+    printPageStyle.textContent = isLandscape
+        ? "@page { size: A4 landscape; margin: 10mm; } .result-image { max-height: 180mm !important; }"
+        : "@page { size: A4 portrait; margin: 10mm; } .result-image { max-height: 265mm !important; }";
+});
+
+
 // Het aanbod "Nu Zelf Inkleuren?" alleen na een ingekleurde versie van een doe-het-zelf-bewerking.
 function updateDiyOffer() {
     const showOffer = lastFillSwitch !== null && !lastFillSwitch.checked;
@@ -642,11 +674,16 @@ function createPaletteEditor(config) {
     const photoButton = document.getElementById(config.photoId);
     const defaultButton = document.getElementById(config.defaultId);
 
+    function applyMode(isCustom) {
+        autoColors.classList.toggle("hidden", isCustom);
+        customColors.classList.toggle("hidden", !isCustom);
+    }
+
+
     customSwitch.addEventListener("change", function () {
         const isCustom = customSwitch.checked;
 
-        autoColors.classList.toggle("hidden", isCustom);
-        customColors.classList.toggle("hidden", !isCustom);
+        applyMode(isCustom);
 
         // De eerste keer beginnen met een handvol kleuren, zodat je iets hebt om aan te passen.
         if (isCustom && getColors().length === 0) {
@@ -775,7 +812,14 @@ function createPaletteEditor(config) {
         isCustom: function () {
             return customSwitch.checked;
         },
-        getColors: getColors
+        getColors: getColors,
+        setColors: setColors,
+
+        // Voor het terugzetten van bewaarde voortgang: zonder tellen en zonder beginkleuren.
+        setCustom: function (isCustom) {
+            customSwitch.checked = isCustom;
+            applyMode(isCustom);
+        }
     };
 }
 
@@ -907,7 +951,7 @@ function friendlyError(error) {
 }
 
 
-function showResult(imageSource) {
+function showResult(imageSource, scroll = true) {
     resultImage.src = imageSource;
     resultSource = imageSource;
     setDownloadEnabled(true);
@@ -917,10 +961,14 @@ function showResult(imageSource) {
     statusMessage.classList.add("hidden");
     resultContainer.classList.remove("hidden");
 
-    resultContainer.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
+    if (scroll) {
+        resultContainer.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+
+    saveProgress();
 }
 
 
@@ -986,3 +1034,259 @@ function closeAlgorithmSettings() {
         settings.classList.add("hidden");
     });
 }
+
+
+/* ---------- Voortgang bewaren ----------
+   Foto, uitsnede, instellingen en resultaat worden in de browser van de bezoeker bewaard
+   (IndexedDB; niet op de server). Ga je naar een andere pagina en kom je terug, dan staat
+   alles nog klaar, ook op dezelfde plek op de pagina. Na MAX_SAVE_AGE_MS wordt het gewist.
+   Lukt bewaren niet (bijv. een privévenster), dan werkt de pagina gewoon zoals altijd. */
+
+const SAVE_DB_NAME = "kunsd";
+const SAVE_STORE = "voortgang";
+const SAVE_KEY = "jouw-kunst";
+const MAX_SAVE_AGE_MS = 24 * 60 * 60 * 1000;   // 1 dag
+const SCROLL_KEY = "jouw-kunst-scroll";
+
+// Tijdens het terugzetten niet tussendoor bewaren
+let isRestoring = false;
+let saveTimer = null;
+
+
+function openSaveDb() {
+    return new Promise(function (resolve, reject) {
+        const request = indexedDB.open(SAVE_DB_NAME, 1);
+
+        request.onupgradeneeded = function () {
+            request.result.createObjectStore(SAVE_STORE);
+        };
+        request.onsuccess = function () {
+            resolve(request.result);
+        };
+        request.onerror = function () {
+            reject(request.error);
+        };
+    });
+}
+
+
+// Eén handeling op de opslag: action krijgt de "store" en geeft een request terug.
+async function useSaveStore(mode, action) {
+    const db = await openSaveDb();
+
+    return new Promise(function (resolve, reject) {
+        const request = action(db.transaction(SAVE_STORE, mode).objectStore(SAVE_STORE));
+
+        request.onsuccess = function () {
+            resolve(request.result);
+        };
+        request.onerror = function () {
+            reject(request.error);
+        };
+    });
+}
+
+
+// Bewaren gebeurt kort na de laatste wijziging, niet bij elke beweging van een slider.
+function saveProgress() {
+    if (isRestoring) {
+        return;
+    }
+
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(writeProgress, 300);
+}
+
+
+function writeProgress() {
+    saveTimer = null;
+
+    if (!originalFile) {
+        return;
+    }
+
+    // Alle schuifjes, schakelaars en keuzelijsten van de bewerkingen
+    const controls = {};
+
+    algorithmSection.querySelectorAll("input[id], select[id]").forEach(function (control) {
+        controls[control.id] = control.type === "checkbox" ? control.checked : control.value;
+    });
+
+    const activeButton = document.querySelector(".algorithm-button.active");
+
+    const progress = {
+        savedAt: Date.now(),
+        file: originalFile,
+        crop: appliedCrop,
+        algorithm: activeButton ? activeButton.dataset.settings : null,
+        controls: controls,
+        palettes: {
+            colorPage: colorPagePalette.getColors(),
+            shape: shapePalette.getColors()
+        },
+        result: resultSource,
+        lastFillSwitch: lastFillSwitch ? lastFillSwitch.id : null,
+        lastCreateButton: lastCreateButton ? lastCreateButton.id : null
+    };
+
+    useSaveStore("readwrite", function (store) {
+        return store.put(progress, SAVE_KEY);
+    }).catch(function () {
+        // Bewaren lukt niet (privévenster, geen ruimte): geen probleem, de pagina werkt gewoon.
+    });
+}
+
+
+function clearProgress() {
+    clearTimeout(saveTimer);
+
+    return useSaveStore("readwrite", function (store) {
+        return store.delete(SAVE_KEY);
+    }).catch(function () {});
+}
+
+
+async function restoreProgress() {
+    let saved;
+
+    try {
+        saved = await useSaveStore("readonly", function (store) {
+            return store.get(SAVE_KEY);
+        });
+    } catch (error) {
+        return;
+    }
+
+    // Niets bewaard, of iemand heeft intussen zelf al een foto gekozen
+    if (!saved || !saved.file || originalFile) {
+        return;
+    }
+
+    if (Date.now() - saved.savedAt > MAX_SAVE_AGE_MS) {
+        clearProgress();
+        return;
+    }
+
+    isRestoring = true;
+
+    try {
+        await showPhoto(saved.file);
+
+        if (saved.crop) {
+            await restoreCrop(saved.crop);
+        }
+
+        // Instellingen terugzetten; een "input"-event laat de getallen naast de sliders meelopen.
+        Object.entries(saved.controls || {}).forEach(function ([id, value]) {
+            const control = document.getElementById(id);
+
+            if (!control) {
+                return;
+            }
+
+            if (control.type === "checkbox") {
+                control.checked = value;
+            } else {
+                control.value = value;
+                control.dispatchEvent(new Event("input"));
+            }
+        });
+
+        restorePalette(colorPagePalette, "color-page-custom", saved.palettes && saved.palettes.colorPage);
+        restorePalette(shapePalette, "shape-custom", saved.palettes && saved.palettes.shape);
+
+        if (saved.algorithm) {
+            selectAlgorithm(saved.algorithm);
+        }
+
+        lastFillSwitch = saved.lastFillSwitch ? document.getElementById(saved.lastFillSwitch) : null;
+        lastCreateButton = saved.lastCreateButton ? document.getElementById(saved.lastCreateButton) : null;
+
+        if (saved.result) {
+            showResult(saved.result, false);
+        }
+
+        await restoreScrollPosition();
+    } catch (error) {
+        // Terugzetten mislukt: begin met een lege pagina.
+        clearProgress();
+    } finally {
+        isRestoring = false;
+    }
+}
+
+
+// De uitsnede tonen heeft de afmetingen van de foto nodig: wacht tot hij geladen is.
+function restoreCrop(crop) {
+    return new Promise(function (resolve) {
+        const image = new Image();
+
+        image.onload = function () {
+            appliedCrop = crop;
+            renderCroppedPreview(crop, image.naturalWidth, image.naturalHeight);
+            setCroppedState(true);
+            resolve();
+        };
+        image.onerror = resolve;
+        image.src = originalDataUrl;
+    });
+}
+
+
+// Terug naar waar je was op de pagina, zodra de foto en het resultaat hun hoogte hebben.
+async function restoreScrollPosition() {
+    let scrollY = null;
+
+    try {
+        scrollY = sessionStorage.getItem(SCROLL_KEY);
+    } catch (error) {
+        return;
+    }
+
+    if (scrollY === null) {
+        return;
+    }
+
+    const images = [uploadedImage, croppedPreviewImage, resultImage].filter(function (image) {
+        return image.getAttribute("src");
+    });
+
+    await Promise.all(images.map(function (image) {
+        return image.decode().catch(function () {});
+    }));
+
+    window.scrollTo(0, Number(scrollY));
+}
+
+
+function restorePalette(palette, switchId, colors) {
+    if (colors && colors.length > 0) {
+        palette.setColors(colors);
+    }
+
+    palette.setCustom(document.getElementById(switchId).checked);
+}
+
+
+// Elke wijziging aan de instellingen bewaren (schuifjes, schakelaars, kleuren, + en ×)
+algorithmSection.addEventListener("input", saveProgress);
+algorithmSection.addEventListener("change", saveProgress);
+algorithmSection.addEventListener("click", saveProgress);
+
+// Weggaan van de pagina: wat nog op bewaren wachtte meteen bewaren, en onthouden waar je was.
+// De scrollpositie gaat in sessionStorage: dat schrijft direct, ook als de pagina al sluit.
+window.addEventListener("pagehide", function () {
+    try {
+        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+    } catch (error) {
+        // Niet erg: dan begin je bovenaan de pagina.
+    }
+
+    if (saveTimer) {
+        clearTimeout(saveTimer);
+        writeProgress();
+    }
+});
+
+
+restoreProgress();

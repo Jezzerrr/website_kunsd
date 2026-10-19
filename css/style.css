@@ -24,6 +24,8 @@
     --panel: #f4f4f4;          /* achtergrond van kaders */
     --line: #dddddd;
     --accent: #cc0000;         /* hover en focus */
+    --warm: #fbf6ea;           /* rustige, warme achtergrond van de werkplek op Jouw Kunsd */
+    --sun: #f9c22e;            /* geel accent (stapnummers), uit de standaardkleuren */
 
     --radius-s: 10px;
     --radius-m: 12px;
@@ -1100,6 +1102,64 @@ body.lightbox-open {
     background: var(--ink);
 }
 
+/* "Aan De Slag": de werkplek in één warm kader, zodat de knoppen en instellingen bij elkaar horen */
+.workspace {
+    padding: 32px 36px 36px;
+    background: var(--warm);
+    border-radius: var(--radius-l);
+}
+
+.workspace > h2 {
+    margin-top: 0;
+}
+
+/* Binnen de werkplek: witte kaders in plaats van grijze */
+.workspace .algorithm-settings,
+.workspace .result-box,
+.workspace .algorithm-group-diy {
+    background: white;
+}
+
+.workspace .algorithm-settings {
+    border: 1px solid #ece4d2;
+}
+
+/* Kopjes met een geel stapnummer: 1 je foto, 2 de bewerking, 3 het resultaat */
+.step-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.step-title::before {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    color: var(--ink);
+    background: var(--sun);
+    border-radius: 50%;
+    font-size: 1.05rem;
+    font-weight: 800;
+    content: attr(data-step);
+}
+
+/* Kleine knoppen bij de kleurvakjes (+ Kleur Toevoegen, ...): minder nadruk dan "Maak ..." */
+.algorithm-settings .image-actions {
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.algorithm-settings .image-actions .secondary-button {
+    padding: 7px 14px;
+    border-width: 1px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
 /* Onder het resultaat: wat je er nu mee kunt doen */
 .result-actions {
     display: grid;
@@ -1124,6 +1184,25 @@ body.lightbox-open {
 
 .result-box .button-row {
     margin-top: 0;
+}
+
+/* Uitnodiging om te delen: één regel onderaan het printkader */
+.result-share {
+    margin: 18px 0 0 !important;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+}
+
+.result-share a {
+    color: var(--ink);
+    font-weight: 700;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+
+.result-share a:hover {
+    color: var(--accent);
 }
 
 .result-box-diy {
@@ -1352,6 +1431,16 @@ body.lightbox-open {
 
     .share-invite {
         padding: 22px 20px 24px;
+    }
+
+    .workspace {
+        margin-left: -6px;
+        margin-right: -6px;
+        padding: 22px 16px 24px;
+    }
+
+    .algorithm-settings .image-actions .secondary-button {
+        flex: 0 1 auto;
     }
 
     .contact-form {

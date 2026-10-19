@@ -101,7 +101,7 @@
                 </li>
                 <li>
                     <strong>Printen Maar</strong>
-                    Zet "Zelf Inkleuren" aan voor een lege versie met nummers, en print hem op A4.
+                    Zet "Zelf Inkleuren" aan en print. A3 toont meer detail, A4 kan ook prima.
                 </li>
                 <li>
                     <strong>Kleur In En Deel</strong>
@@ -223,7 +223,7 @@
         </section>
 
         <!-- Het eigenlijke werk: foto kiezen, bewerking kiezen, resultaat printen of downloaden -->
-        <section id="aan-de-slag" class="home-section">
+        <section id="aan-de-slag" class="home-section workspace">
             <h2>Aan De Slag</h2>
 
             <p class="section-intro">
@@ -244,7 +244,7 @@
 
             <!-- De foto zoals die naar de algoritmes gaat (origineel of uitsnede) -->
             <section id="original-container" class="image-section hidden">
-                <h2 id="original-title">Origineel</h2>
+                <h2 id="original-title" class="step-title" data-step="1">Origineel</h2>
 
                 <!-- Zonder uitsnede: de foto zoals geüpload -->
                 <div id="original-view">
@@ -327,7 +327,7 @@
 
             <section id="algorithm-section" class="hidden">
 
-                <h2>Kies Een Bewerking</h2>
+                <h2 class="step-title" data-step="2">Kies Een Bewerking</h2>
 
                 <div class="algorithm-group algorithm-group-diy">
                     <p class="algorithm-group-title">
@@ -416,14 +416,6 @@
                             class="create-button">
                             Maak RedBlack Dots
                         </button>
-
-                        <button
-                            type="button"
-                            class="download-button"
-                            disabled
-                            title="Maak eerst een afbeelding om te kunnen downloaden">
-                            Download Afbeelding
-                        </button>
                     </div>
 
                 </div>
@@ -478,7 +470,7 @@
                             min="2"
                             max="12"
                             step="1"
-                            value="8"
+                            value="6"
                         >
 
                         <div class="slider-scale">
@@ -594,14 +586,6 @@
                             class="create-button">
                             Maak Vormen
                         </button>
-
-                        <button
-                            type="button"
-                            class="download-button"
-                            disabled
-                            title="Maak eerst een afbeelding om te kunnen downloaden">
-                            Download Afbeelding
-                        </button>
                     </div>
 
                 </div>
@@ -668,14 +652,6 @@
                             id="dots-button"
                             class="create-button">
                             Maak Coloring Dots
-                        </button>
-
-                        <button
-                            type="button"
-                            class="download-button"
-                            disabled
-                            title="Maak eerst een afbeelding om te kunnen downloaden">
-                            Download Afbeelding
                         </button>
                     </div>
 
@@ -887,14 +863,6 @@
                             class="create-button">
                             Maak Coloring Page
                         </button>
-
-                        <button
-                            type="button"
-                            class="download-button"
-                            disabled
-                            title="Maak eerst een afbeelding om te kunnen downloaden">
-                            Download Afbeelding
-                        </button>
                     </div>
 
                 </div>
@@ -910,7 +878,7 @@
                 id="result-container"
                 class="image-section hidden">
 
-                <h2>Resultaat</h2>
+                <h2 class="step-title" data-step="3">Resultaat</h2>
 
                 <img
                     id="result-image"
@@ -938,8 +906,7 @@
                         <h3>Print Je Kunsd</h3>
 
                         <p>
-                            Print op A4 en kies bij het printen voor "passend op pagina".
-                            Op een telefoon of tablet kun je de afbeelding ook eerst downloaden.
+                            Je kunsd past altijd op één vel. Op A3 zie je meer detail, maar A4 kan natuurlijk ook.
                         </p>
 
                         <div class="button-row image-actions">
@@ -958,17 +925,11 @@
                                 Download Afbeelding
                             </button>
                         </div>
-                    </div>
 
-                    <div class="result-box">
-                        <h3>Deel Het Met Mij</h3>
-
-                        <p>
-                            Ingekleurd? Stuur me een foto! Ook je digitale resultaat zie ik graag,
-                            net als je ervaringen en ideeën.
+                        <p class="result-share">
+                            Ingekleurd? Stuur me een foto, daar word ik blij van!
+                            <a href="/contact?onderwerp=Mijn%20Kunsd" data-track="resultaat-delen">Deel Je Kunsd</a>
                         </p>
-
-                        <a href="/contact?onderwerp=Mijn%20Kunsd" class="secondary-button link-button" data-track="resultaat-delen">Deel Je Kunsd</a>
                     </div>
 
                 </div>
