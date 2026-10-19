@@ -7,6 +7,7 @@ import time
 import urllib.error
 import urllib.request
 from functools import wraps
+from html import escape
 from pathlib import Path, PurePosixPath
 
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -211,6 +212,7 @@ def contact():
             "reply_to": email,
             "subject": f"[Kunsd Website] {subject} (met foto)",
             "text": text,
+            "html": contact_email_html(name, email, subject, message, attachments),
             "attachments": attachments,
         })
     except urllib.error.URLError as error:
@@ -219,6 +221,40 @@ def contact():
         return jsonify({"error": "Versturen is niet gelukt. Probeer het nog eens, of stuur je bericht zonder foto."}), 502
 
     return jsonify({"ok": True})
+
+
+def contact_email_html(name, email, subject, message, attachments):
+    """De opgemaakte mail: een wit kaartje met de velden onder elkaar en de foto's erin.
+
+    Mailprogramma's ondersteunen weinig CSS, daarom staat alle opmaak per element (style="...").
+    """
+    def field(label, value_html):
+        return (
+            f'<p style="margin:0 0 4px;color:#3b3fd8;font-weight:bold;font-size:14px;">{label}</p>'
+            f'<p style="margin:0 0 22px;font-size:16px;line-height:1.5;">{value_html}</p>'
+        )
+
+    photos = "".join(
+        f'<img src="cid:{attachment["content_id"]}" alt="Foto {number}" width="480" '
+        f'style="display:block;width:100%;max-width:480px;height:auto;margin:0 0 12px;'
+        f'border:1px solid #dddddd;border-radius:8px;">'
+        for number, attachment in enumerate(attachments, start=1)
+    )
+
+    return f"""\
+<div style="margin:0;padding:32px 12px;background:#f6f7f9;font-family:Arial,Helvetica,sans-serif;color:#171717;">
+  <div style="max-width:560px;margin:0 auto;padding:28px;background:#ffffff;border:1px solid #e3e3e3;border-radius:10px;">
+    <p style="margin:0 0 6px;font-size:16px;">Hallo Jesse,</p>
+    <p style="margin:0 0 26px;font-size:16px;">Er is een nieuw bericht verstuurd via je website, met foto. Hieronder de details.</p>
+    {field("Naam", escape(name) or "(niet ingevuld)")}
+    {field("E-mail", f'<a href="mailto:{escape(email)}" style="color:#1a56db;">{escape(email)}</a>')}
+    {field("Onderwerp", escape(subject))}
+    {field("Bericht", escape(message).replace(chr(10), "<br>"))}
+    <p style="margin:0 0 10px;color:#3b3fd8;font-weight:bold;font-size:14px;">Foto's ({len(attachments)})</p>
+    {photos}
+    <p style="margin:24px 0 0;color:#888888;font-size:13px;">Antwoorden kan direct: je antwoord gaat naar de afzender.</p>
+  </div>
+</div>"""
 
 
 def too_many_messages():
@@ -258,9 +294,12 @@ def read_contact_images():
         output = io.BytesIO()
         limit_size(image, CONTACT_IMAGE_SIZE).save(output, format="JPEG", quality=88)
 
+        # content_id: zo staat de foto ook in de mail zelf (zie contact_email_html)
         attachments.append({
             "filename": f"kunsd-foto-{number}.jpg",
             "content": base64.b64encode(output.getvalue()).decode("ascii"),
+            "content_type": "image/jpeg",
+            "content_id": f"kunsd-foto-{number}",
         })
 
     return attachments
