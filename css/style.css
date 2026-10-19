@@ -10,7 +10,10 @@
    6. Kies een bewerking: groepen, knoppen en instellingen
    7. Formulierelementen: slider, schakelaar, keuzelijst, kleurvakjes
    8. Meldingen en infokaders
-   9. Kleine schermen (alle aanpassingen voor mobiel staan hier bij elkaar)
+   9. Jouw Kunsd: bovenaan, voorbeelden, resultaat, tips en delen
+   10. Contactformulier
+   11. Kleine schermen (alle aanpassingen voor mobiel staan hier bij elkaar)
+   12. Printen (alleen het resultaat op Jouw Kunsd)
    ========================================================================== */
 
 
@@ -621,7 +624,10 @@ body.lightbox-open {
 }
 
 .algorithm-button {
-    padding: 12px 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 22px 6px 6px;
     color: var(--ink);
     background: white;
     border: 2px solid var(--ink);
@@ -633,6 +639,15 @@ body.lightbox-open {
 .algorithm-button.active {
     color: white;
     background: var(--ink);
+}
+
+/* Klein rond voorbeeldje in de knop */
+.algorithm-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    background: white;
+    border-radius: 50%;
 }
 
 /* "Doe-het-zelf": alles waarmee je zelf aan de slag kunt, krijgt een gestippelde rand */
@@ -909,7 +924,395 @@ body.lightbox-open {
 }
 
 
-/* ---------- 9. Kleine schermen ---------- */
+/* ---------- 9. Jouw Kunsd ---------- */
+/* Bovenaan: tekst links, een geprinte en een ingekleurde kleurplaat rechts */
+.art-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+}
+
+.art-hero h1 {
+    margin-top: 0;
+}
+
+/* Twee "vellen papier" die een beetje scheef over elkaar liggen */
+.before-after {
+    position: relative;
+    padding: 10px 0 40px;
+}
+
+.paper {
+    margin: 0;
+    padding: 8px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+}
+
+.paper img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.paper figcaption {
+    position: absolute;
+    top: -14px;
+    left: 14px;
+    padding: 4px 12px;
+    color: white;
+    background: var(--ink);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.paper-left {
+    position: relative;
+    width: 72%;
+    transform: rotate(-3deg);
+}
+
+.paper-right {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 62%;
+    transform: rotate(3deg);
+}
+
+.section-intro {
+    max-width: 680px;
+}
+
+/* Na "Probeer Deze" zonder foto: uitleg bij de knop "Kies Een Foto", die even oplicht */
+.try-hint {
+    max-width: 650px;
+    margin: 16px 0 0;
+    padding: 14px 18px;
+    background: var(--panel);
+    border-left: 6px solid var(--ink);
+    border-radius: var(--radius-s);
+}
+
+.upload-label.attention {
+    animation: attention 0.6s ease-in-out 3;
+}
+
+@keyframes attention {
+    50% {
+        box-shadow: 0 0 0 8px rgba(204, 0, 0, 0.35);
+        transform: scale(1.05);
+    }
+}
+
+/* Vier stappen in plaats van drie */
+.steps-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Voorbeelden: kaarten met plaatje, uitleg en een knop */
+.examples {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.example-card {
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    background: var(--panel);
+    border-radius: var(--radius-l);
+}
+
+.example-card h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin: 16px 0 4px;
+}
+
+.example-card p {
+    flex: 1;
+    margin: 0 0 16px;
+}
+
+.example-card .try-button {
+    align-self: flex-start;
+}
+
+.example-image {
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: white;
+    border-radius: var(--radius-m);
+}
+
+.example-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Labeltje achter de naam; met een gestippelde rand als je het zelf kunt inkleuren */
+.tag {
+    padding: 2px 10px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.tag-diy {
+    border-style: dashed;
+}
+
+/* Wisselen tussen "Ingekleurd" en "Om Te Printen" */
+.view-toggle {
+    display: inline-flex;
+    align-self: flex-start;
+    margin-top: 12px;
+    padding: 3px;
+    background: white;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.view-toggle button {
+    padding: 6px 14px;
+    color: var(--ink);
+    background: none;
+    border: none;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.view-toggle button.active {
+    color: white;
+    background: var(--ink);
+}
+
+/* Onder het resultaat: wat je er nu mee kunt doen */
+.result-actions {
+    display: grid;
+    gap: 16px;
+    max-width: 800px;
+    margin-top: 24px;
+}
+
+.result-box {
+    padding: 20px 24px;
+    background: var(--panel);
+    border-radius: var(--radius-l);
+}
+
+.result-box h3 {
+    margin: 0 0 6px;
+}
+
+.result-box p {
+    margin: 0 0 16px;
+}
+
+.result-box .button-row {
+    margin-top: 0;
+}
+
+.result-box-diy {
+    background: white;
+    border: 2px dashed var(--ink);
+}
+
+/* Tips: kaartjes in een raster */
+.tips {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tips li {
+    padding: 20px;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-l);
+}
+
+.tips strong {
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* Uitnodiging om je resultaat te delen: valt op met een dikke zwarte rand */
+.share-invite {
+    padding: 28px 32px 32px;
+    border: 4px solid var(--ink);
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow);
+}
+
+.share-invite h2 {
+    margin-top: 0;
+}
+
+.share-invite p {
+    max-width: 680px;
+}
+
+.share-invite .link-button {
+    margin-top: 8px;
+}
+
+
+/* ---------- 10. Contactformulier ---------- */
+.contact-intro p,
+.curious-list {
+    max-width: 680px;
+}
+
+.curious-list {
+    margin-top: -4px;
+    padding-left: 22px;
+}
+
+.contact-form {
+    max-width: 680px;
+    margin-top: 32px;
+    padding: 28px;
+    background: var(--panel);
+    border-radius: var(--radius-l);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+}
+
+.form-field {
+    margin: 0 0 20px;
+}
+
+.form-field label,
+.field-title {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.form-field small {
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.form-field input[type="text"],
+.form-field input[type="email"],
+.form-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 14px;
+    color: var(--ink);
+    background: white;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-s);
+    font: inherit;
+}
+
+.form-field textarea {
+    resize: vertical;
+}
+
+.form-field input:focus-visible,
+.form-field textarea:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Foto's toevoegen: een groot vak met een gestippelde rand. Het echte bestandsveld is onzichtbaar. */
+#contact-images {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.form-field .file-drop {
+    display: block;
+    padding: 22px;
+    background: white;
+    border: 2px dashed var(--ink);
+    border-radius: var(--radius-l);
+    font-weight: 400;
+    text-align: center;
+    cursor: pointer;
+}
+
+.form-field .file-drop.hidden {
+    display: none;
+}
+
+.file-drop strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.file-drop span {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.file-drop:hover,
+.file-drop.dragging {
+    background: #fafafa;
+    border-color: var(--accent);
+}
+
+.file-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.file-previews:not(:empty) {
+    margin-top: 14px;
+}
+
+.file-preview {
+    position: relative;
+    width: 96px;
+    height: 96px;
+}
+
+.file-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-m);
+}
+
+.contact-form .status-message {
+    margin: 0 0 20px;
+}
+
+
+/* ---------- 11. Kleine schermen ---------- */
+@media (max-width: 900px) {
+    .steps-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 700px) {
     body {
         padding: 16px;
@@ -930,11 +1333,37 @@ body.lightbox-open {
     }
 
     .gallery,
-    .steps {
+    .steps,
+    .steps-4,
+    .examples,
+    .tips,
+    .form-row,
+    .art-hero {
         grid-template-columns: 1fr;
     }
 
-    .hero-buttons .link-button {
+    .art-hero {
+        gap: 24px;
+    }
+
+    .before-after {
+        max-width: 420px;
+    }
+
+    .share-invite {
+        padding: 22px 20px 24px;
+    }
+
+    .contact-form {
+        padding: 20px;
+    }
+
+    .result-box {
+        padding: 18px;
+    }
+
+    .hero-buttons .link-button,
+    .hero-buttons .upload-label {
         flex: 1 1 100%;
         text-align: center;
     }
@@ -986,7 +1415,52 @@ body.lightbox-open {
 
     .button-row .create-button,
     .button-row .download-button,
-    .image-actions .secondary-button {
+    .image-actions .secondary-button,
+    .share-invite .link-button,
+    .result-box .link-button {
         flex: 1 1 100%;
+        text-align: center;
+    }
+
+    .share-invite .link-button,
+    .result-box .link-button {
+        display: block;
+    }
+}
+
+
+/* ---------- 12. Printen ---------- */
+/* Op Jouw Kunsd, met een resultaat in beeld: alleen het resultaat op papier, zo groot mogelijk */
+@media print {
+    @page {
+        margin: 10mm;
+    }
+
+    body.jouw-kunst-page.has-result {
+        max-width: none;
+        padding: 0;
+    }
+
+    body.jouw-kunst-page.has-result header,
+    body.jouw-kunst-page.has-result footer,
+    body.jouw-kunst-page.has-result main > :not(#aan-de-slag),
+    body.jouw-kunst-page.has-result #aan-de-slag > :not(#result-container),
+    body.jouw-kunst-page.has-result #result-container > :not(.result-image) {
+        display: none !important;
+    }
+
+    body.jouw-kunst-page.has-result #result-container,
+    body.jouw-kunst-page.has-result #aan-de-slag {
+        margin: 0;
+    }
+
+    body.jouw-kunst-page.has-result .result-image {
+        width: 100%;
+        max-width: none;
+        max-height: 270mm;
+        object-fit: contain;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
     }
 }

@@ -5,7 +5,8 @@
 //   - elk paginabezoek (doet count.js zelf, na de instelling hieronder);
 //   - elke klik op een knop: met een eigen naam als een script trackEvent() aanroept,
 //     anders automatisch met de id of tekst van de knop;
-//   - elke klik op een link met een data-track="naam"-attribuut (bijv. de uitnodiging onderaan);
+//   - elke klik op een link of ander element met een data-track="naam"-attribuut (bijv. de uitnodiging
+//     onderaan, of de "Kies Een Foto"-knop, die eigenlijk een label is);
 //   - elk verstuurd formulier (het contactformulier).
 
 
@@ -75,13 +76,13 @@ function buttonName(button) {
 // Eerst (in de capture-fase) vergeten we de vorige klik. Als de knop zelf trackEvent() aanroept,
 // weten we daarna dat hij al geteld is en tellen we hem hieronder niet nog eens.
 document.addEventListener("click", function (event) {
-    if (event.target.closest("button, a[data-track]")) {
+    if (event.target.closest("button, [data-track]")) {
         countedThisClick = false;
     }
 }, true);
 
 document.addEventListener("click", function (event) {
-    const button = event.target.closest("button, a[data-track]");
+    const button = event.target.closest("button, [data-track]");
 
     // Verzendknoppen tellen we bij het versturen van het formulier (zie hieronder).
     if (!button || button.disabled || button.type === "submit") {

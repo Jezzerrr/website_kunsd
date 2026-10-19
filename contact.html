@@ -18,13 +18,13 @@
     <link rel="apple-touch-icon" href="/mijn_kunsd/delen/favicon/apple-touch-icon.png">
 
     <!-- Deel-tags: titel, tekst en plaatje bij een gedeelde link (WhatsApp, Signal, LinkedIn, ...) -->
-    <meta name="description" content="Neem contact op met Jesse over KUNSD, de website waar je kunst maakt van je eigen foto, of een kleurplaat print om zelf mee aan de slag te gaan.">
+    <meta name="description" content="Stuur Jesse je ingekleurde kleurplaat, je digitale resultaat of je ervaringen en ideeën over KUNSD, de website waar je kunst maakt van je eigen foto.">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="KUNSD">
     <meta property="og:locale" content="nl_NL">
     <meta property="og:url" content="https://jesses-kunsd.onrender.com/contact">
     <meta property="og:title" content="Contact - KUNSD">
-    <meta property="og:description" content="Neem contact op met Jesse over KUNSD, de website waar je kunst maakt van je eigen foto, of een kleurplaat print om zelf mee aan de slag te gaan.">
+    <meta property="og:description" content="Stuur Jesse je ingekleurde kleurplaat, je digitale resultaat of je ervaringen en ideeën over KUNSD, de website waar je kunst maakt van je eigen foto.">
     <meta property="og:image" content="https://jesses-kunsd.onrender.com/mijn_kunsd/delen/deel_afbeelding.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -45,13 +45,38 @@
 
 <main>
 
-    <h1>Contact</h1>
+    <section class="contact-intro">
+        <h1>Contact</h1>
 
-    <p>
-        Zin om te sparren? Over kunst, nieuwe mogelijkheden of websites bouwen: ideeën, feedback en vragen zijn altijd welkom.
-    </p>
+        <p class="hero-text">
+            Leuk dat je langskomt! KUNSD is mijn hobbyproject, en het wordt pas echt leuk als anderen
+            er iets mee maken.
+        </p>
 
-    <form action="https://api.web3forms.com/submit" method="POST" id="contact-form">
+        <p>
+            Ben je met een kleurplaat aan de slag gegaan? Dan ben ik heel benieuwd hoe hij is geworden.
+            Stuur me een foto van je ingekleurde print, of gewoon het digitale resultaat.
+        </p>
+
+        <p>Ik hoor ook graag:</p>
+
+        <ul class="curious-list">
+            <li>hoe het ging: wat was leuk, en wat was lastig?</li>
+            <li>wat je zou verbeteren, of wat je nog mist;</li>
+            <li>ideeën voor nieuwe bewerkingen;</li>
+            <li>of gewoon wat je ervan vindt.</li>
+        </ul>
+
+        <p>
+            Elke reactie, groot of klein, helpt me om te groeien en om van KUNSD iets moois te maken.
+            Ook voor vragen, of zin om te sparren over kunst of websites bouwen, kun je hier terecht.
+        </p>
+    </section>
+
+    <!-- Zonder foto gaat het bericht via Web3Forms (zoals altijd). Met foto stuurt js/contact.js het
+         naar de eigen server (/api/contact in app.py), want Web3Forms kan alleen in het betaalde
+         abonnement bijlagen meesturen. -->
+    <form action="https://api.web3forms.com/submit" method="POST" id="contact-form" class="contact-form">
 
         <input
             type="hidden"
@@ -78,16 +103,39 @@
         <input
             type="checkbox"
             name="botcheck"
+            id="botcheck"
             style="display: none;"
             tabindex="-1"
             autocomplete="off"
         >
 
-        <p>
-            <label for="onderwerp">
-                Onderwerp
-            </label>
-            <br>
+        <div class="form-row">
+            <p class="form-field">
+                <label for="naam">Je naam <small>(mag ook leeg blijven)</small></label>
+
+                <input
+                    type="text"
+                    id="naam"
+                    name="name"
+                    autocomplete="name"
+                >
+            </p>
+
+            <p class="form-field">
+                <label for="email">Je e-mailadres</label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    autocomplete="email"
+                    required
+                >
+            </p>
+        </div>
+
+        <p class="form-field">
+            <label for="onderwerp">Onderwerp</label>
 
             <input
                 type="text"
@@ -97,36 +145,40 @@
             >
         </p>
 
-        <p>
-            <label for="email">
-                Je e-mailadres
-            </label>
-            <br>
-
-            <input
-                type="email"
-                id="email"
-                name="email"
-                required
-            >
-        </p>
-
-        <p>
-            <label for="message">
-                Bericht
-            </label>
-            <br>
+        <p class="form-field">
+            <label for="message">Bericht</label>
 
             <textarea
                 id="message"
                 name="message"
-                rows="10"
+                rows="8"
+                placeholder="Hoe ging het? Wat vond je ervan?"
                 required
             ></textarea>
         </p>
 
+        <!-- Foto's toevoegen. Het veld heeft bewust geen name: js/contact.js verstuurt de foto's zelf. -->
+        <div class="form-field">
+            <span class="field-title">Foto's <small>(mag ook leeg blijven)</small></span>
+
+            <label for="contact-images" class="file-drop" id="file-drop" data-track="contact-foto-kiezen">
+                <strong>Voeg Een Foto Toe</strong>
+                <span>Je ingekleurde kleurplaat of je digitale resultaat. Sleep hem hierheen of klik om te kiezen (maximaal 3).</span>
+            </label>
+
+            <input type="file" id="contact-images" accept="image/*" multiple>
+
+            <div id="file-previews" class="file-previews"></div>
+        </div>
+
+        <p
+            id="contact-status"
+            class="status-message hidden">
+        </p>
+
         <button
             type="submit"
+            id="contact-submit"
             class="create-button"
         >
             Verzenden
@@ -136,16 +188,9 @@
 
 </main>
 
-<script>
-    document.getElementById("contact-form").addEventListener("submit", function () {
-        const onderwerp = document.getElementById("onderwerp").value.trim();
-
-        document.getElementById("mail-subject").value =
-            "[Kunsd Website] " + onderwerp;
-    });
-</script>
-
+<!-- Volgorde: eerst analytics.js, dan contact.js -->
 <script src="js/analytics.js"></script>
+<script src="js/contact.js"></script>
 <script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 
 </body>

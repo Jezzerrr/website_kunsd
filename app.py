@@ -1,11 +1,15 @@
 import base64
 import io
+import json
 import os
 import re
+import time
+import urllib.error
+import urllib.request
 from functools import wraps
 from pathlib import Path, PurePosixPath
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, UnidentifiedImageError
 from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 
 from src.color_page import image_to_color_page, suggest_palette
@@ -20,6 +24,26 @@ from src.shape_numbers import (
 )
 
 app = Flask(__name__)
+
+
+def load_env_file(path):
+    """Lokaal testen: zet de regels NAAM=waarde uit .env in de omgeving.
+
+    Op Render staan deze waarden in de instellingen (Environment) en is er geen .env.
+    Wat al in de omgeving staat, wordt niet overschreven.
+    """
+    if not path.is_file():
+        return
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+
+        if line and not line.startswith("#") and "=" in line:
+            name, value = line.split("=", 1)
+            os.environ.setdefault(name.strip(), value.strip().strip('"').strip("'"))
+
+
+load_env_file(Path(app.root_path) / ".env")
 
 HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 
@@ -48,6 +72,22 @@ MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
 
 # De map met foto's voor de diavoorstelling op "Mijn Kunsd"
 SLIDE_SHOW_FOLDER = "mijn_kunsd/slide_show"
+
+# Contactformulier met foto's (zonder foto gaat het via Web3Forms, zie contact.html).
+# De mail gaat via Resend (resend.com), want het Render free plan blokkeert gewone e-mail (SMTP).
+# Nodig in de omgeving (Render: Environment; lokaal: .env):
+#   RESEND_API_KEY  de sleutel van je Resend-account
+#   CONTACT_EMAIL   waar de mail heen gaat: het e-mailadres van je Resend-account
+RESEND_URL = "https://api.resend.com/emails"
+CONTACT_FROM = "KUNSD Website <onboarding@resend.dev>"     # afzender die Resend zonder eigen domein toestaat
+CONTACT_MAX_IMAGES = 3              # gelijk houden met MAX_IMAGES in js/contact.js
+CONTACT_MAX_FILE_MB = 15            # gelijk houden met MAX_FILE_MB in js/contact.js
+CONTACT_IMAGE_SIZE = 2000           # foto's worden verkleind tot hoogstens zoveel pixels: kleine mail
+CONTACT_MAX_PER_HOUR = 10           # spamrem: zoveel berichten per uur per bezoeker
+EMAIL_ADDRESS = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+
+# Wanneer elke bezoeker (IP-adres) iets verstuurde, voor de spamrem. Leeg na een herstart; dat is goed genoeg.
+contact_log = {}
 
 
 # ---------------------------------------------------------------------------
@@ -115,6 +155,132 @@ def slide_show():
     )
 
     return jsonify([f"{SLIDE_SHOW_FOLDER}/{name}" for name in names])
+
+
+# ---------------------------------------------------------------------------
+# Contactformulier met foto's
+# ---------------------------------------------------------------------------
+
+@app.route("/api/contact", methods=["POST"])
+def contact():
+    form = request.form
+
+    # Het onzichtbare vinkje is aangevinkt: een bot. Doe alsof het gelukt is.
+    if form.get("botcheck"):
+        return jsonify({"ok": True})
+
+    api_key = os.environ.get("RESEND_API_KEY")
+    to_address = os.environ.get("CONTACT_EMAIL")
+
+    if not api_key or not to_address:
+        app.logger.error("Contactformulier: RESEND_API_KEY of CONTACT_EMAIL ontbreekt")
+        return jsonify({"error": "Foto's meesturen lukt nu even niet. Stuur je bericht zonder foto, "
+                                 "of probeer het later nog eens."}), 503
+
+    name = form.get("name", "").strip()[:100]
+    email = form.get("email", "").strip()[:200]
+    subject = form.get("onderwerp", "").strip()[:150]
+    message = form.get("message", "").strip()[:10000]
+
+    if not EMAIL_ADDRESS.fullmatch(email):
+        return jsonify({"error": "Vul een geldig e-mailadres in."}), 400
+
+    if not subject or not message:
+        return jsonify({"error": "Vul een onderwerp en een bericht in."}), 400
+
+    if too_many_messages():
+        return jsonify({"error": "Je hebt net al een paar berichten gestuurd. Probeer het later nog eens."}), 429
+
+    try:
+        attachments = read_contact_images()
+    except UserError as error:
+        return jsonify({"error": str(error)}), 400
+
+    text = (
+        f"Naam: {name or '(niet ingevuld)'}\n"
+        f"E-mail: {email}\n"
+        f"Onderwerp: {subject}\n"
+        f"Foto's: {len(attachments)}\n\n"
+        f"{message}\n"
+    )
+
+    try:
+        send_email(api_key, {
+            "from": CONTACT_FROM,
+            "to": [to_address],
+            "reply_to": email,
+            "subject": f"[Kunsd Website] {subject} (met foto)",
+            "text": text,
+            "attachments": attachments,
+        })
+    except urllib.error.URLError as error:
+        detail = error.read().decode("utf-8", "replace") if isinstance(error, urllib.error.HTTPError) else error
+        app.logger.error("Contactformulier: versturen via Resend mislukt: %s", detail)
+        return jsonify({"error": "Versturen is niet gelukt. Probeer het nog eens, of stuur je bericht zonder foto."}), 502
+
+    return jsonify({"ok": True})
+
+
+def too_many_messages():
+    """Eenvoudige spamrem: hoogstens CONTACT_MAX_PER_HOUR berichten per uur per IP-adres."""
+    # Render zet het echte adres van de bezoeker vooraan in X-Forwarded-For
+    visitor = request.headers.get("X-Forwarded-For", request.remote_addr or "").split(",")[0].strip()
+    now = time.time()
+    recent = [moment for moment in contact_log.get(visitor, []) if now - moment < 3600]
+
+    if len(recent) >= CONTACT_MAX_PER_HOUR:
+        return True
+
+    contact_log[visitor] = recent + [now]
+    return False
+
+
+def read_contact_images():
+    """De meegestuurde foto's als bijlagen voor Resend: verkleind tot JPEG, in base64."""
+    files = [file for file in request.files.getlist("images") if file.filename]
+
+    if len(files) > CONTACT_MAX_IMAGES:
+        raise UserError(f"Je kunt maximaal {CONTACT_MAX_IMAGES} foto's meesturen.")
+
+    attachments = []
+
+    for number, file in enumerate(files, start=1):
+        data = file.read()
+
+        if len(data) > CONTACT_MAX_FILE_MB * 1024 * 1024:
+            raise UserError(f"Een foto is groter dan {CONTACT_MAX_FILE_MB} MB. Kies een kleinere foto.")
+
+        try:
+            image = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
+        except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+            raise UserError(f"\"{file.filename}\" kan ik niet openen als afbeelding.")
+
+        output = io.BytesIO()
+        limit_size(image, CONTACT_IMAGE_SIZE).save(output, format="JPEG", quality=88)
+
+        attachments.append({
+            "filename": f"kunsd-foto-{number}.jpg",
+            "content": base64.b64encode(output.getvalue()).decode("ascii"),
+        })
+
+    return attachments
+
+
+def send_email(api_key, payload):
+    """Verstuurt een mail via Resend (een gewoon HTTPS-verzoek; dat mag wel op het Render free plan)."""
+    email_request = urllib.request.Request(
+        RESEND_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "kunsd-website",
+        },
+        method="POST",
+    )
+
+    with urllib.request.urlopen(email_request, timeout=30):
+        pass
 
 
 # ---------------------------------------------------------------------------

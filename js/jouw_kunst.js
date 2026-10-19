@@ -29,6 +29,16 @@ const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
 
+// Onder het resultaat: aanbod om een kleurplaat te maken, en printen
+const diyOffer = document.getElementById("diy-offer");
+const diyOfferText = document.getElementById("diy-offer-text");
+const diyOfferButton = document.getElementById("diy-offer-button");
+const printButton = document.getElementById("print-button");
+
+// "Probeer Deze" zonder foto: uitleg bij de knop "Kies Een Foto"
+const tryHint = document.getElementById("try-hint");
+const mainUploadLabel = document.getElementById("main-upload-label");
+
 // Bijsnijden
 const cropContainer = document.getElementById("crop-container");
 const cropStage = document.getElementById("crop-stage");
@@ -73,6 +83,15 @@ let appliedCrop = null;
 let cropRect = { ...DEFAULT_CROP };
 let dragState = null;
 
+// De bewerking die iemand bij de voorbeelden koos ("Probeer Deze") voordat er een foto was.
+// Na het uploaden gaat die bewerking vanzelf open.
+let pendingAlgorithm = null;
+
+// De laatst uitgevoerde bewerking: de "Zelf Inkleuren"-schakelaar en de "Maak ..."-knop ervan
+// (bij RedBlack Dots is er geen schakelaar: null).
+let lastFillSwitch = null;
+let lastCreateButton = null;
+
 
 // Tellen mag nooit iets stukmaken (bijv. als analytics.js niet laadt).
 function track(name) {
@@ -110,6 +129,20 @@ imageUpload.addEventListener("change", function () {
         // Nieuwe foto: het vorige resultaat is niet meer van toepassing.
         clearResult();
         closeAlgorithmSettings();
+
+        if (pendingAlgorithm) {
+            selectAlgorithm(pendingAlgorithm);
+            pendingAlgorithm = null;
+        }
+
+        tryHint.classList.add("hidden");
+        mainUploadLabel.classList.remove("attention");
+
+        // De knop bovenaan de pagina staat ver weg van de foto: scroll ernaartoe.
+        originalContainer.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
     };
 
     reader.readAsDataURL(file);
@@ -379,21 +412,72 @@ cropStage.addEventListener("pointercancel", endCropDrag);
 
 algorithmButtons.forEach(function (button) {
     button.addEventListener("click", function () {
-        const settingsId = button.dataset.settings;
-        const selectedSettings = document.getElementById(settingsId);
+        track("kies-" + button.dataset.settings);
+        selectAlgorithm(button.dataset.settings);
+    });
+});
 
-        track("kies-" + settingsId);
 
-        algorithmButtons.forEach(function (otherButton) {
-            otherButton.classList.remove("active");
+// Opent de instellingen van één bewerking (bijv. "color-page-settings") en sluit de andere.
+function selectAlgorithm(settingsId) {
+    algorithmButtons.forEach(function (button) {
+        button.classList.toggle("active", button.dataset.settings === settingsId);
+    });
+
+    algorithmSettings.forEach(function (settings) {
+        settings.classList.toggle("hidden", settings.id !== settingsId);
+    });
+}
+
+
+/* ---------- Voorbeelden ---------- */
+
+// Wisselen tussen het ingekleurde voorbeeld en de lege versie om te printen.
+document.querySelectorAll(".example-card").forEach(function (card) {
+    const image = card.querySelector(".example-image img");
+
+    card.querySelectorAll(".view-toggle button").forEach(function (button) {
+        button.addEventListener("click", function () {
+            image.src = image.dataset[button.dataset.view];
+
+            card.querySelectorAll(".view-toggle button").forEach(function (other) {
+                other.classList.toggle("active", other === button);
+            });
         });
+    });
+});
 
-        algorithmSettings.forEach(function (settings) {
-            settings.classList.add("hidden");
+
+// "Probeer Deze": met een foto gaat de bewerking meteen open. Zonder foto gaan we naar "Aan De Slag",
+// met uitleg bij de knop "Kies Een Foto"; na het uploaden gaat de gekozen bewerking vanzelf open.
+document.querySelectorAll(".try-button").forEach(function (button) {
+    button.addEventListener("click", function () {
+        if (originalFile) {
+            selectAlgorithm(button.dataset.algorithm);
+
+            algorithmSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+            return;
+        }
+
+        pendingAlgorithm = button.dataset.algorithm;
+
+        tryHint.textContent =
+            `Leuk, je kiest ${button.dataset.name}! Kies eerst een foto van je computer of telefoon. ` +
+            `Daarna staat ${button.dataset.name} meteen voor je klaar.`;
+        tryHint.classList.remove("hidden");
+
+        // De knop even laten oplichten (opnieuw starten als hij al oplichtte)
+        mainUploadLabel.classList.remove("attention");
+        void mainUploadLabel.offsetWidth;
+        mainUploadLabel.classList.add("attention");
+
+        document.getElementById("aan-de-slag").scrollIntoView({
+            behavior: "smooth",
+            block: "start"
         });
-
-        button.classList.add("active");
-        selectedSettings.classList.remove("hidden");
     });
 });
 
@@ -416,6 +500,7 @@ shapeSelect.addEventListener("change", function () {
 
 shapeButton.addEventListener("click", async function () {
     track("maak-shape-division");
+    rememberAlgorithm(shapeFill, shapeButton);
 
     const fields = {
         shape: shapeSelect.value,
@@ -433,6 +518,7 @@ shapeButton.addEventListener("click", async function () {
 
 rankedDotsButton.addEventListener("click", async function () {
     track("maak-ranked-dots");
+    rememberAlgorithm(null, rankedDotsButton);
 
     await runPythonAlgorithm(
         "/api/ranked-dots",
@@ -447,6 +533,7 @@ rankedDotsButton.addEventListener("click", async function () {
 
 dotsButton.addEventListener("click", async function () {
     track("maak-dots");
+    rememberAlgorithm(dotsFill, dotsButton);
 
     await runPythonAlgorithm(
         "/api/dots",
@@ -461,6 +548,7 @@ dotsButton.addEventListener("click", async function () {
 
 colorPageButton.addEventListener("click", async function () {
     track("maak-kleurplaat");
+    rememberAlgorithm(colorPageFill, colorPageButton);
 
     const fields = {
         smoothness: colorPageSmoothnessSlider.value,
@@ -475,6 +563,50 @@ colorPageButton.addEventListener("click", async function () {
 
     await runPythonAlgorithm("/api/color-page", fields, colorPageButton);
 });
+
+
+function rememberAlgorithm(fillSwitch, createButton) {
+    lastFillSwitch = fillSwitch;
+    lastCreateButton = createButton;
+}
+
+
+/* ---------- Na het resultaat: kleurplaat maken, printen ---------- */
+
+// "Maak Er Een Kleurplaat Van": zet "Zelf Inkleuren" aan en maak dezelfde bewerking opnieuw.
+diyOfferButton.addEventListener("click", function () {
+    if (!lastFillSwitch || !lastCreateButton) {
+        return;
+    }
+
+    track("maak-er-een-kleurplaat-van");
+
+    lastFillSwitch.checked = true;
+    lastCreateButton.click();
+});
+
+
+// Printen: style.css zorgt dat alleen het resultaat op papier komt (zie "Printen").
+printButton.addEventListener("click", function () {
+    if (!resultSource) {
+        return;
+    }
+
+    track("print");
+    window.print();
+});
+
+
+// Het aanbod "Nu Zelf Inkleuren?" alleen na een ingekleurde versie van een doe-het-zelf-bewerking.
+function updateDiyOffer() {
+    const showOffer = lastFillSwitch !== null && !lastFillSwitch.checked;
+
+    diyOffer.classList.toggle("hidden", !showOffer);
+
+    if (showOffer) {
+        diyOfferText.textContent = lastFillSwitch.dataset.offer;
+    }
+}
 
 
 /* ---------- Eigen kleuren kiezen (Coloring Page en Shape Division) ---------- */
@@ -779,6 +911,8 @@ function showResult(imageSource) {
     resultImage.src = imageSource;
     resultSource = imageSource;
     setDownloadEnabled(true);
+    updateDiyOffer();
+    document.body.classList.add("has-result");
 
     statusMessage.classList.add("hidden");
     resultContainer.classList.remove("hidden");
@@ -800,6 +934,7 @@ function clearResult() {
     resultSource = null;
     resultImage.removeAttribute("src");
     setDownloadEnabled(false);
+    document.body.classList.remove("has-result");
 }
 
 
