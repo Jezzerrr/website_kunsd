@@ -1554,7 +1554,7 @@ body.lightbox-open {
 /* Op Jouw Kunsd, met een resultaat in beeld: alleen het resultaat op papier, zo groot mogelijk */
 @media print {
     @page {
-        margin: 10mm;
+        margin: 7mm;
     }
 
     body.jouw-kunst-page.has-result {
@@ -1575,11 +1575,18 @@ body.lightbox-open {
         margin: 0;
     }
 
+    /* Geen geel kader van de werkplek op papier: alleen het resultaat, met wit eromheen */
+    body.jouw-kunst-page.has-result #aan-de-slag {
+        padding: 0;
+        background: none;
+        border-radius: 0;
+    }
+
     body.jouw-kunst-page.has-result .result-image {
         width: 100%;
         max-width: none;
-        max-height: 270mm;
-        object-fit: contain;
+        max-height: 282mm;
+        object-fit: contain;            /* niet vervormen; in het midden van de pagina */
         border: none;
         border-radius: 0;
         box-shadow: none;

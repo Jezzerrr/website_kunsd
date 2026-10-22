@@ -55,6 +55,10 @@ HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 MIN_IMAGE_SIZE = 1600
 MAX_IMAGE_SIZE = 3000
 
+# Langste zijde van het resultaat bij de stippen (Coloring Dots en RedBlack Dots). Stippen tekenen
+# kost bijna niets, dus we maken ze groot: scherp bij printen (A4 ongeveer 300 dpi).
+DOT_IMAGE_SIZE = 3600
+
 # Langste zijde van het resultaat bij Shape Division: houdt het snel en de download klein.
 MAX_SHAPE_SIZE = 2000
 
@@ -374,7 +378,7 @@ def image_endpoint(function):
 @app.route("/api/ranked-dots", methods=["POST"])
 @image_endpoint
 def ranked_dots():
-    input_image, grid_size = snap_to_dot_grid(load_input_image())
+    input_image, grid_size = snap_to_dot_grid(load_dot_image())
     colors = get_palette("gist_heat", 3, add_white=True, sort_by_darkness=True)
 
     return image_to_json(image_to_ranked_dots(
@@ -388,13 +392,15 @@ def ranked_dots():
 @app.route("/api/dots", methods=["POST"])
 @image_endpoint
 def dots():
-    input_image, grid_size = snap_to_dot_grid(load_input_image())
+    input_image, grid_size = snap_to_dot_grid(load_dot_image())
 
     return image_to_json(image_to_dots(
         input_image,
         grid_size=grid_size,
         color=False,
-        fill=read_flag("fill", default=False)
+        fill=read_flag("fill", default=False),
+        # Omtrekjes even dik als vroeger op 1600 pixels (1 pixel), anders worden ze te dun bij printen
+        outline_width=max(1, round(max(input_image.size) / MIN_IMAGE_SIZE))
     ))
 
 
@@ -502,6 +508,11 @@ def load_input_image():
     image = limit_size(image, MAX_IMAGE_SIZE)
 
     return ensure_min_size(image, MIN_IMAGE_SIZE)
+
+
+def load_dot_image():
+    """De foto voor de stippen: altijd DOT_IMAGE_SIZE pixels op de langste zijde."""
+    return limit_size(ensure_min_size(load_input_image(), DOT_IMAGE_SIZE), DOT_IMAGE_SIZE)
 
 
 def apply_crop(image):

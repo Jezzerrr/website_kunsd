@@ -635,18 +635,23 @@ printButton.addEventListener("click", function () {
 });
 
 
-// Vlak voor het printen (via de knop of Ctrl+P): A4 staand of liggend, net als het resultaat,
-// en het resultaat nooit hoger dan de pagina. Zo past het altijd op één pagina.
+// Vlak voor het printen (via de knop of Ctrl+P): A4 staand of liggend, net als het resultaat.
+// Het resultaat krijgt de hele pagina (min een smalle marge) en wordt daarin zo groot mogelijk
+// en in het midden gezet, zonder vervormen. Zo past het altijd op één pagina.
+const PRINT_MARGIN_MM = 7;
 const printPageStyle = document.createElement("style");
 document.head.appendChild(printPageStyle);
 
 window.addEventListener("beforeprint", function () {
     const isLandscape = resultImage.naturalWidth > resultImage.naturalHeight;
 
-    // A4 is 210 x 297 mm; min 2 x 10 mm marge, en nog wat speling
-    printPageStyle.textContent = isLandscape
-        ? "@page { size: A4 landscape; margin: 10mm; } .result-image { max-height: 180mm !important; }"
-        : "@page { size: A4 portrait; margin: 10mm; } .result-image { max-height: 265mm !important; }";
+    // A4 is 210 x 297 mm; min de marge aan twee kanten, en 1 mm speling tegen een lege tweede pagina
+    const pageHeight = isLandscape ? 210 : 297;
+    const imageHeight = pageHeight - 2 * PRINT_MARGIN_MM - 1;
+
+    printPageStyle.textContent =
+        `@page { size: A4 ${isLandscape ? "landscape" : "portrait"}; margin: ${PRINT_MARGIN_MM}mm; } ` +
+        `body.jouw-kunst-page.has-result .result-image { height: ${imageHeight}mm !important; max-height: none !important; }`;
 });
 
 
