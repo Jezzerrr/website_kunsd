@@ -73,7 +73,7 @@
         </p>
     </section>
 
-    <!-- Zonder foto gaat het bericht via Web3Forms (zoals altijd). Met foto stuurt js/contact.js het
+    <!-- Zonder bijlage gaat het bericht via Web3Forms (zoals altijd). Met foto of pdf stuurt js/contact.js het
          naar de eigen server (/api/contact in app.py), want Web3Forms kan alleen in het betaalde
          abonnement bijlagen meesturen. -->
     <form action="https://api.web3forms.com/submit" method="POST" id="contact-form" class="contact-form">
@@ -157,16 +157,16 @@
             ></textarea>
         </p>
 
-        <!-- Foto's toevoegen. Het veld heeft bewust geen name: js/contact.js verstuurt de foto's zelf. -->
+        <!-- Foto's of pdf's toevoegen. Het veld heeft bewust geen name: js/contact.js verstuurt de bestanden zelf. -->
         <div class="form-field">
-            <span class="field-title">Foto's <small>(mag ook leeg blijven)</small></span>
+            <span class="field-title">Foto's of pdf's <small>(mag ook leeg blijven)</small></span>
 
             <label for="contact-images" class="file-drop" id="file-drop" data-track="contact-foto-kiezen">
-                <strong>Voeg Een Foto Toe</strong>
-                <span>Je ingekleurde kleurplaat of je digitale resultaat. Sleep hem hierheen of klik om te kiezen (maximaal 3).</span>
+                <strong>Voeg Een Foto Of Pdf Toe</strong>
+                <span>Je ingekleurde kleurplaat, je digitale resultaat of een pdf. Sleep hem hierheen of klik om te kiezen (maximaal 3).</span>
             </label>
 
-            <input type="file" id="contact-images" accept="image/*" multiple>
+            <input type="file" id="contact-images" accept="image/*,application/pdf,.pdf" multiple>
 
             <div id="file-previews" class="file-previews"></div>
         </div>

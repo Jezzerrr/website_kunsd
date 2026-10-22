@@ -1380,6 +1380,38 @@ body.lightbox-open {
     border-radius: var(--radius-m);
 }
 
+/* Een pdf heeft geen voorbeeldplaatje: een vakje met "PDF" en de bestandsnaam */
+.file-preview-pdf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    padding: 6px;
+    box-sizing: border-box;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-m);
+    background: #ffffff;
+    text-align: center;
+}
+
+.file-preview-pdf strong {
+    font-size: 1.1rem;
+}
+
+.file-preview-pdf span {
+    width: 100%;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 .contact-form .status-message {
     margin: 0 0 20px;
 }

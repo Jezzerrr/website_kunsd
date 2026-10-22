@@ -74,15 +74,16 @@ MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
 # De map met foto's voor de diavoorstelling op "Mijn Kunsd"
 SLIDE_SHOW_FOLDER = "mijn_kunsd/slide_show"
 
-# Contactformulier met foto's (zonder foto gaat het via Web3Forms, zie contact.html).
+# Contactformulier met foto's of pdf's (zonder bijlage gaat het via Web3Forms, zie contact.html).
 # De mail gaat via Resend (resend.com), want het Render free plan blokkeert gewone e-mail (SMTP).
 # Nodig in de omgeving (Render: Environment; lokaal: .env):
 #   RESEND_API_KEY  de sleutel van je Resend-account
 #   CONTACT_EMAIL   waar de mail heen gaat: het e-mailadres van je Resend-account
 RESEND_URL = "https://api.resend.com/emails"
 CONTACT_FROM = "KUNSD Website <onboarding@resend.dev>"     # afzender die Resend zonder eigen domein toestaat
-CONTACT_MAX_IMAGES = 3              # gelijk houden met MAX_IMAGES in js/contact.js
+CONTACT_MAX_IMAGES = 3              # bijlagen (foto's en pdf's samen); gelijk houden met MAX_IMAGES in js/contact.js
 CONTACT_MAX_FILE_MB = 15            # gelijk houden met MAX_FILE_MB in js/contact.js
+CONTACT_MAX_PDF_MB = 8              # pdf's gaan onverkleind mee; Resend staat in totaal 40 MB per mail toe (na base64)
 CONTACT_IMAGE_SIZE = 2000           # foto's worden verkleind tot hoogstens zoveel pixels: kleine mail
 CONTACT_MAX_PER_HOUR = 10           # spamrem: zoveel berichten per uur per bezoeker
 EMAIL_ADDRESS = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
@@ -175,7 +176,7 @@ def contact():
 
     if not api_key or not to_address:
         app.logger.error("Contactformulier: RESEND_API_KEY of CONTACT_EMAIL ontbreekt")
-        return jsonify({"error": "Foto's meesturen lukt nu even niet. Stuur je bericht zonder foto, "
+        return jsonify({"error": "Bijlagen meesturen lukt nu even niet. Stuur je bericht zonder bijlage, "
                                  "of probeer het later nog eens."}), 503
 
     name = form.get("name", "").strip()[:100]
@@ -201,7 +202,7 @@ def contact():
         f"Naam: {name or '(niet ingevuld)'}\n"
         f"E-mail: {email}\n"
         f"Onderwerp: {subject}\n"
-        f"Foto's: {len(attachments)}\n\n"
+        f"Bijlagen: {len(attachments)}\n\n"
         f"{message}\n"
     )
 
@@ -210,7 +211,7 @@ def contact():
             "from": CONTACT_FROM,
             "to": [to_address],
             "reply_to": email,
-            "subject": f"[Kunsd Website] {subject} (met foto)",
+            "subject": f"[Kunsd Website] {subject} (met bijlage)",
             "text": text,
             "html": contact_email_html(name, email, subject, message, attachments),
             "attachments": attachments,
@@ -218,13 +219,13 @@ def contact():
     except urllib.error.URLError as error:
         detail = error.read().decode("utf-8", "replace") if isinstance(error, urllib.error.HTTPError) else error
         app.logger.error("Contactformulier: versturen via Resend mislukt: %s", detail)
-        return jsonify({"error": "Versturen is niet gelukt. Probeer het nog eens, of stuur je bericht zonder foto."}), 502
+        return jsonify({"error": "Versturen is niet gelukt. Probeer het nog eens, of stuur je bericht zonder bijlage."}), 502
 
     return jsonify({"ok": True})
 
 
 def contact_email_html(name, email, subject, message, attachments):
-    """De opgemaakte mail: een wit kaartje met de velden onder elkaar en de foto's erin.
+    """De opgemaakte mail: een wit kaartje met de velden onder elkaar en de foto's erin (pdf's alleen als bijlage).
 
     Mailprogramma's ondersteunen weinig CSS, daarom staat alle opmaak per element (style="...").
     """
@@ -238,19 +239,28 @@ def contact_email_html(name, email, subject, message, attachments):
         f'<img src="cid:{attachment["content_id"]}" alt="Foto {number}" width="480" '
         f'style="display:block;width:100%;max-width:480px;height:auto;margin:0 0 12px;'
         f'border:1px solid #dddddd;border-radius:8px;">'
-        for number, attachment in enumerate(attachments, start=1)
+        for number, attachment in enumerate(
+            [attachment for attachment in attachments if "content_id" in attachment], start=1
+        )
+    )
+
+    pdfs = "".join(
+        f'<p style="margin:0 0 8px;font-size:15px;">&#128196; {escape(attachment["filename"])} (zie bijlage)</p>'
+        for attachment in attachments
+        if attachment["content_type"] == "application/pdf"
     )
 
     return f"""\
 <div style="margin:0;padding:32px 12px;background:#f6f7f9;font-family:Arial,Helvetica,sans-serif;color:#171717;">
   <div style="max-width:560px;margin:0 auto;padding:28px;background:#ffffff;border:1px solid #e3e3e3;border-radius:10px;">
     <p style="margin:0 0 6px;font-size:16px;">Hallo Jesse,</p>
-    <p style="margin:0 0 26px;font-size:16px;">Er is een nieuw bericht verstuurd via je website, met foto. Hieronder de details.</p>
+    <p style="margin:0 0 26px;font-size:16px;">Er is een nieuw bericht verstuurd via je website, met bijlage. Hieronder de details.</p>
     {field("Naam", escape(name) or "(niet ingevuld)")}
     {field("E-mail", f'<a href="mailto:{escape(email)}" style="color:#1a56db;">{escape(email)}</a>')}
     {field("Onderwerp", escape(subject))}
     {field("Bericht", escape(message).replace(chr(10), "<br>"))}
-    <p style="margin:0 0 10px;color:#3b3fd8;font-weight:bold;font-size:14px;">Foto's ({len(attachments)})</p>
+    <p style="margin:0 0 10px;color:#3b3fd8;font-weight:bold;font-size:14px;">Bijlagen ({len(attachments)})</p>
+    {pdfs}
     {photos}
     <p style="margin:24px 0 0;color:#888888;font-size:13px;">Antwoorden kan direct: je antwoord gaat naar de afzender.</p>
   </div>
@@ -272,16 +282,28 @@ def too_many_messages():
 
 
 def read_contact_images():
-    """De meegestuurde foto's als bijlagen voor Resend: verkleind tot JPEG, in base64."""
+    """De meegestuurde bijlagen voor Resend, in base64: foto's verkleind tot JPEG, pdf's zoals ze zijn."""
     files = [file for file in request.files.getlist("images") if file.filename]
 
     if len(files) > CONTACT_MAX_IMAGES:
-        raise UserError(f"Je kunt maximaal {CONTACT_MAX_IMAGES} foto's meesturen.")
+        raise UserError(f"Je kunt maximaal {CONTACT_MAX_IMAGES} bestanden meesturen.")
 
     attachments = []
 
     for number, file in enumerate(files, start=1):
         data = file.read()
+
+        # Een pdf herken je aan de eerste bytes; de naam en het type van de browser zijn niet te vertrouwen.
+        if data.startswith(b"%PDF-"):
+            if len(data) > CONTACT_MAX_PDF_MB * 1024 * 1024:
+                raise UserError(f"Een pdf is groter dan {CONTACT_MAX_PDF_MB} MB. Kies een kleinere pdf.")
+
+            attachments.append({
+                "filename": f"kunsd-bijlage-{number}.pdf",
+                "content": base64.b64encode(data).decode("ascii"),
+                "content_type": "application/pdf",
+            })
+            continue
 
         if len(data) > CONTACT_MAX_FILE_MB * 1024 * 1024:
             raise UserError(f"Een foto is groter dan {CONTACT_MAX_FILE_MB} MB. Kies een kleinere foto.")
@@ -289,7 +311,7 @@ def read_contact_images():
         try:
             image = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
         except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
-            raise UserError(f"\"{file.filename}\" kan ik niet openen als afbeelding.")
+            raise UserError(f"\"{file.filename}\" kan ik niet openen als foto of pdf.")
 
         output = io.BytesIO()
         limit_size(image, CONTACT_IMAGE_SIZE).save(output, format="JPEG", quality=88)

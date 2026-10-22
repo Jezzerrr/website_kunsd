@@ -1,7 +1,7 @@
 // Het contactformulier.
 //
-// Zonder foto verstuurt de browser het formulier gewoon naar Web3Forms (zoals altijd).
-// Met foto('s) sturen we alles naar de eigen server (/api/contact in app.py), die er een mail
+// Zonder bijlage verstuurt de browser het formulier gewoon naar Web3Forms (zoals altijd).
+// Met foto's of pdf's sturen we alles naar de eigen server (/api/contact in app.py), die er een mail
 // met bijlagen van maakt. Web3Forms kan alleen in het betaalde abonnement bijlagen meesturen.
 
 const contactForm = document.getElementById("contact-form");
@@ -13,11 +13,12 @@ const filePreviews = document.getElementById("file-previews");
 const contactStatus = document.getElementById("contact-status");
 const submitButton = document.getElementById("contact-submit");
 
-// Moeten gelijk zijn aan CONTACT_MAX_IMAGES en CONTACT_MAX_FILE_MB in app.py
+// Moeten gelijk zijn aan CONTACT_MAX_IMAGES, CONTACT_MAX_FILE_MB en CONTACT_MAX_PDF_MB in app.py
 const MAX_IMAGES = 3;
 const MAX_FILE_MB = 15;
+const MAX_PDF_MB = 8;
 
-// De gekozen foto's. We houden ze zelf bij, zodat je er meer kunt toevoegen of er een kunt weghalen.
+// De gekozen bestanden (foto's en pdf's). We houden ze zelf bij, zodat je er meer kunt toevoegen of er een kunt weghalen.
 let selectedImages = [];
 
 
@@ -67,22 +68,35 @@ fileDrop.addEventListener("drop", function (event) {
 });
 
 
+// Sommige browsers (of Windows) geven een pdf geen type mee, dus kijken we ook naar de naam.
+function isPdf(file) {
+    return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+}
+
+
 function addImages(files) {
     hideError();
 
     Array.from(files).forEach(function (file) {
-        if (!file.type.startsWith("image/")) {
-            showError(`"${file.name}" is geen afbeelding.`);
+        const pdf = isPdf(file);
+
+        if (!pdf && !file.type.startsWith("image/")) {
+            showError(`"${file.name}" is geen foto of pdf.`);
             return;
         }
 
-        if (file.size > MAX_FILE_MB * 1024 * 1024) {
+        if (pdf && file.size > MAX_PDF_MB * 1024 * 1024) {
+            showError(`"${file.name}" is groter dan ${MAX_PDF_MB} MB. Kies een kleinere pdf.`);
+            return;
+        }
+
+        if (!pdf && file.size > MAX_FILE_MB * 1024 * 1024) {
             showError(`"${file.name}" is groter dan ${MAX_FILE_MB} MB. Kies een kleinere foto.`);
             return;
         }
 
         if (selectedImages.length >= MAX_IMAGES) {
-            showError(`Je kunt maximaal ${MAX_IMAGES} foto's meesturen.`);
+            showError(`Je kunt maximaal ${MAX_IMAGES} bestanden meesturen.`);
             return;
         }
 
@@ -97,7 +111,7 @@ function addImages(files) {
 }
 
 
-// Een klein voorbeeld van elke foto, met een kruisje om hem weg te halen.
+// Een klein voorbeeld van elke foto (of een vakje met "PDF" en de naam), met een kruisje om hem weg te halen.
 function renderPreviews() {
     filePreviews.textContent = "";
 
@@ -105,19 +119,35 @@ function renderPreviews() {
         const preview = document.createElement("div");
         preview.className = "file-preview";
 
-        const image = document.createElement("img");
-        image.src = URL.createObjectURL(file);
-        image.alt = file.name;
-        image.onload = function () {
-            URL.revokeObjectURL(image.src);
-        };
+        let thumbnail;
+
+        if (isPdf(file)) {
+            thumbnail = document.createElement("div");
+            thumbnail.className = "file-preview-pdf";
+            thumbnail.title = file.name;
+
+            const label = document.createElement("strong");
+            label.textContent = "PDF";
+
+            const fileName = document.createElement("span");
+            fileName.textContent = file.name;
+
+            thumbnail.append(label, fileName);
+        } else {
+            thumbnail = document.createElement("img");
+            thumbnail.src = URL.createObjectURL(file);
+            thumbnail.alt = file.name;
+            thumbnail.onload = function () {
+                URL.revokeObjectURL(thumbnail.src);
+            };
+        }
 
         const removeButton = document.createElement("button");
         removeButton.type = "button";
         removeButton.className = "palette-remove";
         removeButton.textContent = "×";
-        removeButton.title = "Haal deze foto weg";
-        removeButton.setAttribute("aria-label", "Haal deze foto weg");
+        removeButton.title = "Haal dit bestand weg";
+        removeButton.setAttribute("aria-label", "Haal dit bestand weg");
         removeButton.dataset.track = "contact-foto-weghalen";
 
         removeButton.addEventListener("click", function () {
@@ -125,7 +155,7 @@ function renderPreviews() {
             renderPreviews();
         });
 
-        preview.append(image, removeButton);
+        preview.append(thumbnail, removeButton);
         filePreviews.appendChild(preview);
     });
 
@@ -138,7 +168,7 @@ function renderPreviews() {
 contactForm.addEventListener("submit", async function (event) {
     mailSubject.value = "[Kunsd Website] " + subjectInput.value.trim();
 
-    // Zonder foto: de browser verstuurt het formulier zelf naar Web3Forms.
+    // Zonder bijlage: de browser verstuurt het formulier zelf naar Web3Forms.
     if (selectedImages.length === 0) {
         return;
     }
@@ -179,7 +209,7 @@ contactForm.addEventListener("submit", async function (event) {
         if (!response.ok || !data) {
             throw new Error(
                 (data && data.error) ||
-                "Versturen is niet gelukt. Probeer het nog eens, of stuur je bericht zonder foto."
+                "Versturen is niet gelukt. Probeer het nog eens, of stuur je bericht zonder bijlage."
             );
         }
 
