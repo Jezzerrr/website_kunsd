@@ -110,13 +110,13 @@
             </ol>
         </section>
 
-        <!-- Voorbeelden: één foto, vier bewerkingen. Bij de doe-het-zelf-bewerkingen kun je wisselen tussen
+        <!-- Voorbeelden: één foto, vijf bewerkingen. Bij de doe-het-zelf-bewerkingen kun je wisselen tussen
              het ingekleurde voorbeeld en de lege versie om te printen. -->
         <section id="voorbeelden" class="home-section">
-            <h2>Eén Foto, Vier Bewerkingen</h2>
+            <h2>Eén Foto, Vijf Bewerkingen</h2>
 
             <p class="section-intro">
-                Zo zien de bewerkingen eruit op een portret van mij. Bij drie ervan krijg je ook een lege versie
+                Zo zien de bewerkingen eruit op een portret van mij. Bij vier ervan krijg je ook een lege versie
                 om te printen en zelf in te kleuren.
             </p>
 
@@ -172,6 +172,32 @@
                     </p>
 
                     <button type="button" class="secondary-button try-button" data-algorithm="color-page-settings" data-name="Coloring Page" data-track="probeer-coloring-page">Probeer Deze</button>
+                </article>
+
+                <article class="example-card">
+                    <div class="example-image">
+                        <img
+                            src="mijn_kunsd/voorbeelden/paint-by-number.jpg"
+                            data-filled="mijn_kunsd/voorbeelden/paint-by-number.jpg"
+                            data-empty="mijn_kunsd/voorbeelden/paint-by-number-leeg.png"
+                            alt="Paint By Number: portret in veel kleine vlakjes van zestien kleuren"
+                            width="640"
+                            height="800"
+                            loading="lazy">
+                    </div>
+
+                    <div class="view-toggle" role="group" aria-label="Voorbeeld van Paint By Number">
+                        <button type="button" class="active" data-view="filled" data-track="voorbeeld-paint-by-number-ingekleurd">Ingekleurd</button>
+                        <button type="button" data-view="empty" data-track="voorbeeld-paint-by-number-om-te-printen">Om Te Printen</button>
+                    </div>
+
+                    <h3>Paint By Number <span class="tag tag-diy">Om In Te Kleuren</span></h3>
+                    <p>
+                        Schilderen op nummer, zoals de pakketten uit de winkel: honderden kleine vlakjes in veel
+                        kleuren. Meer werk, maar als het af is lijkt het echt op je foto.
+                    </p>
+
+                    <button type="button" class="secondary-button try-button" data-algorithm="paint-by-number-settings" data-name="Paint By Number" data-track="probeer-paint-by-number">Probeer Deze</button>
                 </article>
 
                 <article class="example-card">
@@ -350,6 +376,14 @@
                             data-settings="color-page-settings">
                             <img src="mijn_kunsd/voorbeelden/coloring-page.jpg" alt="" class="algorithm-thumb" loading="lazy">
                             Coloring Page
+                        </button>
+
+                        <button
+                            type="button"
+                            class="algorithm-button"
+                            data-settings="paint-by-number-settings">
+                            <img src="mijn_kunsd/voorbeelden/paint-by-number.jpg" alt="" class="algorithm-thumb" loading="lazy">
+                            Paint By Number
                         </button>
 
                         <button
@@ -867,6 +901,166 @@
 
                 </div>
 
+
+                <div
+                    id="paint-by-number-settings"
+                    class="algorithm-settings hidden">
+
+                    <h3>Paint By Number</h3>
+
+                    <label
+                        class="switch-row"
+                        for="paint-by-number-custom">
+
+                        <span>
+                            <strong>Eigen Kleuren Kiezen</strong>
+
+                            <small>
+                                Zet aan om zelf de kleuren te bepalen, bijvoorbeeld die van je eigen verf.
+                            </small>
+                        </span>
+
+                        <span class="switch">
+                            <input
+                                type="checkbox"
+                                id="paint-by-number-custom">
+
+                            <span class="switch-slider"></span>
+                        </span>
+
+                    </label>
+
+                    <!-- Automatisch: aantal kleuren -->
+                    <div id="paint-by-number-auto-colors">
+
+                        <div class="slider-header">
+                            <label for="paint-by-number-colors-slider">
+                                Aantal kleuren
+                            </label>
+
+                            <output
+                                id="paint-by-number-colors-value"
+                                for="paint-by-number-colors-slider">
+                                16
+                            </output>
+                        </div>
+
+                        <input
+                            type="range"
+                            id="paint-by-number-colors-slider"
+                            class="art-slider"
+                            min="6"
+                            max="24"
+                            step="1"
+                            value="16"
+                        >
+
+                        <div class="slider-scale">
+                            <span>Weinig</span>
+                            <span>Veel</span>
+                        </div>
+
+                        <p class="palette-hint">
+                            Kleuren die bijna hetzelfde zijn worden samengevoegd, dus soms krijg je er iets minder.
+                        </p>
+
+                    </div>
+
+                    <!-- Zelf kiezen: kleurvakjes met de kleurkiezer van je browser -->
+                    <div id="paint-by-number-custom-colors" class="hidden">
+
+                        <p class="palette-hint">
+                            Klik op een kleur om hem te veranderen. Paint By Number gebruikt precies deze kleuren.
+                        </p>
+
+                        <div id="paint-by-number-palette-list" class="palette-list"></div>
+
+                        <div class="button-row image-actions">
+                            <button
+                                type="button"
+                                id="paint-by-number-palette-add-button"
+                                class="secondary-button">
+                                + Kleur Toevoegen
+                            </button>
+
+                            <button
+                                type="button"
+                                id="paint-by-number-palette-from-photo-button"
+                                class="secondary-button">
+                                Kleuren Uit Foto
+                            </button>
+
+                            <button
+                                type="button"
+                                id="paint-by-number-palette-default-button"
+                                class="secondary-button">
+                                Standaardkleuren
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="slider-header">
+                        <label for="paint-by-number-detail-slider">
+                            Detail
+                        </label>
+
+                        <output
+                            id="paint-by-number-detail-value"
+                            for="paint-by-number-detail-slider">
+                            0.5
+                        </output>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="paint-by-number-detail-slider"
+                        class="art-slider"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value="0.5"
+                    >
+
+                    <div class="slider-scale">
+                        <span>Grote vlakjes</span>
+                        <span>Kleine vlakjes</span>
+                    </div>
+
+                    <label
+                        class="switch-row switch-row-diy"
+                        for="paint-by-number-fill">
+
+                        <span>
+                            <strong>Zelf Inkleuren</strong>
+
+                            <small>
+                                Zet aan voor de lege versie met nummers en een legenda.
+                            </small>
+                        </span>
+
+                        <span class="switch">
+                            <input
+                                type="checkbox"
+                                id="paint-by-number-fill"
+                                data-offer="Mooi geworden? Maak er dan een schilderen-op-nummer van: alleen de lijnen, met in elk vlakje een nummer en onderaan welke kleur bij welk nummer hoort.">
+
+                            <span class="switch-slider"></span>
+                        </span>
+
+                    </label>
+
+                    <div class="button-row">
+                        <button
+                            type="button"
+                            id="paint-by-number-button"
+                            class="create-button">
+                            Maak Paint By Number
+                        </button>
+                    </div>
+
+                </div>
+
             </section>
 
             <p
@@ -950,7 +1144,7 @@
                 <li>
                     <strong>Weinig Kleuren Voor Kinderen</strong>
                     Vier tot zes kleuren en grote vormen zijn fijn voor kleine handjes. Zoek je een uitdaging?
-                    Kies meer kleuren en kleinere vormen.
+                    Kies meer kleuren en kleinere vormen, of probeer Paint By Number.
                 </li>
                 <li>
                     <strong>Kleuren Die Je Al Hebt</strong>

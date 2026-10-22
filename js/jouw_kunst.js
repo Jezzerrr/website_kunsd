@@ -25,6 +25,10 @@ const colorPageMinRegionSlider = document.getElementById("color-page-min-region-
 const colorPageDetailSlider = document.getElementById("color-page-detail-slider");
 const colorPageFill = document.getElementById("color-page-fill");
 const colorPageButton = document.getElementById("color-page-button");
+const paintByNumberColorsSlider = document.getElementById("paint-by-number-colors-slider");
+const paintByNumberDetailSlider = document.getElementById("paint-by-number-detail-slider");
+const paintByNumberFill = document.getElementById("paint-by-number-fill");
+const paintByNumberButton = document.getElementById("paint-by-number-button");
 const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
@@ -62,7 +66,7 @@ const MIN_CROP_SIZE = 0.08;
 // ook klopt als het scherm van grootte verandert.
 const DEFAULT_CROP = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
 
-// Eigen kleuren (Coloring Page en Shape Division): minimaal en maximaal aantal, en een beginkeuze.
+// Eigen kleuren (Coloring Page, Paint By Number en Shape Division): minimaal en maximaal aantal, en een beginkeuze.
 const MIN_CUSTOM_COLORS = 2;
 const MAX_CUSTOM_COLORS = 12;
 const START_COLORS = ["#2b2d42", "#d62839", "#f9c22e", "#3a86ff", "#f4f1de"];
@@ -582,6 +586,23 @@ colorPageButton.addEventListener("click", async function () {
 });
 
 
+paintByNumberButton.addEventListener("click", async function () {
+    track("maak-paint-by-number");
+    rememberAlgorithm(paintByNumberFill, paintByNumberButton);
+
+    const fields = {
+        detail: paintByNumberDetailSlider.value,
+        fill: !paintByNumberFill.checked
+    };
+
+    if (!addColorFields(fields, paintByNumberPalette, "n_colors", paintByNumberColorsSlider)) {
+        return;
+    }
+
+    await runPythonAlgorithm("/api/paint-by-number", fields, paintByNumberButton);
+});
+
+
 function rememberAlgorithm(fillSwitch, createButton) {
     lastFillSwitch = fillSwitch;
     lastCreateButton = createButton;
@@ -641,7 +662,7 @@ function updateDiyOffer() {
 }
 
 
-/* ---------- Eigen kleuren kiezen (Coloring Page en Shape Division) ---------- */
+/* ---------- Eigen kleuren kiezen (Coloring Page, Paint By Number en Shape Division) ---------- */
 
 // Zet de kleurkeuze van een paneel in de velden die naar de server gaan: de eigen kleuren
 // als die zijn aangezet, anders het aantal kleuren van de slider (onder de naam countField).
@@ -833,6 +854,19 @@ const colorPagePalette = createPaletteEditor({
     photoId: "palette-from-photo-button",
     defaultId: "palette-default-button",
     trackName: "kleurplaat",
+    paletteUrl: "/api/color-page-palette"
+});
+
+// "Kleuren Uit Foto" werkt hetzelfde als bij de Coloring Page, dus dezelfde route.
+const paintByNumberPalette = createPaletteEditor({
+    switchId: "paint-by-number-custom",
+    autoId: "paint-by-number-auto-colors",
+    customId: "paint-by-number-custom-colors",
+    listId: "paint-by-number-palette-list",
+    addId: "paint-by-number-palette-add-button",
+    photoId: "paint-by-number-palette-from-photo-button",
+    defaultId: "paint-by-number-palette-default-button",
+    trackName: "paint-by-number",
     paletteUrl: "/api/color-page-palette"
 });
 
@@ -1122,6 +1156,7 @@ function writeProgress() {
         controls: controls,
         palettes: {
             colorPage: colorPagePalette.getColors(),
+            paintByNumber: paintByNumberPalette.getColors(),
             shape: shapePalette.getColors()
         },
         result: resultSource,
@@ -1193,6 +1228,7 @@ async function restoreProgress() {
         });
 
         restorePalette(colorPagePalette, "color-page-custom", saved.palettes && saved.palettes.colorPage);
+        restorePalette(paintByNumberPalette, "paint-by-number-custom", saved.palettes && saved.palettes.paintByNumber);
         restorePalette(shapePalette, "shape-custom", saved.palettes && saved.palettes.shape);
 
         if (saved.algorithm) {

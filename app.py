@@ -16,6 +16,7 @@ from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 from src.color_page import image_to_color_page, suggest_palette
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.helper_functions.color_helpers import get_palette
+from src.paint_by_number import image_to_paint_by_number
 from src.shape_division import image_to_shapes
 from src.shape_numbers import (
     image_to_numbered_shapes,
@@ -455,6 +456,23 @@ def color_page():
         smoothness=read_number("smoothness", 1, 0, 5),
         min_region_size=read_number("min_region_size", 0.1, 0.05, 1),
         detail=read_number("detail", 0.6, 0, 1),
+        fill=fill,
+        legend=not fill
+    ))
+
+
+@app.route("/api/paint-by-number", methods=["POST"])
+@image_endpoint
+def paint_by_number():
+    # "Kleuren uit foto" gebruikt dezelfde route als de Coloring Page (/api/color-page-palette)
+    colors = read_custom_colors()
+    fill = read_flag("fill", default=True)
+
+    return image_to_json(image_to_paint_by_number(
+        load_input_image(),
+        n_colors=int(read_number("n_colors", 16, 6, 24)),
+        colors=colors or None,
+        detail=read_number("detail", 0.5, 0, 1),
         fill=fill,
         legend=not fill
     ))
