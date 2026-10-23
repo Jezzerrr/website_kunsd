@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Jesses website voor de KUNSD</title>
+    <title>KUNSD · Maak Kunst Van Je Eigen Foto</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +36,7 @@
 
     <header>
         <nav>
-            <a href="/">Home</a>
+            <a href="/" aria-current="page">Home</a>
             <a href="/jouw_kunst">Jouw Kunsd</a>
             <a href="/mijn_kunst">Mijn Kunsd</a>
             <a href="/contact">Contact</a>
@@ -45,48 +45,90 @@
 
     <main>
 
-        <!-- Bovenaan: wat je hier kunt doen, met twee knoppen -->
-        <section class="hero">
-            <h1>Jesses website voor de KUNSD</h1>
+        <!-- Bovenaan: wat je hier kunt doen, met een geprinte en een ingekleurde Paint By Number -->
+        <section class="art-hero">
+            <div class="art-hero-text">
+                <h1>Maak Kunst Van Je Eigen Foto</h1>
 
-            <p class="hero-text">
-                Maak kunst van je eigen foto's, met algoritmes die ik zelf in Python heb geschreven.
-                Stippen, vormen, kleurplaten: upload een foto, kies een bewerking en download het resultaat.
-            </p>
+                <p class="hero-text">
+                    Upload een foto en mijn algoritmes maken er een kleurplaat, een schilderij-op-nummer
+                    of een stippenportret van. Print het uit en kleur het zelf in, of hang het zo op.
+                </p>
 
-            <div class="hero-buttons">
-                <a href="/jouw_kunst" class="create-button link-button" data-track="home-maak-kunst">Maak Je Eigen Kunsd</a>
-                <a href="/mijn_kunst" class="secondary-button link-button" data-track="home-bekijk-werk">Bekijk Mijn Werk</a>
+                <p class="hero-text">
+                    Gratis, zonder account, en je foto wordt niet bewaard.
+                </p>
+
+                <div class="hero-buttons">
+                    <a href="/jouw_kunst" class="create-button link-button" data-track="home-maak-kunst">Maak Je Eigen Kunsd</a>
+                    <a href="/mijn_kunst" class="secondary-button link-button" data-track="home-bekijk-werk">Bekijk Mijn Werk</a>
+                </div>
+            </div>
+
+            <div class="before-after">
+                <figure class="paper paper-left">
+                    <img
+                        src="mijn_kunsd/voorbeelden/paint-by-number-leeg.png"
+                        alt="Een geprinte Paint By Number van een portret, met lijnen en nummers"
+                        width="640"
+                        height="909">
+                    <figcaption>1. Print</figcaption>
+                </figure>
+
+                <figure class="paper paper-right">
+                    <img
+                        src="mijn_kunsd/voorbeelden/paint-by-number.jpg"
+                        alt="Dezelfde Paint By Number, ingekleurd"
+                        width="640"
+                        height="800">
+                    <figcaption>2. Kleur In</figcaption>
+                </figure>
             </div>
         </section>
 
-        <section class="featured-art">
-            <img
-                src="mijn_kunsd/dots_family/EmLuJes_dots.jpg"
-                alt="Familiefoto omgezet in gekleurde stippen"
-                width="1200"
-                height="900">
+        <!-- De vier bewerkingen als kleine plaatjes; klikken gaat naar de voorbeelden op Jouw Kunsd -->
+        <section class="home-section">
+            <h2>Vier Bewerkingen</h2>
+
+            <div class="style-strip">
+                <a href="/jouw_kunst#voorbeelden" data-track="home-stijl-shape-division">
+                    <img src="mijn_kunsd/voorbeelden/shape-division.jpg" alt="Portret als mozaïek van vormen" width="640" height="800" loading="lazy">
+                    <span>Shape Division</span>
+                </a>
+                <a href="/jouw_kunst#voorbeelden" data-track="home-stijl-paint-by-number">
+                    <img src="mijn_kunsd/voorbeelden/paint-by-number.jpg" alt="Portret als schilderij op nummer" width="640" height="800" loading="lazy">
+                    <span>Paint By Number</span>
+                </a>
+                <a href="/jouw_kunst#voorbeelden" data-track="home-stijl-coloring-dots">
+                    <img src="mijn_kunsd/voorbeelden/coloring-dots.png" alt="Portret van zwarte stippen" width="640" height="800" loading="lazy">
+                    <span>Coloring Dots</span>
+                </a>
+                <a href="/jouw_kunst#voorbeelden" data-track="home-stijl-redblack-dots">
+                    <img src="mijn_kunsd/voorbeelden/redblack-dots.png" alt="Portret van rode en zwarte stippen" width="640" height="802" loading="lazy">
+                    <span>RedBlack Dots</span>
+                </a>
+            </div>
         </section>
 
-        <!-- In drie stappen van foto naar kunst -->
-        <section class="home-section">
-            <h2>Zo Werkt Het</h2>
+        <!-- Doorkijkje naar Mijn Kunsd -->
+        <section class="home-section about-teaser">
+            <img
+                src="mijn_kunsd/square_moves/JesseMetzFotoPS.jpeg"
+                alt="Portret van Jesse waarin blokjes een stukje zijn verschoven"
+                width="1600"
+                height="900"
+                loading="lazy">
 
-            <ol class="steps">
-                <li>
-                    <strong>Kies Een Foto</strong>
-                    Upload een foto en snijd hem eventueel bij. Een portret of een kleurrijke foto werkt het best.
-                </li>
-                <li>
-                    <strong>Kies Een Bewerking</strong>
-                    Alleen een mooi plaatje, of iets om na het printen zelf mee aan de slag te gaan,
-                    zoals een kleurplaat met nummers.
-                </li>
-                <li>
-                    <strong>Download En Print</strong>
-                    Bekijk het resultaat, speel met de instellingen en download je eigen kunstwerk.
-                </li>
-            </ol>
+            <div>
+                <h2>Over Mij</h2>
+
+                <p>
+                    Overdag ben ik data scientist, 's avonds laat ik dezelfde technieken los op foto's.
+                    In de zomer van 2025 hing mijn werk in het Frans Hals Museum, als deel van De Portrettenparade.
+                </p>
+
+                <a href="/mijn_kunst" class="secondary-button link-button" data-track="home-lees-verhaal">Lees Mijn Verhaal</a>
+            </div>
         </section>
 
         <!-- Uitleg dat de site een project in ontwikkeling is -->
@@ -94,14 +136,9 @@
             <h2>Altijd In Ontwikkeling</h2>
 
             <p>
-                KUNSD is mijn hobbyproject en groeit stap voor stap. Ik ben data scientist en vind het mooi
-                om met code iets te maken dat je kunt ophangen of inkleuren. Elk algoritme begint als een
-                experiment op mijn laptop; de beste komen hier terecht, zodat jij ze ook kunt gebruiken.
-            </p>
-
-            <p>
-                Er komen dus regelmatig nieuwe bewerkingen bij, en bestaande worden beter.
-                Op mijn lijstje staan onder andere rechte lijnen en puzzelstukjes.
+                KUNSD is mijn hobbyproject en groeit stap voor stap. Elk algoritme begint als een experiment
+                op mijn laptop; de beste komen hier terecht, zodat jij ze ook kunt gebruiken. Er komen dus
+                regelmatig nieuwe bewerkingen bij, en bestaande worden beter.
             </p>
 
             <p>
@@ -118,6 +155,7 @@
             ik denk graag samen.
             <a href="/contact" data-track="uitnodiging-contact">Stuur me een bericht</a>
         </p>
+        <p class="footer-credit">&copy; 2026 Jesse Metz &middot; KUNSD</p>
     </footer>
 
     <script src="js/analytics.js"></script>

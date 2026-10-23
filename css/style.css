@@ -65,6 +65,13 @@ nav a:hover {
     transform: rotate(3deg) scale(1.1);
 }
 
+/* De pagina waar je nu bent: dikke streep eronder */
+nav a[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 6px;
+}
+
 main {
     line-height: 1.6;
 }
@@ -92,6 +99,71 @@ main {
 
 .site-footer a:hover {
     color: var(--accent);
+}
+
+/* Naam onderaan elke pagina */
+.site-footer .footer-credit {
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.site-footer p:only-child.footer-credit {
+    margin-top: 0;
+}
+
+/* Homepage: de vier bewerkingen als kleine plaatjes naast elkaar */
+.style-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.style-strip a {
+    display: block;
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.style-strip img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    margin-bottom: 8px;
+    border-radius: var(--radius-m);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.style-strip a:hover {
+    color: var(--accent);
+}
+
+.style-strip a:hover img {
+    transform: translateY(-4px);
+}
+
+/* Homepage: doorkijkje naar Mijn Kunsd, foto links en tekst rechts */
+.about-teaser {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: center;
+}
+
+.about-teaser img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow);
+}
+
+.about-teaser h2 {
+    margin-top: 0;
 }
 
 button,
@@ -1449,8 +1521,19 @@ body.lightbox-open {
     .examples,
     .tips,
     .form-row,
-    .art-hero {
+    .art-hero,
+    .about-teaser {
         grid-template-columns: 1fr;
+    }
+
+    /* Vier bewerkingen: twee bij twee op een telefoon */
+    .style-strip {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .about-teaser {
+        gap: 20px;
     }
 
     .art-hero {
