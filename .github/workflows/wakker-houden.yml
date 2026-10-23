@@ -1,0 +1,32 @@
+# Houdt de site op Render wakker, zodat bezoekers niet twee minuten hoeven te wachten.
+#
+# Het Render free plan legt de site na 15 minuten zonder bezoekers in slaap. Deze GitHub Action
+# vraagt elke 5 minuten /api/wakker op (zie app.py), zodat dat niet gebeurt.
+#
+# Gratis: GitHub Actions is onbeperkt gratis voor openbare repo's, en Render geeft 750 gratis
+# uren per maand: genoeg voor één site die de hele maand draait (31 x 24 = 744 uur).
+#
+# Let op:
+# - GitHub start geplande taken soms een paar minuten te laat; daarom elke 5 minuten (ruim binnen 15).
+# - GitHub zet geplande taken uit als er 60 dagen niets in de repo gebeurt. Weer aanzetten kan
+#   onder Actions > Site Wakker Houden > Enable workflow.
+# - Zelf testen: Actions > Site Wakker Houden > Run workflow.
+
+name: Site Wakker Houden
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Klop Aan Bij De Site
+        # Mislukt het een keer (bijv. tijdens een deploy), dan geen foutmelding: over 5 minuten
+        # gewoon opnieuw. Zo krijg je ook geen mailtjes van GitHub over mislukte runs.
+        run: |
+          curl --silent --show-error --max-time 180 --retry 3 --retry-delay 10 \
+            "https://jesses-kunsd.onrender.com/api/wakker" || echo "Geen antwoord, volgende keer opnieuw."
