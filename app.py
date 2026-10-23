@@ -13,7 +13,7 @@ from pathlib import Path, PurePosixPath
 from PIL import Image, ImageOps, UnidentifiedImageError
 from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 
-from src.color_page import image_to_color_page, suggest_palette
+from src.color_page import suggest_palette
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.helper_functions.color_helpers import get_palette
 from src.paint_by_number import image_to_paint_by_number
@@ -449,28 +449,9 @@ def shape_division_palette():
     })
 
 
-@app.route("/api/color-page", methods=["POST"])
-@image_endpoint
-def color_page():
-    colors = read_custom_colors()
-    fill = read_flag("fill", default=True)
-
-    return image_to_json(image_to_color_page(
-        load_input_image(),
-        n_colors=int(read_number("n_colors", 6, 2, 12)),
-        colors=colors or None,
-        smoothness=read_number("smoothness", 1, 0, 5),
-        min_region_size=read_number("min_region_size", 0.1, 0.05, 1),
-        detail=read_number("detail", 0.6, 0, 1),
-        fill=fill,
-        legend=not fill
-    ))
-
-
 @app.route("/api/paint-by-number", methods=["POST"])
 @image_endpoint
 def paint_by_number():
-    # "Kleuren uit foto" gebruikt dezelfde route als de Coloring Page (/api/color-page-palette)
     colors = read_custom_colors()
     fill = read_flag("fill", default=True)
 
@@ -484,9 +465,10 @@ def paint_by_number():
     ))
 
 
-@app.route("/api/color-page-palette", methods=["POST"])
+@app.route("/api/paint-by-number-palette", methods=["POST"])
 @image_endpoint
-def color_page_palette():
+def paint_by_number_palette():
+    # "Kleuren Uit Foto": dezelfde kleurkeuze als Paint By Number zelf (k-means uit color_page.py)
     n_colors = int(read_number("n_colors", 6, 2, 12))
 
     return jsonify({"colors": suggest_palette(load_input_image(), n_colors)})

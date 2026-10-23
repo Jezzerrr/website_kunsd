@@ -228,3 +228,6 @@ input_plaatjes/**
 input_plaatjes/**/
 input_plaatjes/**/.gitkeep
 
+
+# Eigen documenten, zoals onderzoek en ideeën
+documenten/

@@ -110,13 +110,13 @@
             </ol>
         </section>
 
-        <!-- Voorbeelden: één foto, vijf bewerkingen. Bij de doe-het-zelf-bewerkingen kun je wisselen tussen
+        <!-- Voorbeelden: één foto, vier bewerkingen. Bij de doe-het-zelf-bewerkingen kun je wisselen tussen
              het ingekleurde voorbeeld en de lege versie om te printen. -->
         <section id="voorbeelden" class="home-section">
-            <h2>Eén Foto, Vijf Bewerkingen</h2>
+            <h2>Eén Foto, Vier Bewerkingen</h2>
 
             <p class="section-intro">
-                Zo zien de bewerkingen eruit op een portret van mij. Bij vier ervan krijg je ook een lege versie
+                Zo zien de bewerkingen eruit op een portret van mij. Bij drie ervan krijg je ook een lege versie
                 om te printen en zelf in te kleuren.
             </p>
 
@@ -146,32 +146,6 @@
                     </p>
 
                     <button type="button" class="secondary-button try-button" data-algorithm="shape-division-settings" data-name="Shape Division" data-track="probeer-shape-division">Probeer Deze</button>
-                </article>
-
-                <article class="example-card">
-                    <div class="example-image">
-                        <img
-                            src="mijn_kunsd/voorbeelden/coloring-page.jpg"
-                            data-filled="mijn_kunsd/voorbeelden/coloring-page.jpg"
-                            data-empty="mijn_kunsd/voorbeelden/coloring-page-leeg.png"
-                            alt="Coloring Page: portret in vlakken van zes kleuren"
-                            width="640"
-                            height="800"
-                            loading="lazy">
-                    </div>
-
-                    <div class="view-toggle" role="group" aria-label="Voorbeeld van Coloring Page">
-                        <button type="button" class="active" data-view="filled" data-track="voorbeeld-coloring-page-ingekleurd">Ingekleurd</button>
-                        <button type="button" data-view="empty" data-track="voorbeeld-coloring-page-om-te-printen">Om Te Printen</button>
-                    </div>
-
-                    <h3>Coloring Page <span class="tag tag-diy">Om In Te Kleuren</span></h3>
-                    <p>
-                        Een echte kleurplaat: je foto in grote vlakken, elk met een nummer. Onderaan staat welke
-                        kleur bij welk nummer hoort. Kies zelf hoeveel kleuren, of welke.
-                    </p>
-
-                    <button type="button" class="secondary-button try-button" data-algorithm="color-page-settings" data-name="Coloring Page" data-track="probeer-coloring-page">Probeer Deze</button>
                 </article>
 
                 <article class="example-card">
@@ -368,14 +342,6 @@
                             data-settings="shape-division-settings">
                             <img src="mijn_kunsd/voorbeelden/shape-division.jpg" alt="" class="algorithm-thumb" loading="lazy">
                             Shape Division
-                        </button>
-
-                        <button
-                            type="button"
-                            class="algorithm-button"
-                            data-settings="color-page-settings">
-                            <img src="mijn_kunsd/voorbeelden/coloring-page.jpg" alt="" class="algorithm-thumb" loading="lazy">
-                            Coloring Page
                         </button>
 
                         <button
@@ -686,216 +652,6 @@
                             id="dots-button"
                             class="create-button">
                             Maak Coloring Dots
-                        </button>
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="color-page-settings"
-                    class="algorithm-settings hidden">
-
-                    <h3>Coloring Page</h3>
-
-                    <label
-                        class="switch-row"
-                        for="color-page-custom">
-
-                        <span>
-                            <strong>Eigen Kleuren Kiezen</strong>
-
-                            <small>
-                                Zet aan om zelf de kleuren te bepalen.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="color-page-custom">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <!-- Automatisch: aantal kleuren -->
-                    <div id="color-page-auto-colors">
-
-                        <div class="slider-header">
-                            <label for="color-page-colors-slider">
-                                Aantal kleuren
-                            </label>
-
-                            <output
-                                id="color-page-colors-value"
-                                for="color-page-colors-slider">
-                                6
-                            </output>
-                        </div>
-
-                        <input
-                            type="range"
-                            id="color-page-colors-slider"
-                            class="art-slider"
-                            min="2"
-                            max="12"
-                            step="1"
-                            value="6"
-                        >
-
-                        <div class="slider-scale">
-                            <span>Weinig</span>
-                            <span>Veel</span>
-                        </div>
-
-                    </div>
-
-                    <!-- Zelf kiezen: kleurvakjes met de kleurkiezer van je browser -->
-                    <div id="color-page-custom-colors" class="hidden">
-
-                        <p class="palette-hint">
-                            Klik op een kleur om hem te veranderen. De Coloring Page gebruikt precies deze kleuren.
-                        </p>
-
-                        <div id="palette-list" class="palette-list"></div>
-
-                        <div class="button-row image-actions">
-                            <button
-                                type="button"
-                                id="palette-add-button"
-                                class="secondary-button">
-                                + Kleur Toevoegen
-                            </button>
-
-                            <button
-                                type="button"
-                                id="palette-from-photo-button"
-                                class="secondary-button">
-                                Kleuren Uit Foto
-                            </button>
-
-                            <button
-                                type="button"
-                                id="palette-default-button"
-                                class="secondary-button">
-                                Standaardkleuren
-                            </button>
-                        </div>
-
-                    </div>
-
-                    <div class="slider-header">
-                        <label for="color-page-smoothness-slider">
-                            Gladheid van de randen
-                        </label>
-
-                        <output
-                            id="color-page-smoothness-value"
-                            for="color-page-smoothness-slider">
-                            1
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="color-page-smoothness-slider"
-                        class="art-slider"
-                        min="0"
-                        max="5"
-                        step="0.5"
-                        value="1"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Hoekig</span>
-                        <span>Glad</span>
-                    </div>
-
-                    <div class="slider-header">
-                        <label for="color-page-detail-slider">
-                            Details behouden
-                        </label>
-
-                        <output
-                            id="color-page-detail-value"
-                            for="color-page-detail-slider">
-                            0.6
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="color-page-detail-slider"
-                        class="art-slider"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value="0.6"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Weinig</span>
-                        <span>Veel</span>
-                    </div>
-
-                    <div class="slider-header">
-                        <label for="color-page-min-region-slider">
-                            Kleinste vlak
-                        </label>
-
-                        <output
-                            id="color-page-min-region-value"
-                            for="color-page-min-region-slider">
-                            0.1%
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="color-page-min-region-slider"
-                        class="art-slider"
-                        min="0.05"
-                        max="1"
-                        step="0.05"
-                        value="0.1"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Klein</span>
-                        <span>Groot</span>
-                    </div>
-
-                    <label
-                        class="switch-row switch-row-diy"
-                        for="color-page-fill">
-
-                        <span>
-                            <strong>Zelf Inkleuren</strong>
-
-                            <small>
-                                Zet aan voor een lege kleurplaat met nummers en een legenda.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="color-page-fill"
-                                data-offer="Mooi geworden? Maak er dan een kleurplaat van: alleen de lijnen, met in elk vlak een nummer en onderaan welke kleur bij welk nummer hoort.">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <div class="button-row">
-                        <button
-                            type="button"
-                            id="color-page-button"
-                            class="create-button">
-                            Maak Coloring Page
                         </button>
                     </div>
 

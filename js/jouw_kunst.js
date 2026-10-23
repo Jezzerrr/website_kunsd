@@ -19,12 +19,6 @@ const shapeFill = document.getElementById("shape-fill");
 const shapeButton = document.getElementById("shape-button");
 const rankedDotsButton = document.getElementById("ranked-dots-button");
 const dotsButton = document.getElementById("dots-button");
-const colorPageColorsSlider = document.getElementById("color-page-colors-slider");
-const colorPageSmoothnessSlider = document.getElementById("color-page-smoothness-slider");
-const colorPageMinRegionSlider = document.getElementById("color-page-min-region-slider");
-const colorPageDetailSlider = document.getElementById("color-page-detail-slider");
-const colorPageFill = document.getElementById("color-page-fill");
-const colorPageButton = document.getElementById("color-page-button");
 const paintByNumberColorsSlider = document.getElementById("paint-by-number-colors-slider");
 const paintByNumberDetailSlider = document.getElementById("paint-by-number-detail-slider");
 const paintByNumberFill = document.getElementById("paint-by-number-fill");
@@ -66,7 +60,7 @@ const MIN_CROP_SIZE = 0.08;
 // ook klopt als het scherm van grootte verandert.
 const DEFAULT_CROP = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
 
-// Eigen kleuren (Coloring Page, Paint By Number en Shape Division): minimaal en maximaal aantal, en een beginkeuze.
+// Eigen kleuren (Paint By Number en Shape Division): minimaal en maximaal aantal, en een beginkeuze.
 const MIN_CUSTOM_COLORS = 2;
 const MAX_CUSTOM_COLORS = 12;
 const START_COLORS = ["#2b2d42", "#d62839", "#f9c22e", "#3a86ff", "#f4f1de"];
@@ -437,7 +431,7 @@ algorithmButtons.forEach(function (button) {
 });
 
 
-// Opent de instellingen van één bewerking (bijv. "color-page-settings") en sluit de andere.
+// Opent de instellingen van één bewerking (bijv. "paint-by-number-settings") en sluit de andere.
 function selectAlgorithm(settingsId) {
     algorithmButtons.forEach(function (button) {
         button.classList.toggle("active", button.dataset.settings === settingsId);
@@ -567,25 +561,6 @@ dotsButton.addEventListener("click", async function () {
 });
 
 
-colorPageButton.addEventListener("click", async function () {
-    track("maak-kleurplaat");
-    rememberAlgorithm(colorPageFill, colorPageButton);
-
-    const fields = {
-        smoothness: colorPageSmoothnessSlider.value,
-        min_region_size: colorPageMinRegionSlider.value,
-        detail: colorPageDetailSlider.value,
-        fill: !colorPageFill.checked
-    };
-
-    if (!addColorFields(fields, colorPagePalette, "n_colors", colorPageColorsSlider)) {
-        return;
-    }
-
-    await runPythonAlgorithm("/api/color-page", fields, colorPageButton);
-});
-
-
 paintByNumberButton.addEventListener("click", async function () {
     track("maak-paint-by-number");
     rememberAlgorithm(paintByNumberFill, paintByNumberButton);
@@ -667,7 +642,7 @@ function updateDiyOffer() {
 }
 
 
-/* ---------- Eigen kleuren kiezen (Coloring Page, Paint By Number en Shape Division) ---------- */
+/* ---------- Eigen kleuren kiezen (Paint By Number en Shape Division) ---------- */
 
 // Zet de kleurkeuze van een paneel in de velden die naar de server gaan: de eigen kleuren
 // als die zijn aangezet, anders het aantal kleuren van de slider (onder de naam countField).
@@ -850,19 +825,6 @@ function createPaletteEditor(config) {
 }
 
 
-const colorPagePalette = createPaletteEditor({
-    switchId: "color-page-custom",
-    autoId: "color-page-auto-colors",
-    customId: "color-page-custom-colors",
-    listId: "palette-list",
-    addId: "palette-add-button",
-    photoId: "palette-from-photo-button",
-    defaultId: "palette-default-button",
-    trackName: "kleurplaat",
-    paletteUrl: "/api/color-page-palette"
-});
-
-// "Kleuren Uit Foto" werkt hetzelfde als bij de Coloring Page, dus dezelfde route.
 const paintByNumberPalette = createPaletteEditor({
     switchId: "paint-by-number-custom",
     autoId: "paint-by-number-auto-colors",
@@ -872,7 +834,7 @@ const paintByNumberPalette = createPaletteEditor({
     photoId: "paint-by-number-palette-from-photo-button",
     defaultId: "paint-by-number-palette-default-button",
     trackName: "paint-by-number",
-    paletteUrl: "/api/color-page-palette"
+    paletteUrl: "/api/paint-by-number-palette"
 });
 
 const shapePalette = createPaletteEditor({
@@ -1160,7 +1122,6 @@ function writeProgress() {
         algorithm: activeButton ? activeButton.dataset.settings : null,
         controls: controls,
         palettes: {
-            colorPage: colorPagePalette.getColors(),
             paintByNumber: paintByNumberPalette.getColors(),
             shape: shapePalette.getColors()
         },
@@ -1232,11 +1193,11 @@ async function restoreProgress() {
             }
         });
 
-        restorePalette(colorPagePalette, "color-page-custom", saved.palettes && saved.palettes.colorPage);
         restorePalette(paintByNumberPalette, "paint-by-number-custom", saved.palettes && saved.palettes.paintByNumber);
         restorePalette(shapePalette, "shape-custom", saved.palettes && saved.palettes.shape);
 
-        if (saved.algorithm) {
+        // Een bewerking die intussen van de pagina is gehaald, gaat niet meer open
+        if (saved.algorithm && document.getElementById(saved.algorithm)) {
             selectAlgorithm(saved.algorithm);
         }
 
