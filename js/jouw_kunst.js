@@ -1040,7 +1040,13 @@ function closeAlgorithmSettings() {
 /* ---------- Voortgang bewaren ----------
    Foto, uitsnede, instellingen en resultaat worden in de browser van de bezoeker bewaard
    (IndexedDB; niet op de server). Ga je naar een andere pagina en kom je terug, dan staat
-   alles nog klaar, ook op dezelfde plek op de pagina. Na MAX_SAVE_AGE_MS wordt het gewist.
+   alles nog klaar, ook op dezelfde plek op de pagina.
+
+   Dat geldt alleen binnen één bezoek. Sluit je het tabblad of de browser, of druk je op F5,
+   dan begin je de volgende keer met een lege pagina en wordt de bewaarde foto gewist.
+   Hoe: elk tabblad krijgt een eigen bezoek-code in sessionStorage (die verdwijnt als het
+   tabblad sluit). De bewaarde voortgang hoort bij die code; past hij niet, dan wordt hij gewist.
+   Na MAX_SAVE_AGE_MS wordt het hoe dan ook gewist.
    Lukt bewaren niet (bijv. een privévenster), dan werkt de pagina gewoon zoals altijd. */
 
 const SAVE_DB_NAME = "kunsd";
@@ -1048,10 +1054,34 @@ const SAVE_STORE = "voortgang";
 const SAVE_KEY = "jouw-kunst";
 const MAX_SAVE_AGE_MS = 24 * 60 * 60 * 1000;   // 1 dag
 const SCROLL_KEY = "jouw-kunst-scroll";
+const VISIT_KEY = "jouw-kunst-bezoek";
 
 // Tijdens het terugzetten niet tussendoor bewaren
 let isRestoring = false;
 let saveTimer = null;
+
+
+// De code van dit bezoek (dit tabblad). Geen sessionStorage beschikbaar: null, dan bewaren we niets.
+function getVisitId() {
+    try {
+        let visitId = sessionStorage.getItem(VISIT_KEY);
+
+        if (!visitId) {
+            visitId = Date.now() + "-" + Math.random().toString(36).slice(2);
+            sessionStorage.setItem(VISIT_KEY, visitId);
+        }
+        return visitId;
+    } catch (error) {
+        return null;
+    }
+}
+
+
+// Is de pagina net ververst (F5 of de herlaadknop)?
+function isPageReload() {
+    const navigation = performance.getEntriesByType("navigation")[0];
+    return Boolean(navigation && navigation.type === "reload");
+}
 
 
 function openSaveDb() {
@@ -1102,7 +1132,9 @@ function saveProgress() {
 function writeProgress() {
     saveTimer = null;
 
-    if (!originalFile) {
+    const visitId = getVisitId();
+
+    if (!originalFile || !visitId) {
         return;
     }
 
@@ -1117,6 +1149,7 @@ function writeProgress() {
 
     const progress = {
         savedAt: Date.now(),
+        visitId: visitId,
         file: originalFile,
         crop: appliedCrop,
         algorithm: activeButton ? activeButton.dataset.settings : null,
@@ -1150,6 +1183,17 @@ function clearProgress() {
 async function restoreProgress() {
     let saved;
 
+    // F5: opnieuw beginnen, met een lege pagina bovenaan
+    if (isPageReload()) {
+        try {
+            sessionStorage.removeItem(SCROLL_KEY);
+        } catch (error) {
+            // Niet erg
+        }
+        clearProgress();
+        return;
+    }
+
     try {
         saved = await useSaveStore("readonly", function (store) {
             return store.get(SAVE_KEY);
@@ -1163,7 +1207,8 @@ async function restoreProgress() {
         return;
     }
 
-    if (Date.now() - saved.savedAt > MAX_SAVE_AGE_MS) {
+    // Bewaard in een eerder bezoek (tabblad of browser intussen gesloten), of te oud: wissen
+    if (saved.visitId !== getVisitId() || Date.now() - saved.savedAt > MAX_SAVE_AGE_MS) {
         clearProgress();
         return;
     }
