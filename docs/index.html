@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--
+        Wachtpagina voor KUNSD, op GitHub Pages (gratis, altijd wakker).
+
+        Waarom: op het Render free plan valt de site na 15 minuten zonder bezoekers in slaap.
+        Het opstarten duurt dan 1 à 2 minuten, en Render toont in die tijd zijn eigen (rare) scherm.
+        Deze pagina staat ergens anders, dus die is er altijd meteen. Hij maakt de site wakker,
+        legt uit dat het even duurt en stuurt de bezoeker door zodra de site draait.
+        Is de site al wakker, dan gaat de bezoeker vrijwel meteen door.
+
+        Hoe: de pagina vraagt elke paar seconden /api/wakker op (zie app.py). Pas als daar
+        {"status": "ok"} terugkomt, draait de echte site.
+
+        Doorlinken naar een bepaalde pagina: zet ?naar=/jouw_kunst achter het adres.
+    -->
+
+    <title>KUNSD Start Op</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Favicon: een kopie, want de plaatjes op Render zijn er pas als de site wakker is -->
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <!-- Deel-tags: dit is het adres dat je deelt, dus hier hoort het deelplaatje bij -->
+    <meta name="description" content="Bekijk de digitale kunst van Jesse en ga zelf aan de slag: upload je foto en laat zijn algoritmes er kunst van maken, of print een kleurplaat om zelf in te kleuren.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="KUNSD">
+    <meta property="og:locale" content="nl_NL">
+    <meta property="og:url" content="https://jezzerrr.github.io/website_kunsd/">
+    <meta property="og:title" content="KUNSD - Jesses Kunst">
+    <meta property="og:description" content="Bekijk de digitale kunst van Jesse en ga zelf aan de slag: upload je foto en laat zijn algoritmes er kunst van maken, of print een kleurplaat om zelf in te kleuren.">
+    <meta property="og:image" content="https://jezzerrr.github.io/website_kunsd/deel_afbeelding.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="KUNSD: maak kunst van je eigen foto, met een kleurrijk abstract portret en een foto van Jesse">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <style>
+        /* Dezelfde kleuren als css/style.css van de echte site */
+        :root {
+            --ink: #171717;
+            --muted: #666666;
+            --line: #dddddd;
+            --accent: #cc0000;
+            --warm: #fbf6ea;
+            --sun: #f9c22e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ink);
+            background: var(--warm);
+            font-family: "Syne", sans-serif;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 560px;
+            padding: 40px 36px;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.12);
+            text-align: center;
+        }
+
+        /* Eerst alleen een kort "even kijken": is de site al wakker, dan zie je de uitleg niet eens */
+        .card.checking .explain {
+            visibility: hidden;
+        }
+
+        .logo {
+            margin: 0 0 6px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            color: var(--muted);
+        }
+
+        h1 {
+            margin: 0 0 18px;
+            font-size: 30px;
+            font-weight: 800;
+            line-height: 1.15;
+        }
+
+        p {
+            margin: 0 0 14px;
+            line-height: 1.55;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        /* Drie stippen die om de beurt oplichten: een knipoog naar de Dots-algoritmes */
+        .dots {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 26px 0 22px;
+        }
+
+        .dots span {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        .dots span:nth-child(1) { background: var(--accent); }
+        .dots span:nth-child(2) { background: var(--sun); animation-delay: 0.2s; }
+        .dots span:nth-child(3) { background: var(--ink); animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.6); opacity: 0.4; }
+            50%      { transform: scale(1);   opacity: 1; }
+        }
+
+        .bar {
+            height: 10px;
+            margin: 0 0 10px;
+            border-radius: 5px;
+            background: var(--line);
+            overflow: hidden;
+        }
+
+        .bar div {
+            width: 0;
+            height: 100%;
+            border-radius: 5px;
+            background: var(--sun);
+            transition: width 1s linear;
+        }
+
+        .status {
+            min-height: 1.5em;
+            font-weight: 600;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 12px 22px;
+            border: 2px solid var(--ink);
+            border-radius: 10px;
+            color: var(--ink);
+            background: #ffffff;
+            font: inherit;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .button:hover,
+        .button:focus-visible {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .button.ready {
+            color: #ffffff;
+            background: var(--ink);
+        }
+
+        .button.ready:hover,
+        .button.ready:focus-visible {
+            color: #ffffff;
+            background: var(--accent);
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .dots span {
+                animation: none;
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="card checking" id="card">
+        <p class="logo">KUNSD</p>
+
+        <h1 class="explain">De Website Wordt Wakker</h1>
+
+        <div class="dots" aria-hidden="true">
+            <span></span><span></span><span></span>
+        </div>
+
+        <div class="explain">
+            <p>
+                Mijn website draait gratis, en slaapt daarom als er een tijdje niemand komt.
+                Het wakker worden duurt ongeveer <strong>twee minuten</strong>.
+            </p>
+
+            <p class="muted">
+                Je hoeft niets te doen: zodra de site klaar is, ga je vanzelf door.
+                Haal intussen alvast een foto tevoorschijn waar je kunst van wilt maken.
+            </p>
+
+            <div class="bar" aria-hidden="true"><div id="bar"></div></div>
+        </div>
+
+        <p class="status" id="status" role="status">Even kijken of de site al wakker is...</p>
+
+        <a class="button" id="button" href="https://jesses-kunsd.onrender.com/" hidden>Ga Toch Alvast Naar De Site</a>
+    </main>
+
+    <script>
+        const SITE = "https://jesses-kunsd.onrender.com";
+        const EXPECTED_SECONDS = 120;   // zo lang duurt opstarten meestal
+        const CHECK_EVERY_MS = 3000;    // zo vaak vragen we of de site al wakker is
+        const CHECK_TIMEOUT_MS = 10000; // een vraag die langer duurt, breken we af en proberen we opnieuw
+        const SHOW_TEXT_AFTER_MS = 1500;  // pas na zoveel tijd de uitleg tonen (wakker = meteen door)
+        const TOO_LONG_SECONDS = 240;     // daarna een andere tekst en een knop om het zelf te proberen
+
+        const card = document.getElementById("card");
+        const bar = document.getElementById("bar");
+        const status = document.getElementById("status");
+        const button = document.getElementById("button");
+
+        // Waar de bezoeker heen wil, bijv. ?naar=/jouw_kunst. Alleen paden op de eigen site.
+        const wanted = new URLSearchParams(location.search).get("naar") || "/";
+        const path = wanted.startsWith("/") && !wanted.startsWith("//") ? wanted : "/";
+        const target = SITE + path;
+        button.href = target;
+
+        const start = Date.now();
+
+        async function isAwake() {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
+
+            try {
+                // Tijdens het opstarten geeft Render zijn eigen pagina terug, niet onze JSON.
+                // Pas als er echt {"status": "ok"} komt, draait de site.
+                const response = await fetch(`${SITE}/api/wakker?t=${Date.now()}`, {
+                    cache: "no-store",
+                    signal: controller.signal,
+                });
+                if (!response.ok) return false;
+                const answer = await response.json();
+                return answer.status === "ok";
+            } catch (error) {
+                return false;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        function showProgress() {
+            const seconds = (Date.now() - start) / 1000;
+
+            // De balk loopt naar 95% in de verwachte tijd en wacht daar op het echte "klaar"
+            bar.style.width = `${Math.min(95, (seconds / EXPECTED_SECONDS) * 95)}%`;
+
+            if (seconds > TOO_LONG_SECONDS) {
+                status.textContent = "Het duurt langer dan normaal. Ik blijf het proberen.";
+                button.hidden = false;
+            } else if (seconds > SHOW_TEXT_AFTER_MS / 1000) {
+                const left = Math.max(10, Math.round((EXPECTED_SECONDS - seconds) / 10) * 10);
+                status.textContent = seconds < EXPECTED_SECONDS
+                    ? `Nog ongeveer ${left} seconden...`
+                    : "Bijna klaar...";
+            }
+        }
+
+        function goToSite() {
+            bar.style.width = "100%";
+            status.textContent = "De site is wakker, je gaat door!";
+            // replace: met de terugknop kom je niet opnieuw op deze wachtpagina
+            location.replace(target);
+        }
+
+        async function wait() {
+            while (true) {
+                if (await isAwake()) {
+                    goToSite();
+                    return;
+                }
+                showProgress();
+                await new Promise((resolve) => setTimeout(resolve, CHECK_EVERY_MS));
+            }
+        }
+
+        setTimeout(() => {
+            card.classList.remove("checking");
+            showProgress();
+        }, SHOW_TEXT_AFTER_MS);
+
+        setInterval(showProgress, 1000);
+
+        wait();
+    </script>
+
+</body>
+</html>
