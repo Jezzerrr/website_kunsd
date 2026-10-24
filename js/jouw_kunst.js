@@ -638,7 +638,12 @@ window.addEventListener("beforeprint", function () {
 
     printPageStyle.textContent =
         `@page { size: A4 ${isLandscape ? "landscape" : "portrait"}; margin: ${PRINT_MARGIN_MM}mm; } ` +
-        `body.jouw-kunst-page.has-result .result-image { height: ${imageHeight}mm !important; max-height: none !important; }`;
+        // Alleen op papier: anders blijft het plaatje na het printen ook op het scherm uitgerekt
+        `@media print { body.jouw-kunst-page.has-result .result-image { height: ${imageHeight}mm !important; max-height: none !important; } }`;
+});
+
+window.addEventListener("afterprint", function () {
+    printPageStyle.textContent = "";
 });
 
 
