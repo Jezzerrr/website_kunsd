@@ -53,6 +53,18 @@ const downloadButtons = document.querySelectorAll(".download-button");
 const DOWNLOAD_HINT_DISABLED = "Maak eerst een afbeelding om te kunnen downloaden";
 const DOWNLOAD_HINT_ENABLED = "Sla je kunsd op als afbeelding";
 
+// Bestandsnaam bij downloaden en delen. Er komt altijd vanzelf een naam in met de bewerking
+// en het tijdstip, zodat een telefoon geen "mijn-kunsd (1)", "(2)", ... hoeft te maken.
+const fileNameInput = document.getElementById("file-name");
+const shareButton = document.getElementById("share-button");
+
+const FILE_NAMES = {
+    "shape-division-settings": "shape-division",
+    "paint-by-number-settings": "paint-by-number",
+    "dots-settings": "coloring-dots",
+    "ranked-dots-settings": "redblack-dots"
+};
+
 // Kleinste toegestane uitsnede, als fractie van de afbeelding (0.08 = 8%).
 const MIN_CROP_SIZE = 0.08;
 
@@ -860,6 +872,8 @@ downloadButtons.forEach(function (button) {
     button.addEventListener("click", downloadResult);
 });
 
+shareButton.addEventListener("click", shareResult);
+
 
 // Het originele bestand, de instellingen van het gekozen algoritme en (als die er is) de uitsnede.
 function buildFormData(fields) {
@@ -956,6 +970,8 @@ function showResult(imageSource, scroll = true) {
     resultImage.src = imageSource;
     resultSource = imageSource;
     setDownloadEnabled(true);
+    fileNameInput.value = defaultFileName();
+    updateShareButton();
     updateDiyOffer();
     document.body.classList.add("has-result");
 
@@ -983,6 +999,7 @@ function clearResult() {
     resultSource = null;
     resultImage.removeAttribute("src");
     setDownloadEnabled(false);
+    shareButton.classList.add("hidden");
     document.body.classList.remove("has-result");
 }
 
@@ -1005,11 +1022,97 @@ function downloadResult() {
     const link = document.createElement("a");
 
     link.href = resultSource;
-    link.download = "mijn-kunsd.png";
+    link.download = chosenFileName();
 
     document.body.appendChild(link);
     link.click();
     link.remove();
+}
+
+
+// Bijvoorbeeld "kunsd-shape-division-kleurplaat-2026-10-24-0739"
+function defaultFileName() {
+    const activeButton = document.querySelector(".algorithm-button.active");
+    const parts = ["kunsd"];
+
+    if (activeButton && FILE_NAMES[activeButton.dataset.settings]) {
+        parts.push(FILE_NAMES[activeButton.dataset.settings]);
+    }
+
+    if (lastFillSwitch && lastFillSwitch.checked) {
+        parts.push("kleurplaat");
+    }
+
+    const now = new Date();
+    const pad = function (number) {
+        return String(number).padStart(2, "0");
+    };
+
+    parts.push(
+        now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
+        "-" + pad(now.getHours()) + pad(now.getMinutes())
+    );
+
+    return parts.join("-");
+}
+
+
+// De naam uit het invulveld, zonder tekens die in bestandsnamen niet mogen. Leeg: de standaardnaam.
+function chosenFileName() {
+    let name = fileNameInput.value
+        .trim()
+        .replace(/\.png$/i, "")
+        .replace(/[\\/:*?"<>|]+/g, "-")
+        .replace(/^\.+/, "")
+        .trim();
+
+    if (!name) {
+        name = defaultFileName();
+        fileNameInput.value = name;
+    }
+
+    return name + ".png";
+}
+
+
+// Telefoons (en sommige computers) kunnen een bestand delen: WhatsApp, mail, of bewaren bij je foto's.
+function canShareFiles() {
+    if (!navigator.canShare) {
+        return false;
+    }
+
+    try {
+        const testFile = new File([""], "test.png", { type: "image/png" });
+        return navigator.canShare({ files: [testFile] });
+    } catch (error) {
+        return false;
+    }
+}
+
+
+function updateShareButton() {
+    shareButton.classList.toggle("hidden", !canShareFiles());
+}
+
+
+async function shareResult() {
+    if (!resultSource) {
+        return;
+    }
+
+    track("delen");
+
+    try {
+        const blob = await (await fetch(resultSource)).blob();
+        const file = new File([blob], chosenFileName(), { type: "image/png" });
+
+        await navigator.share({ files: [file], title: "Mijn Kunsd" });
+    } catch (error) {
+        // Zelf geannuleerd: niets aan de hand. Anders lukt delen niet: dan maar gewoon downloaden.
+        if (error.name !== "AbortError") {
+            downloadResult();
+        }
+    }
 }
 
 

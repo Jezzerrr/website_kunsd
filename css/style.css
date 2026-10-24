@@ -1258,6 +1258,35 @@ body.lightbox-open {
     margin-top: 0;
 }
 
+/* Bestandsnaam bij downloaden: invulveld met ".png" er vast achter */
+.file-name-field {
+    max-width: 460px;
+    margin-bottom: 16px;
+}
+
+.file-name-input {
+    display: flex;
+    align-items: stretch;
+}
+
+.file-name-field .file-name-input input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    border-right: none;
+    border-radius: var(--radius-s) 0 0 var(--radius-s);
+}
+
+.file-name-input span {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    color: var(--muted);
+    background: white;
+    border: 2px solid var(--ink);
+    border-left: none;
+    border-radius: 0 var(--radius-s) var(--radius-s) 0;
+}
+
 /* Uitnodiging om te delen: één regel onderaan het printkader */
 .result-share {
     margin: 18px 0 0 !important;

@@ -859,6 +859,19 @@
                             Je kunsd past altijd op één vel. Op A3 zie je meer detail, maar A4 kan natuurlijk ook.
                         </p>
 
+                        <div class="form-field file-name-field">
+                            <label for="file-name">Naam Van Je Bestand</label>
+                            <div class="file-name-input">
+                                <input
+                                    type="text"
+                                    id="file-name"
+                                    maxlength="80"
+                                    autocomplete="off"
+                                    spellcheck="false">
+                                <span>.png</span>
+                            </div>
+                        </div>
+
                         <div class="button-row image-actions">
                             <button
                                 type="button"
@@ -873,6 +886,15 @@
                                 disabled
                                 title="Maak eerst een afbeelding om te kunnen downloaden">
                                 Download Afbeelding
+                            </button>
+
+                            <!-- Alleen zichtbaar als de browser bestanden kan delen (vooral telefoons) -->
+                            <button
+                                type="button"
+                                id="share-button"
+                                class="secondary-button hidden"
+                                title="Stuur je kunsd via een app, of bewaar hem bij je foto's">
+                                Deel Afbeelding
                             </button>
                         </div>
 
