@@ -1,8 +1,8 @@
-"""Shape division: eigen kleuren, gelijke grootte per vorm en de lege kleurplaat met nummers.
+"""Shape division: eigen kleuren, gelijke grootte per vorm en het lege tekenvel met nummers.
 
 Dit bestand gebruikt de functies uit shape_division.py (zelfde vormen en zelfde kleuren als de
 ingekleurde variant) en de nummers, de legenda en de kleurfuncties uit helper_functions (zoals bij
-de Kleurplaat). shape_division.py zelf blijft ongewijzigd.
+de andere algoritmes). shape_division.py zelf blijft ongewijzigd.
 
 Wat hier staat:
 - side_for_equal_area(): zorgt dat elke vorm bij dezelfde instelling even gedetailleerd is
@@ -214,7 +214,7 @@ def _draw_outlines(polygons, width, height):
         # nieuw beeld aan en is daardoor bij duizenden vormen veel te traag.
         draw.line(points + [points[0]], fill=LINE_COLOR, width=line, joint="curve")
 
-    # Een lijst om de hele afbeelding, zoals bij de Kleurplaat
+    # Een lijst om de hele afbeelding, zoals bij de andere tekenvellen
     draw.rectangle((0, 0, width * scale - 1, height * scale - 1), outline=LINE_COLOR, width=line)
 
     return big.resize((width, height), Image.Resampling.LANCZOS)

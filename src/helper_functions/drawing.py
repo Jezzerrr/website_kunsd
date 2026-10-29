@@ -1,5 +1,5 @@
 """Tekenhulpjes die meerdere algoritmes gebruiken: kleuren van lijntjes en nummers,
-de legenda (nummer -> kleur) onder een lege kleurplaat en het lettertype."""
+de legenda (nummer -> kleur) onder een leeg tekenvel en het lettertype."""
 
 import math
 import os

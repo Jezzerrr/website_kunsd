@@ -19,15 +19,14 @@ const shapeFill = document.getElementById("shape-fill");
 const shapeButton = document.getElementById("shape-button");
 const rankedDotsButton = document.getElementById("ranked-dots-button");
 const dotsButton = document.getElementById("dots-button");
-const paintByNumberColorsSlider = document.getElementById("paint-by-number-colors-slider");
-const paintByNumberDetailSlider = document.getElementById("paint-by-number-detail-slider");
-const paintByNumberFill = document.getElementById("paint-by-number-fill");
-const paintByNumberButton = document.getElementById("paint-by-number-button");
+const chordinatesCountSlider = document.getElementById("chordinates-count-slider");
+const chordinatesFill = document.getElementById("chordinates-fill");
+const chordinatesButton = document.getElementById("chordinates-button");
 const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
 
-// Onder het resultaat: aanbod om een kleurplaat te maken, en printen
+// Onder het resultaat: aanbod om het tekenvel te maken, en printen
 const diyOffer = document.getElementById("diy-offer");
 const diyOfferText = document.getElementById("diy-offer-text");
 const diyOfferButton = document.getElementById("diy-offer-button");
@@ -46,6 +45,20 @@ const cropStartButton = document.getElementById("crop-start-button");
 const cropResetButton = document.getElementById("crop-reset-button");
 const cropOkButton = document.getElementById("crop-ok-button");
 const cropCancelButton = document.getElementById("crop-cancel-button");
+const cropTitle = document.getElementById("crop-title");
+const cropHint = document.getElementById("crop-hint");
+
+// Chordinates: het rondje van de foto dat de cirkel wordt, en de knop om het zelf te kiezen
+const circlePreviewImage = document.getElementById("circle-preview-image");
+const circleChooseButton = document.getElementById("circle-choose-button");
+
+// De gewone teksten van de bijsnijder; bij "Kies Het Rondje" staan er andere
+const CROP_TITLE = cropTitle.textContent;
+const CROP_HINT = cropHint.textContent;
+const CIRCLE_TITLE = "Kies Het Rondje";
+const CIRCLE_HINT =
+    "Sleep het rondje naar het gezicht en maak het groter of kleiner met de hoekjes. " +
+    "Laat het gezicht het rondje zo goed als vullen. Klik daarna op OK.";
 
 // Er is een downloadknop bij elk algoritme; ze delen dezelfde status.
 const downloadButtons = document.querySelectorAll(".download-button");
@@ -56,11 +69,14 @@ const DOWNLOAD_HINT_ENABLED = "Sla je kunsd op als afbeelding";
 // Bestandsnaam bij downloaden en delen. Er komt altijd vanzelf een naam in met de bewerking
 // en het tijdstip, zodat een telefoon geen "mijn-kunsd (1)", "(2)", ... hoeft te maken.
 const fileNameInput = document.getElementById("file-name");
+const pdfButton = document.getElementById("pdf-button");
+const printText = document.getElementById("print-text");
+const PRINT_TEXT = printText.textContent;
 const shareButton = document.getElementById("share-button");
 
 const FILE_NAMES = {
     "shape-division-settings": "shape-division",
-    "paint-by-number-settings": "paint-by-number",
+    "chordinates-settings": "chordinates",
     "dots-settings": "coloring-dots",
     "ranked-dots-settings": "redblack-dots"
 };
@@ -72,7 +88,7 @@ const MIN_CROP_SIZE = 0.08;
 // ook klopt als het scherm van grootte verandert.
 const DEFAULT_CROP = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
 
-// Eigen kleuren (Paint By Number en Shape Division): minimaal en maximaal aantal, en een beginkeuze.
+// Eigen kleuren (Shape Division): minimaal en maximaal aantal, en een beginkeuze.
 const MIN_CUSTOM_COLORS = 2;
 const MAX_CUSTOM_COLORS = 12;
 const START_COLORS = ["#2b2d42", "#d62839", "#f9c22e", "#3a86ff", "#f4f1de"];
@@ -80,6 +96,15 @@ const EXTRA_COLORS = ["#2a9d8f", "#f4a261", "#8ecae6", "#9b5de5", "#e76f51", "#6
 
 // Bevat het laatste resultaat, of null als er (nog) niets te downloaden is.
 let resultSource = null;
+
+// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates): alle bladen, alle
+// bladen naast elkaar in één afbeelding (voor "Download Afbeelding"), en samen als pdf. Anders null.
+let resultPages = null;
+let resultCombined = null;
+let resultPdf = null;
+
+// Staat de bijsnijder in de stand "Kies Het Rondje" (vierkant, met een rond kader)?
+let cropIsCircle = false;
 
 // Wat de gebruiker heeft geüpload. Dit gaat altijd ongewijzigd naar de server.
 let originalFile = null;
@@ -97,7 +122,7 @@ let dragState = null;
 // Na het uploaden gaat die bewerking vanzelf open.
 let pendingAlgorithm = null;
 
-// De laatst uitgevoerde bewerking: de "Zelf Inkleuren"-schakelaar en de "Maak ..."-knop ervan
+// De laatst uitgevoerde bewerking: de "Tekenvel"-schakelaar en de "Maak ..."-knop ervan
 // (bij RedBlack Dots is er geen schakelaar: null).
 let lastFillSwitch = null;
 let lastCreateButton = null;
@@ -175,16 +200,34 @@ function showPhoto(file) {
 /* ---------- Bijsnijden ---------- */
 
 cropStartButton.addEventListener("click", function () {
+    track("bijsnijden-start");
+    openCropEditor(false);
+});
+
+
+// "Kies Het Rondje" bij Chordinates: dezelfde bijsnijder, maar altijd vierkant en met een rond kader.
+circleChooseButton.addEventListener("click", function () {
+    track("kies-het-rondje");
+    openCropEditor(true);
+});
+
+
+function openCropEditor(isCircle) {
     if (!originalDataUrl) {
         return;
     }
 
-    track("bijsnijden-start");
+    cropIsCircle = isCircle;
+    cropBox.classList.toggle("crop-box-round", isCircle);
+    cropTitle.textContent = isCircle ? CIRCLE_TITLE : CROP_TITLE;
+    cropHint.textContent = isCircle ? CIRCLE_HINT : CROP_HINT;
 
     // We snijden altijd bij vanaf het origineel, zodat je een eerdere
     // uitsnede opnieuw kunt aanpassen.
     cropImage.src = originalDataUrl;
-    setCropRect(appliedCrop ? { ...appliedCrop } : { ...DEFAULT_CROP });
+
+    const startRect = appliedCrop ? { ...appliedCrop } : { ...DEFAULT_CROP };
+    setCropRect(isCircle ? centerSquare(startRect, uploadedImage.naturalWidth, uploadedImage.naturalHeight) : startRect);
 
     originalContainer.classList.add("hidden");
     algorithmSection.classList.add("hidden");
@@ -194,7 +237,7 @@ cropStartButton.addEventListener("click", function () {
         behavior: "smooth",
         block: "start"
     });
-});
+}
 
 
 cropCancelButton.addEventListener("click", function () {
@@ -219,6 +262,7 @@ cropOkButton.addEventListener("click", function () {
     appliedCrop = { ...cropRect };
     renderCroppedPreview(appliedCrop, naturalWidth, naturalHeight);
     setCroppedState(true);
+    renderCirclePreview();
 
     // Nieuwe invoer: het vorige resultaat hoort er niet meer bij.
     clearResult();
@@ -239,6 +283,7 @@ cropResetButton.addEventListener("click", function () {
 
     appliedCrop = null;
     setCroppedState(false);
+    renderCirclePreview();
 
     clearResult();
     resultContainer.classList.add("hidden");
@@ -272,6 +317,48 @@ function renderCroppedPreview(rect, naturalWidth, naturalHeight) {
     croppedPreviewImage.style.left = `${-(rect.x / rect.w) * 100}%`;
     croppedPreviewImage.style.top = `${-(rect.y / rect.h) * 100}%`;
 }
+
+
+// Het grootste vierkant (in pixels) in het midden van een uitsnede, als fracties van de foto.
+// Dat vierkant gebruikt Chordinates voor de cirkel (zie _center_square in chordinates.py).
+function centerSquare(rect, naturalWidth, naturalHeight) {
+    if (!naturalWidth || !naturalHeight) {
+        return rect;
+    }
+
+    const side = Math.min(rect.w * naturalWidth, rect.h * naturalHeight);
+    const w = side / naturalWidth;
+    const h = side / naturalHeight;
+
+    return {
+        x: rect.x + (rect.w - w) / 2,
+        y: rect.y + (rect.h - h) / 2,
+        w: w,
+        h: h
+    };
+}
+
+
+// Het rondje bij Chordinates: hetzelfde stuk van de foto als de server gebruikt.
+function renderCirclePreview() {
+    const naturalWidth = uploadedImage.naturalWidth;
+    const naturalHeight = uploadedImage.naturalHeight;
+
+    if (!originalDataUrl || !naturalWidth || !naturalHeight) {
+        return;
+    }
+
+    const square = centerSquare(appliedCrop || { x: 0, y: 0, w: 1, h: 1 }, naturalWidth, naturalHeight);
+
+    circlePreviewImage.src = originalDataUrl;
+    circlePreviewImage.style.width = `${100 / square.w}%`;
+    circlePreviewImage.style.left = `${-(square.x / square.w) * 100}%`;
+    circlePreviewImage.style.top = `${-(square.y / square.h) * 100}%`;
+}
+
+
+// Na het laden van een (nieuwe) foto kennen we pas de afmetingen voor het rondje.
+uploadedImage.addEventListener("load", renderCirclePreview);
 
 
 function setCroppedState(isCropped) {
@@ -374,6 +461,12 @@ cropStage.addEventListener("pointermove", function (event) {
         const y = clamp(point.y, 0, 1);
         const anchor = dragState.anchor;
 
+        if (cropIsCircle) {
+            setCropRect(squareFromCorner(anchor, x >= anchor.x ? 1 : -1, y >= anchor.y ? 1 : -1,
+                Math.abs(x - anchor.x), Math.abs(y - anchor.y)));
+            return;
+        }
+
         setCropRect({
             x: Math.min(anchor.x, x),
             y: Math.min(anchor.y, y),
@@ -405,6 +498,11 @@ cropStage.addEventListener("pointermove", function (event) {
         bottom = clamp(start.y + start.h + dy, top + MIN_CROP_SIZE, 1);
     }
 
+    if (cropIsCircle) {
+        setCropRect(squareResize(dragState.mode, start, left, top, right, bottom));
+        return;
+    }
+
     setCropRect({
         x: left,
         y: top,
@@ -412,6 +510,64 @@ cropStage.addEventListener("pointermove", function (event) {
         h: bottom - top
     });
 });
+
+
+// "Kies Het Rondje": de uitsnede blijft een vierkant (in pixels, dus niet in fracties: de foto is
+// meestal niet vierkant). Een vierkant vanaf een vaste hoek (anchor) in de richting dirX, dirY,
+// zo groot als de grootste van de twee gesleepte maten, maar nooit buiten de foto.
+function squareFromCorner(anchor, dirX, dirY, w, h) {
+    const naturalWidth = cropImage.naturalWidth || 1;
+    const naturalHeight = cropImage.naturalHeight || 1;
+
+    const maxW = (dirX > 0 ? 1 - anchor.x : anchor.x) * naturalWidth;
+    const maxH = (dirY > 0 ? 1 - anchor.y : anchor.y) * naturalHeight;
+    const minSide = MIN_CROP_SIZE * Math.min(naturalWidth, naturalHeight);
+    const side = Math.max(minSide, Math.min(Math.max(w * naturalWidth, h * naturalHeight), maxW, maxH));
+
+    const squareW = side / naturalWidth;
+    const squareH = side / naturalHeight;
+
+    return {
+        x: dirX > 0 ? anchor.x : anchor.x - squareW,
+        y: dirY > 0 ? anchor.y : anchor.y - squareH,
+        w: squareW,
+        h: squareH
+    };
+}
+
+
+// Een hoekje of zijkant verslepen in de stand "Kies Het Rondje".
+function squareResize(mode, start, left, top, right, bottom) {
+    const naturalWidth = cropImage.naturalWidth || 1;
+    const naturalHeight = cropImage.naturalHeight || 1;
+
+    // Hoekje: de tegenoverliggende hoek blijft staan
+    if (mode.length === 2) {
+        const anchor = {
+            x: mode.includes("w") ? start.x + start.w : start.x,
+            y: mode.includes("n") ? start.y + start.h : start.y
+        };
+
+        return squareFromCorner(anchor, mode.includes("w") ? -1 : 1, mode.includes("n") ? -1 : 1,
+            right - left, bottom - top);
+    }
+
+    // Zijkant: de tegenoverliggende zijkant blijft staan, het vierkant blijft in het midden
+    const isVertical = mode === "n" || mode === "s";
+    let side = isVertical ? (bottom - top) * naturalHeight : (right - left) * naturalWidth;
+    side = Math.min(side, naturalWidth, naturalHeight);
+
+    const w = side / naturalWidth;
+    const h = side / naturalHeight;
+
+    if (isVertical) {
+        const centerX = start.x + start.w / 2;
+        return { x: clamp(centerX - w / 2, 0, 1 - w), y: mode === "n" ? bottom - h : top, w: w, h: h };
+    }
+
+    const centerY = start.y + start.h / 2;
+    return { x: mode === "w" ? right - w : left, y: clamp(centerY - h / 2, 0, 1 - h), w: w, h: h };
+}
 
 
 function endCropDrag(event) {
@@ -443,7 +599,7 @@ algorithmButtons.forEach(function (button) {
 });
 
 
-// Opent de instellingen van één bewerking (bijv. "paint-by-number-settings") en sluit de andere.
+// Opent de instellingen van één bewerking (bijv. "chordinates-settings") en sluit de andere.
 function selectAlgorithm(settingsId) {
     algorithmButtons.forEach(function (button) {
         button.classList.toggle("active", button.dataset.settings === settingsId);
@@ -459,7 +615,7 @@ function selectAlgorithm(settingsId) {
 
 /* ---------- Voorbeelden ---------- */
 
-// Wisselen tussen het ingekleurde voorbeeld en de lege versie om te printen.
+// Wisselen tussen "Zo Wordt Het" en het tekenvel om te printen.
 document.querySelectorAll(".example-card").forEach(function (card) {
     const image = card.querySelector(".example-image img");
 
@@ -573,20 +729,18 @@ dotsButton.addEventListener("click", async function () {
 });
 
 
-paintByNumberButton.addEventListener("click", async function () {
-    track("maak-paint-by-number");
-    rememberAlgorithm(paintByNumberFill, paintByNumberButton);
+chordinatesButton.addEventListener("click", async function () {
+    track("maak-chordinates");
+    rememberAlgorithm(chordinatesFill, chordinatesButton);
 
-    const fields = {
-        detail: paintByNumberDetailSlider.value,
-        fill: !paintByNumberFill.checked
-    };
-
-    if (!addColorFields(fields, paintByNumberPalette, "n_colors", paintByNumberColorsSlider)) {
-        return;
-    }
-
-    await runPythonAlgorithm("/api/paint-by-number", fields, paintByNumberButton);
+    await runPythonAlgorithm(
+        "/api/chordinates",
+        {
+            n_lines: chordinatesCountSlider.value,
+            fill: !chordinatesFill.checked
+        },
+        chordinatesButton
+    );
 });
 
 
@@ -596,15 +750,15 @@ function rememberAlgorithm(fillSwitch, createButton) {
 }
 
 
-/* ---------- Na het resultaat: kleurplaat maken, printen ---------- */
+/* ---------- Na het resultaat: tekenvel maken, printen ---------- */
 
-// "Maak Er Een Kleurplaat Van": zet "Zelf Inkleuren" aan en maak dezelfde bewerking opnieuw.
+// "Maak Het Tekenvel": zet "Tekenvel" aan en maak dezelfde bewerking opnieuw.
 diyOfferButton.addEventListener("click", function () {
     if (!lastFillSwitch || !lastCreateButton) {
         return;
     }
 
-    track("maak-er-een-kleurplaat-van");
+    track("maak-het-tekenvel");
 
     lastFillSwitch.checked = true;
     lastCreateButton.click();
@@ -622,32 +776,45 @@ printButton.addEventListener("click", function () {
 });
 
 
+// Bij "Opslaan als pdf" stelt de browser de titel van de pagina voor als bestandsnaam.
+// Tijdens het printen is de titel daarom de naam uit "Naam Van Je Bestand".
+const PAGE_TITLE = document.title;
+
+
 // Vlak voor het printen (via de knop of Ctrl+P): A4 staand of liggend, net als het resultaat.
 // Het resultaat krijgt de hele pagina (min een smalle marge) en wordt daarin zo groot mogelijk
 // en in het midden gezet, zonder vervormen. Zo past het altijd op één pagina.
+// Een tekenvel (meerdere bladen) heeft zijn eigen witte rand al: dat krijgt geen extra marge,
+// zodat het precies even groot op papier komt als in de pdf van "Download Pdf".
 const PRINT_MARGIN_MM = 7;
 const printPageStyle = document.createElement("style");
 document.head.appendChild(printPageStyle);
 
 window.addEventListener("beforeprint", function () {
-    const isLandscape = resultImage.naturalWidth > resultImage.naturalHeight;
+    if (resultSource) {
+        document.title = fileBaseName();
+    }
 
-    // A4 is 210 x 297 mm; min de marge aan twee kanten, en 1 mm speling tegen een lege tweede pagina
+    const isLandscape = resultImage.naturalWidth > resultImage.naturalHeight;
+    const margin = resultPages ? 0 : PRINT_MARGIN_MM;
+
+    // A4 is 210 x 297 mm; min de marge aan twee kanten, en wat speling tegen een lege extra pagina
     const pageHeight = isLandscape ? 210 : 297;
-    const imageHeight = pageHeight - 2 * PRINT_MARGIN_MM - 1;
+    const imageHeight = pageHeight - 2 * margin - (resultPages ? 0.5 : 1);
 
     printPageStyle.textContent =
-        `@page { size: A4 ${isLandscape ? "landscape" : "portrait"}; margin: ${PRINT_MARGIN_MM}mm; } ` +
+        `@page { size: A4 ${isLandscape ? "landscape" : "portrait"}; margin: ${margin}mm; } ` +
         // Alleen op papier: anders blijft het plaatje na het printen ook op het scherm uitgerekt
         `@media print { body.jouw-kunst-page.has-result .result-image { height: ${imageHeight}mm !important; max-height: none !important; } }`;
 });
 
 window.addEventListener("afterprint", function () {
+    document.title = PAGE_TITLE;
     printPageStyle.textContent = "";
 });
 
 
-// Het aanbod "Nu Zelf Inkleuren?" alleen na een ingekleurde versie van een doe-het-zelf-bewerking.
+// Het aanbod "Nu Zelf Tekenen?" alleen na "Zo Wordt Het" van een tekenpuzzel (niet na het tekenvel zelf).
 function updateDiyOffer() {
     const showOffer = lastFillSwitch !== null && !lastFillSwitch.checked;
 
@@ -659,7 +826,7 @@ function updateDiyOffer() {
 }
 
 
-/* ---------- Eigen kleuren kiezen (Paint By Number en Shape Division) ---------- */
+/* ---------- Eigen kleuren kiezen (Shape Division) ---------- */
 
 // Zet de kleurkeuze van een paneel in de velden die naar de server gaan: de eigen kleuren
 // als die zijn aangezet, anders het aantal kleuren van de slider (onder de naam countField).
@@ -842,18 +1009,6 @@ function createPaletteEditor(config) {
 }
 
 
-const paintByNumberPalette = createPaletteEditor({
-    switchId: "paint-by-number-custom",
-    autoId: "paint-by-number-auto-colors",
-    customId: "paint-by-number-custom-colors",
-    listId: "paint-by-number-palette-list",
-    addId: "paint-by-number-palette-add-button",
-    photoId: "paint-by-number-palette-from-photo-button",
-    defaultId: "paint-by-number-palette-default-button",
-    trackName: "paint-by-number",
-    paletteUrl: "/api/paint-by-number-palette"
-});
-
 const shapePalette = createPaletteEditor({
     switchId: "shape-custom",
     autoId: "shape-auto-colors",
@@ -878,6 +1033,7 @@ downloadButtons.forEach(function (button) {
 });
 
 shareButton.addEventListener("click", shareResult);
+pdfButton.addEventListener("click", downloadPdf);
 
 
 // Het originele bestand, de instellingen van het gekozen algoritme en (als die er is) de uitsnede.
@@ -921,7 +1077,7 @@ async function runPythonAlgorithm(url, fields, button) {
 
         const data = await readServerAnswer(response, "De bewerking is mislukt.");
 
-        showResult(data.image);
+        showResult(data.image, true, data.pages || null, data.pdf || null, data.combined || null);
     } catch (error) {
         showError(friendlyError(error));
     } finally {
@@ -971,9 +1127,37 @@ function friendlyError(error) {
 }
 
 
-function showResult(imageSource, scroll = true) {
+// pages en pdf: bij een resultaat van meerdere bladen (zie resultPages). Blad 1 staat in resultImage,
+// de volgende bladen komen eronder; printen zet elk blad op een eigen pagina.
+function showResult(imageSource, scroll = true, pages = null, pdf = null, combined = null) {
     resultImage.src = imageSource;
     resultSource = imageSource;
+    resultPages = pages && pages.length > 1 ? pages : null;
+    resultPdf = resultPages ? pdf : null;
+    resultCombined = resultPages ? combined : null;
+    pdfButton.classList.toggle("hidden", !resultPdf);
+
+    removeExtraPages();
+
+    if (resultPages) {
+        let previous = resultImage;
+
+        resultPages.slice(1).forEach(function (pageSource, index) {
+            const page = document.createElement("img");
+            page.className = "result-image result-page";
+            page.src = pageSource;
+            page.alt = `Blad ${index + 2} van je tekenvel`;
+            previous.after(page);
+            previous = page;
+        });
+    }
+
+    printText.textContent = resultPages
+        ? `Je tekenvel heeft ${resultPages.length} bladen: printen zet elk blad op een eigen A4. ` +
+          "\"Download Pdf\" geeft alle bladen klaar om te printen, \"Download Afbeelding\" " +
+          "één afbeelding met de bladen naast elkaar."
+        : PRINT_TEXT;
+
     setDownloadEnabled(true);
     fileNameInput.value = defaultFileName();
     updateShareButton();
@@ -1000,8 +1184,20 @@ function showError(message) {
 }
 
 
+function removeExtraPages() {
+    resultContainer.querySelectorAll(".result-page").forEach(function (page) {
+        page.remove();
+    });
+}
+
+
 function clearResult() {
     resultSource = null;
+    resultPages = null;
+    resultPdf = null;
+    resultCombined = null;
+    pdfButton.classList.add("hidden");
+    removeExtraPages();
     resultImage.removeAttribute("src");
     setDownloadEnabled(false);
     shareButton.classList.add("hidden");
@@ -1017,17 +1213,33 @@ function setDownloadEnabled(isEnabled) {
 }
 
 
+// "Download Afbeelding": altijd een PNG. Bij een tekenvel staan de bladen daarin naast elkaar.
 function downloadResult() {
     if (!resultSource) {
         return;
     }
 
     track("download");
+    saveFile(resultCombined || resultSource, chosenFileName(".png"));
+}
 
+
+// "Download Pdf" (alleen bij een tekenvel): alle bladen, elk op een eigen A4.
+function downloadPdf() {
+    if (!resultPdf) {
+        return;
+    }
+
+    track("download-pdf");
+    saveFile(resultPdf, chosenFileName(".pdf"));
+}
+
+
+function saveFile(source, fileName) {
     const link = document.createElement("a");
 
-    link.href = resultSource;
-    link.download = chosenFileName();
+    link.href = source;
+    link.download = fileName;
 
     document.body.appendChild(link);
     link.click();
@@ -1035,7 +1247,7 @@ function downloadResult() {
 }
 
 
-// Bijvoorbeeld "kunsd-shape-division-kleurplaat-2026-10-24-0739"
+// Bijvoorbeeld "kunsd-shape-division-tekenvel-2026-10-24-0739"
 function defaultFileName() {
     const activeButton = document.querySelector(".algorithm-button.active");
     const parts = ["kunsd"];
@@ -1045,7 +1257,7 @@ function defaultFileName() {
     }
 
     if (lastFillSwitch && lastFillSwitch.checked) {
-        parts.push("kleurplaat");
+        parts.push("tekenvel");
     }
 
     const now = new Date();
@@ -1063,10 +1275,12 @@ function defaultFileName() {
 
 
 // De naam uit het invulveld, zonder tekens die in bestandsnamen niet mogen. Leeg: de standaardnaam.
-function chosenFileName() {
+// Zonder extensie: die komt erachter bij downloaden (chosenFileName), en bij printen niet (de
+// browser zet er zelf .pdf achter bij "Opslaan als pdf").
+function fileBaseName() {
     let name = fileNameInput.value
         .trim()
-        .replace(/\.png$/i, "")
+        .replace(/\.(png|pdf)$/i, "")
         .replace(/[\\/:*?"<>|]+/g, "-")
         .replace(/^\.+/, "")
         .trim();
@@ -1076,7 +1290,12 @@ function chosenFileName() {
         fileNameInput.value = name;
     }
 
-    return name + ".png";
+    return name;
+}
+
+
+function chosenFileName(extension) {
+    return fileBaseName() + extension;
 }
 
 
@@ -1108,8 +1327,8 @@ async function shareResult() {
     track("delen");
 
     try {
-        const blob = await (await fetch(resultSource)).blob();
-        const file = new File([blob], chosenFileName(), { type: "image/png" });
+        const blob = await (await fetch(resultCombined || resultSource)).blob();
+        const file = new File([blob], chosenFileName(".png"), { type: "image/png" });
 
         await navigator.share({ files: [file], title: "Mijn Kunsd" });
     } catch (error) {
@@ -1263,10 +1482,12 @@ function writeProgress() {
         algorithm: activeButton ? activeButton.dataset.settings : null,
         controls: controls,
         palettes: {
-            paintByNumber: paintByNumberPalette.getColors(),
             shape: shapePalette.getColors()
         },
         result: resultSource,
+        resultPages: resultPages,
+        resultPdf: resultPdf,
+        resultCombined: resultCombined,
         lastFillSwitch: lastFillSwitch ? lastFillSwitch.id : null,
         lastCreateButton: lastCreateButton ? lastCreateButton.id : null
     };
@@ -1346,7 +1567,6 @@ async function restoreProgress() {
             }
         });
 
-        restorePalette(paintByNumberPalette, "paint-by-number-custom", saved.palettes && saved.palettes.paintByNumber);
         restorePalette(shapePalette, "shape-custom", saved.palettes && saved.palettes.shape);
 
         // Een bewerking die intussen van de pagina is gehaald, gaat niet meer open
@@ -1358,7 +1578,8 @@ async function restoreProgress() {
         lastCreateButton = saved.lastCreateButton ? document.getElementById(saved.lastCreateButton) : null;
 
         if (saved.result) {
-            showResult(saved.result, false);
+            showResult(saved.result, false, saved.resultPages || null, saved.resultPdf || null,
+                saved.resultCombined || null);
         }
 
         await restoreScrollPosition();
@@ -1380,6 +1601,7 @@ function restoreCrop(crop) {
             appliedCrop = crop;
             renderCroppedPreview(crop, image.naturalWidth, image.naturalHeight);
             setCroppedState(true);
+            renderCirclePreview();
             resolve();
         };
         image.onerror = resolve;

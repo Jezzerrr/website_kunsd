@@ -13,10 +13,8 @@ from pathlib import Path, PurePosixPath
 from PIL import Image, ImageOps, UnidentifiedImageError
 from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 
-from src.color_page import suggest_palette
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.helper_functions.color_helpers import get_palette
-from src.paint_by_number import image_to_paint_by_number
 from src.shape_division import image_to_shapes
 from src.shape_numbers import (
     image_to_numbered_shapes,
@@ -24,6 +22,7 @@ from src.shape_numbers import (
     side_for_equal_area,
     suggest_shape_palette,
 )
+from src.chordinates import image_to_chordinates
 
 app = Flask(__name__)
 
@@ -459,29 +458,18 @@ def shape_division_palette():
     })
 
 
-@app.route("/api/paint-by-number", methods=["POST"])
+@app.route("/api/chordinates", methods=["POST"])
 @image_endpoint
-def paint_by_number():
-    colors = read_custom_colors()
-    fill = read_flag("fill", default=True)
-
-    return image_to_json(image_to_paint_by_number(
+def chordinates():
+    # Zonder "fill" krijg je het tekenvel: twee A4-bladen (de cirkel, en de lijst met lijnen)
+    template = not read_flag("fill", default=True)
+    result = image_to_chordinates(
         load_input_image(),
-        n_colors=int(read_number("n_colors", 16, 6, 24)),
-        colors=colors or None,
-        detail=read_number("detail", 0.5, 0, 1),
-        fill=fill,
-        legend=not fill
-    ))
+        n_lines=int(read_number("n_lines", 600, 250, 800)),
+        template=template
+    )
 
-
-@app.route("/api/paint-by-number-palette", methods=["POST"])
-@image_endpoint
-def paint_by_number_palette():
-    # "Kleuren Uit Foto": dezelfde kleurkeuze als Paint By Number zelf (k-means uit color_page.py)
-    n_colors = int(read_number("n_colors", 6, 2, 12))
-
-    return jsonify({"colors": suggest_palette(load_input_image(), n_colors)})
+    return pages_to_json(result) if template else image_to_json(result)
 
 
 # ---------------------------------------------------------------------------
@@ -646,6 +634,56 @@ def image_to_json(image):
     image_base64 = base64.b64encode(output.getvalue()).decode("utf-8")
 
     return jsonify({"image": f"data:image/png;base64,{image_base64}"})
+
+
+def pages_to_json(pages):
+    """Een resultaat van meerdere bladen: elk blad als PNG (om te tonen en te printen), alle bladen
+    naast elkaar in één PNG (om als afbeelding te downloaden) en samen als pdf.
+    In de pdf wordt een te lang blad verkleind tot het op A4 past."""
+    page_width = pages[0].width
+    a4 = (page_width, round(page_width * 297 / 210))
+    pdf_pages = []
+
+    for page in pages:
+        if page.height > a4[1]:
+            scale = a4[1] / page.height
+            small = page.resize((round(page.width * scale), a4[1]), Image.Resampling.LANCZOS)
+            page = Image.new("RGB", a4, "white")
+            page.paste(small, ((a4[0] - small.width) // 2, 0))
+
+        pdf_pages.append(page.convert("RGB"))
+
+    pdf = io.BytesIO()
+    pdf_pages[0].save(pdf, format="PDF", save_all=True, append_images=pdf_pages[1:], resolution=300)
+
+    images = [image_to_data_url(page) for page in pages]
+
+    # Alle bladen naast elkaar, met een grijs streepje ertussen
+    gap = 40
+    combined = Image.new("RGB", (sum(page.width for page in pages) + gap * (len(pages) - 1),
+                                 max(page.height for page in pages)), "white")
+    x = 0
+
+    for page in pages:
+        if x > 0:
+            combined.paste((210, 210, 210), (x - gap, 0, x, combined.height))
+
+        combined.paste(page, (x, 0))
+        x += page.width + gap
+
+    return jsonify({
+        "image": images[0],
+        "pages": images,
+        "combined": image_to_data_url(combined),
+        "pdf": "data:application/pdf;base64," + base64.b64encode(pdf.getvalue()).decode("ascii"),
+    })
+
+
+def image_to_data_url(image):
+    output = io.BytesIO()
+    image.save(output, format="PNG")
+
+    return "data:image/png;base64," + base64.b64encode(output.getvalue()).decode("utf-8")
 
 
 if __name__ == "__main__":

@@ -985,7 +985,7 @@ body.lightbox-open {
 
 
 /* ---------- 9. Jouw Kunsd ---------- */
-/* Bovenaan: tekst links, een geprinte en een ingekleurde kleurplaat rechts */
+/* Bovenaan: tekst links, een geprint tekenvel en hoe het wordt als het af is rechts */
 .art-hero {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1120,7 +1120,7 @@ body.lightbox-open {
     object-fit: contain;
 }
 
-/* Labeltje achter de naam; met een gestippelde rand als je het zelf kunt inkleuren */
+/* Labeltje achter de naam; met een gestippelde rand als het een tekenpuzzel is */
 .tag {
     padding: 2px 10px;
     border: 2px solid var(--ink);
@@ -1134,7 +1134,7 @@ body.lightbox-open {
     border-style: dashed;
 }
 
-/* Wisselen tussen "Ingekleurd" en "Om Te Printen" */
+/* Wisselen tussen "Zo Wordt Het" en "Tekenvel" */
 .view-toggle {
     display: inline-flex;
     align-self: flex-start;
@@ -1295,6 +1295,185 @@ body.lightbox-open {
 .result-box-diy {
     background: white;
     border: 2px dashed var(--ink);
+}
+
+/* Tekenpuzzels: bovenaan op "ruitjespapier", zoals een schrift of een technische tekening */
+.puzzle-hero {
+    padding: 36px;
+    background-color: #fdfcf8;
+    background-image:
+        linear-gradient(rgba(23, 23, 23, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23, 23, 23, 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-l);
+}
+
+/* Klein regeltje boven de titel */
+.eyebrow {
+    margin: 0 0 6px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* De uitgelichte puzzel (Chordinates) over de hele breedte: plaatje links, uitleg rechts */
+.example-card-featured,
+.example-card-wide {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 28px;
+    align-items: center;
+}
+
+.example-card-featured {
+    background: var(--warm);
+    border: 2px solid var(--ink);
+}
+
+.example-card-wide {
+    grid-template-columns: 220px 1fr;
+}
+
+.example-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.example-text h3 {
+    margin-top: 0;
+}
+
+.example-image-square {
+    aspect-ratio: 1 / 1;
+}
+
+.example-card-wide .example-image {
+    max-width: 220px;
+}
+
+.tag-new {
+    color: var(--ink);
+    background: var(--sun);
+}
+
+/* Wat je nodig hebt, hoe lang het duurt en hoe pittig het is */
+.puzzle-specs {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
+    font-size: 0.9rem;
+}
+
+.puzzle-specs div {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.puzzle-specs dt {
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.puzzle-specs dd {
+    margin: 0;
+}
+
+/* Niveau: vijf rondjes, de eerste --level gevuld (zoals een stip uit Coloring Dots) */
+.level {
+    --level: 1;
+    position: relative;
+    display: inline-block;
+    width: 90px;
+    height: 14px;
+    vertical-align: middle;
+    background: radial-gradient(circle at 7px 7px, transparent 4px, var(--ink) 4.5px, var(--ink) 5.5px, transparent 6px) 0 0 / 18px 14px repeat-x;
+}
+
+.level::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(var(--level) * 18px);
+    height: 100%;
+    background: radial-gradient(circle at 7px 7px, var(--ink) 5.5px, transparent 6px) 0 0 / 18px 14px repeat-x;
+    content: "";
+}
+
+.example-card-featured .view-toggle,
+.example-card-wide .try-button {
+    margin-top: 0;
+}
+
+.example-card-featured .try-button {
+    margin-top: 14px;
+}
+
+/* Chordinates: het rondje van de foto dat de cirkel wordt, met de knop "Kies Het Rondje" */
+.circle-choice {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    margin: 18px 0 22px;
+    padding: 14px;
+    background: var(--warm);
+    border-radius: var(--radius-m);
+}
+
+.circle-choice strong,
+.circle-choice small {
+    display: block;
+}
+
+.circle-choice small {
+    margin: 4px 0 10px;
+    color: var(--muted);
+}
+
+.circle-choice .secondary-button {
+    padding: 7px 14px;
+    border-width: 1px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Zelfde truc als bij de uitsnede: een vierkant kader, de foto erin verschoven (zie js/jouw_kunst.js) */
+.circle-preview {
+    position: relative;
+    flex: 0 0 110px;
+    width: 110px;
+    height: 110px;
+    overflow: hidden;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+}
+
+.circle-preview img {
+    position: absolute;
+    display: block;
+    max-width: none;
+    height: auto;
+}
+
+/* De bijsnijder in de stand "Kies Het Rondje" */
+.crop-box-round {
+    border-radius: 50%;
+}
+
+/* Blad 2 (en verder) van een resultaat met meerdere bladen */
+.result-page {
+    margin-top: 20px;
 }
 
 /* Tips: kaartjes in een raster */
@@ -1555,6 +1734,20 @@ body.lightbox-open {
         gap: 24px;
     }
 
+    .puzzle-hero {
+        padding: 22px 18px;
+    }
+
+    .example-card-featured,
+    .example-card-wide {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .example-card-wide .example-image {
+        max-width: none;
+    }
+
     .before-after {
         max-width: 420px;
     }
@@ -1678,6 +1871,12 @@ body.lightbox-open {
         padding: 0;
         background: none;
         border-radius: 0;
+    }
+
+    /* Elk volgend blad (het tekenvel van Chordinates) op een eigen pagina */
+    body.jouw-kunst-page.has-result .result-page {
+        margin-top: 0;
+        break-before: page;
     }
 
     body.jouw-kunst-page.has-result .result-image {
