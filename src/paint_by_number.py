@@ -1,9 +1,7 @@
 """Paint By Number (kleuren op nummer): een foto als 'schilderen op nummer'-pakket.
 
-Het verschil met de Kleurplaat (color_page.py):
-- De Kleurplaat maakt een paar grote, gladde vlakken: snel ingekleurd, een vereenvoudigd plaatje.
-- Paint By Number maakt honderden kleine vlakjes met meer kleuren (standaard 16), zoals de
-  schilderpakketten uit de winkel. Ingekleurd lijkt het weer echt op de foto.
+Honderden kleine vlakjes met veel kleuren (standaard 16), zoals de schilderpakketten uit
+de winkel. Ingekleurd lijkt het weer echt op de foto. De bouwstenen staan in color_page.py.
 
 Hoe het werkt (licht genoeg voor de Render free plan):
 1. Alle rekenwerk gebeurt op een kleine versie van de foto (zo'n 400 tot 700 pixels).
@@ -13,7 +11,7 @@ Hoe het werkt (licht genoeg voor de Render free plan):
 3. Opruimen: randen licht gladstrijken, te dunne stukjes en te kleine vlakjes samenvoegen
    met hun buurman, zodat er in elk vlak een nummer past.
 4. Pas daarna vergroten naar de printgrootte, met vloeiende randen.
-5. Tekenen: dunne lijntjes, een nummer in elk vlak en een legenda (zoals bij de Kleurplaat).
+5. Tekenen: dunne lijntjes, een nummer in elk vlak en een legenda.
 
 Nodig: numpy, scipy en Pillow (staan al in requirements.txt).
 """
@@ -109,7 +107,7 @@ def image_to_paint_by_number(
     if fill:
         return Image.fromarray(palette[labels].astype(np.uint8))
 
-    # 5. Dunnere lijntjes dan bij de Kleurplaat, want er zijn veel meer vlakjes
+    # 5. Dunne lijntjes, want er zijn veel vlakjes
     line_width = max(2.0, output_size * 0.0013)
 
     return _draw_empty_page(labels, palette, legend, line_width)

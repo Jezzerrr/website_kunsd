@@ -166,11 +166,10 @@ def slide_show():
 
 @app.route("/api/wakker")
 def wakker():
-    """Antwoordt zodra de site draait. De wachtpagina op GitHub Pages (docs/index.html) vraagt dit
-    steeds opnieuw op terwijl Render opstart, en stuurt de bezoeker door zodra hier "ok" terugkomt.
-    De header Access-Control-Allow-Origin laat die pagina (een ander domein) het antwoord lezen."""
+    """Een licht adres voor cron-job.org: elke paar minuten even aankloppen houdt de site op
+    Render wakker (anders valt hij na 15 minuten in slaap en duurt het openen lang).
+    no-store: niet bewaren in een cache, zodat elk verzoek echt de server bereikt."""
     response = jsonify(status="ok")
-    response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Cache-Control"] = "no-store"
     return response
 

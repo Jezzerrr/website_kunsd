@@ -1,22 +1,12 @@
-"""Kleurplaat: verandert een foto in vlakken van dezelfde kleur.
+"""Gedeelde bouwstenen voor Paint By Number (paint_by_number.py) en "Kleuren Uit Foto".
 
-Twee varianten:
-- fill=True : de ingekleurde kleurplaat (egale vlakken)
-- fill=False: de lege kleurplaat, met lijntjes, een klein grijs nummer in elk
-              vlak en een legenda onderaan (nummer -> kleur)
+Dit was de Kleurplaat (Coloring Page). Die staat niet meer op de site; de functie zelf
+(image_to_color_page) staat nog in de git-geschiedenis. Wat hier over is:
+- suggest_palette: automatische kleuren uit een foto (k-means in Lab)
+- kleuren kiezen, elke pixel de dichtstbijzijnde kleur geven, gladstrijken, te kleine en
+  te dunne vlakjes opruimen, en de lege variant tekenen (lijntjes, nummers, legenda)
 
-Hoe het werkt:
-1. De foto wordt verkleind (max_size) zodat het snel blijft.
-2. Kleuren kiezen: zelf opgegeven, of automatisch via k-means op de foto.
-3. Elke pixel krijgt de dichtstbijzijnde kleur (in Lab, dichter bij hoe ogen kleur zien).
-4. Gladstrijken: elke kleur wordt vervaagd en per plek wint de sterkste kleur.
-   Dat maakt randen vloeiend en laat dunne streepjes en kleine vlekjes verdwijnen.
-5. Details terughalen: kleine vormen die duidelijk afsteken (ogen, mond, lichtpuntjes)
-   worden niet weggepoetst, ook al zijn ze klein. Ruis en dunne randjes wel.
-6. Te kleine, onbelangrijke vlakjes worden samengevoegd met hun buurman.
-7. Tekenen: egale vlakken, of lijntjes + nummers + legenda.
-
-Nodig: numpy, scipy en Pillow (scipy zit ook in scikit-image).
+Nodig: numpy, scipy en Pillow.
 """
 
 import numpy as np
@@ -24,116 +14,7 @@ from PIL import Image, ImageDraw
 from scipy import ndimage
 
 from src.helper_functions.drawing import LINE_COLOR, NUMBER_COLOR, add_legend, get_font
-from src.helper_functions.lab_colors import balanced_color_bias, parse_color, rgb_to_lab
-
-def image_to_color_page(
-        img,
-        n_colors=6,
-        colors=None,
-        smoothness=1.0,
-        min_region_size=0.1,
-        detail=0.6,
-        fill=True,
-        legend=True,
-        max_size=1200,
-        line_width=None,
-        seed=0,
-):
-    """Verander een afbeelding in een kleurplaat.
-
-    Args:
-        img: PIL Image.
-        n_colors: aantal kleuren (alleen als colors niet is opgegeven).
-        colors: eigen kleuren als lijst, bijv. [(255, 0, 0), "#00aa55"].
-            Standaard (None) worden de kleuren bepaald uit de foto zelf.
-        smoothness: hoe glad de randen zijn. 0 = geen gladstrijken, hoger = vloeiender
-            en minder dunne streepjes. Handig bereik: 0 t/m 5.
-        min_region_size: kleinste toegestane vlak, in procent van de hele afbeelding.
-            Kleinere vlakjes worden samengevoegd met een buurvlak (tenzij ze door
-            "detail" worden beschermd). Handig bereik: 0.05 t/m 1.
-        detail: 0 t/m 1. Hoeveel kleine, duidelijk afstekende vormen (ogen, mond,
-            lichtpuntjes) behouden blijven, ook als ze kleiner zijn dan min_region_size
-            of dunner dan smoothness toelaat. 0 = niets beschermen, 1 = zoveel mogelijk.
-        fill: True = ingekleurd, False = leeg met nummers.
-        legend: bij de lege variant een legenda (nummer -> kleur) onder de afbeelding zetten.
-        max_size: de langste zijde wordt hoogstens zoveel pixels (houdt het snel).
-        line_width: dikte van de lijntjes in de lege variant, in pixels. None = automatisch.
-        seed: zorgt dat dezelfde foto steeds dezelfde kleuren krijgt.
-
-    Returns:
-        PIL Image (RGB).
-    """
-    img, rgb, lab = _prepare(img, max_size)
-    width, height = img.size
-    longest = max(width, height)
-
-    # 1. Kleuren kiezen
-    if colors:
-        palette = np.array([parse_color(c) for c in colors], dtype=np.float32)
-        palette_lab = rgb_to_lab(palette[None, :, :])[0]
-    else:
-        palette, palette_lab = _palette_from_image(rgb, lab, n_colors, seed)
-
-    # 2. Elke pixel krijgt de dichtstbijzijnde kleur. Bij eigen kleuren zorgen we er ook voor
-    #    dat elke gekozen kleur voldoende voorkomt (ook als hij niet in de foto zit).
-    bias = None
-
-    if colors:
-        flat_lab = lab.reshape(-1, 3)
-        rng = np.random.default_rng(seed)
-        sample = rng.choice(len(flat_lab), size=min(len(flat_lab), 40000), replace=False)
-        bias = balanced_color_bias(flat_lab[sample], palette_lab)
-
-    raw = _nearest_color(lab, palette_lab, bias)
-
-    # 3. Gladstrijken en opruimen. Zie de uitleg bovenaan dit bestand.
-    sigma = smoothness * 0.005 * longest
-    min_area = max(1, int(width * height * min_region_size / 100))
-
-    detail = float(np.clip(detail, 0, 1))
-    protect = None
-
-    if detail > 0:
-        protect = {
-            "palette_lab": palette_lab,
-            # Hoe sterk een vorm moet afsteken (verschil in Lab-kleur) om beschermd te worden
-            "threshold": 10 + 70 * (1 - detail),
-            # Hoe klein een beschermde vorm minstens moet zijn (in pixels)
-            "floor_area": max(12, int(min_area * (0.35 - 0.3 * detail))),
-            # Hoe dik hij minstens moet zijn (straal in pixels): dunne randjes vallen af
-            "min_thickness": longest * (0.006 - 0.004 * detail),
-        }
-
-    # Ruis (losse pixels) meteen weghalen, anders blijft er veel te veel rommel over
-    noise_area = max(4, int(width * height * 0.00005))
-    raw = _remove_small_regions(raw, noise_area)
-
-    labels = _smooth_labels(raw, sigma)
-    labels = _remove_small_regions(labels, min_area, protect)
-
-    if sigma > 0:
-        if protect:
-            # Haal duidelijke details terug die het gladstrijken wegpoetste
-            labels = _restore_details(raw, labels, **protect)
-
-        # Lichte ronde: maakt de randen van teruggehaalde vormen weer mooi rond
-        labels = _smooth_labels(labels, max(1.0, sigma / 3))
-        labels = _remove_small_regions(labels, min_area, protect)
-
-    # Te smalle stukken weghalen: anders lopen de lijntjes aan weerszijden van een smal vlak
-    # in elkaar over en lijkt een vlak in tweeën gesplitst. Geldt voor beide varianten,
-    # zodat de ingekleurde en de lege versie bij elkaar passen.
-    outline = line_width if line_width is not None else max(2.0, longest * 0.002)
-    labels = _remove_thin_parts(labels, radius=max(2.0, outline * 1.25))
-    labels = _remove_small_regions(labels, min_area, protect)
-
-    # 4. Alleen gebruikte kleuren houden, donkerste eerst (nummer 1 = donkerste)
-    labels, palette = _renumber_by_darkness(labels, palette)
-
-    if fill:
-        return Image.fromarray(palette[labels].astype(np.uint8))
-
-    return _draw_empty_page(labels, palette, legend, line_width)
+from src.helper_functions.lab_colors import rgb_to_lab
 
 
 def suggest_palette(img, n_colors=6, max_size=600, seed=0):
@@ -322,28 +203,8 @@ def _label_regions(labels):
     return region_ids, offset
 
 
-def _region_thickness(labels, region_ids, ids):
-    """De 'dikte' van elk vlak: hoe ver je er minimaal vanaf de rand kunt staan (straal van de grootste cirkel)."""
-    boundary = np.zeros(labels.shape, dtype=bool)
-    boundary[:, :-1] |= labels[:, :-1] != labels[:, 1:]
-    boundary[:-1, :] |= labels[:-1, :] != labels[1:, :]
-
-    distance = ndimage.distance_transform_edt(~boundary)
-
-    return ndimage.maximum(distance, labels=region_ids, index=ids)
-
-
-def _color_difference(palette_lab, labels_a, labels_b):
-    """Verschil in kleur (Lab) tussen twee kaarten met kleurnummers, per pixel."""
-    return np.sqrt(((palette_lab[labels_a] - palette_lab[labels_b]) ** 2).sum(axis=2))
-
-
-def _remove_small_regions(labels, min_area, protect=None):
-    """Voeg te kleine vlakjes samen met het dichtstbijzijnde grotere vlak.
-
-    Met protect (zie image_to_color_page) blijven kleine vlakjes staan die duidelijk afsteken
-    en dik genoeg zijn, zoals een oog of een lichtpuntje.
-    """
+def _remove_small_regions(labels, min_area):
+    """Voeg te kleine vlakjes samen met het dichtstbijzijnde grotere vlak."""
     for _ in range(3):
         region_ids, count = _label_regions(labels)
         areas = np.bincount(region_ids.ravel(), minlength=count + 1)
@@ -362,28 +223,7 @@ def _remove_small_regions(labels, min_area, protect=None):
         )
         targets = labels[nearest[0], nearest[1]]
 
-        remove = small.copy()
-
-        if protect:
-            ids = np.nonzero(small)[0]
-
-            difference = _color_difference(protect["palette_lab"], labels, targets)
-            contrast = ndimage.mean(difference, labels=region_ids, index=ids)
-            thickness = _region_thickness(labels, region_ids, ids)
-
-            keep = (
-                (areas[ids] >= protect["floor_area"])
-                & (contrast >= protect["threshold"])
-                & (thickness >= protect["min_thickness"])
-            )
-            remove[ids[keep]] = False
-
-        remove_mask = remove[region_ids]
-
-        if not remove_mask.any():
-            break
-
-        labels = np.where(remove_mask, targets, labels)
+        labels = np.where(small_mask, targets, labels)
 
     return labels
 
@@ -412,46 +252,6 @@ def _remove_thin_parts(labels, radius):
     nearest = ndimage.distance_transform_edt(removed, return_distances=False, return_indices=True)
 
     return labels[nearest[0], nearest[1]]
-
-
-def _restore_details(raw, smoothed, palette_lab, threshold, floor_area, min_thickness):
-    """Zet duidelijke kleine vormen terug die het gladstrijken heeft weggepoetst.
-
-    Een vorm komt terug als hij (bijna) helemaal verdwenen is, sterk afsteekt tegen
-    wat er nu staat, groot genoeg is en dik genoeg (dunne randjes tussen twee kleuren
-    komen dus niet terug).
-    """
-    region_ids, count = _label_regions(raw)
-
-    if count == 0:
-        return smoothed
-
-    ids = np.arange(1, count + 1)
-    areas = np.bincount(region_ids.ravel(), minlength=count + 1)[1:]
-
-    lost = raw != smoothed
-    lost_count = ndimage.sum(lost, labels=region_ids, index=ids)
-
-    difference = _color_difference(palette_lab, raw, smoothed)
-    difference_sum = ndimage.sum(np.where(lost, difference, 0.0), labels=region_ids, index=ids)
-    contrast = difference_sum / np.maximum(lost_count, 1)
-
-    candidates = (areas >= floor_area) & (lost_count > 0.5 * areas) & (contrast >= threshold)
-
-    # De dikte uitrekenen kost tijd, dus alleen voor de kandidaten
-    thickness = np.zeros(count)
-    candidate_ids = ids[candidates]
-
-    if len(candidate_ids) > 0:
-        thickness[candidates] = _region_thickness(raw, region_ids, candidate_ids)
-
-    restore = candidates & (thickness >= min_thickness)
-
-    restore_flags = np.zeros(count + 1, dtype=bool)
-    restore_flags[1:] = restore
-    restore_mask = restore_flags[region_ids]
-
-    return np.where(restore_mask, raw, smoothed)
 
 
 def _renumber_by_darkness(labels, palette):

@@ -973,27 +973,13 @@ body.lightbox-open {
     cursor: not-allowed;
 }
 
-/* ---------- 8. Meldingen en infokaders ---------- */
+/* ---------- 8. Meldingen ---------- */
 .status-message {
     max-width: 650px;
     margin-top: 25px;
     padding: 14px 18px;
     color: #8a1c1c;
     background: #ffe8e8;
-    border-radius: var(--radius-s);
-}
-
-/* Not in use now. */
-.email-address {
-    font-family: Consolas, Monaco, "Courier New", monospace;
-    font-weight: 600;
-}
-
-.info-box {
-    margin: 20px 0;
-    padding: 20px;
-    background: var(--panel);
-    border-left: 6px solid black;
     border-radius: var(--radius-s);
 }
 
