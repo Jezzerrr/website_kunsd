@@ -1911,6 +1911,104 @@ body.lightbox-open {
     height: auto;
 }
 
+/* Speeltuin: stap 1 is de foto (eventueel bijgesneden), stap 2 de bewerkingen */
+.workspace.playground,
+.playground-upload-box {
+    margin-bottom: 32px;
+}
+
+/* Nog geen foto: stap 1 springt eruit, met een geel kader */
+.playground-upload-box.needs-photo {
+    box-shadow: 0 0 0 4px var(--sun);
+}
+
+/* Nog geen foto: de bewerkingen zijn "op slot": grijze knoppen en stapnummer, en een voorbeeld */
+.playground.locked .playground-controls {
+    opacity: 0.4;
+    filter: grayscale(1);
+    pointer-events: none;
+}
+
+.playground.locked .step-title::before {
+    background: var(--line);
+}
+
+/* Bezig (of nog geen foto): de knop wordt grijs */
+.playground .create-button:disabled {
+    color: white;
+    background: #b5b5b5;
+    border-color: #b5b5b5;
+    opacity: 1;
+}
+
+.playground-result {
+    position: relative;
+}
+
+/* Het voorbeeld (gemaakt van Jesse's portret) met een duidelijk label, zolang er geen eigen foto is */
+.playground.locked .playground-result {
+    outline: 3px dashed var(--line);
+    outline-offset: -3px;
+}
+
+.example-tag {
+    position: absolute;
+    top: 22px;
+    left: 22px;
+    padding: 4px 12px;
+    color: white;
+    background: var(--ink);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.playground.has-photo .example-tag,
+.playground.has-photo:not(.has-result) .playground-output,
+.playground.has-result .playground-input {
+    display: none;
+}
+
+/* Een stuk van de foto in een kader (zie showPart in js/speeltuin.js) */
+.photo-frame {
+    position: relative;
+    width: 100%;
+    overflow: hidden;               /* de verhouding (aspect-ratio) wordt door het script ingesteld */
+    background: white;
+}
+
+.photo-frame img {
+    position: absolute;
+    display: block;
+    max-width: none;
+    height: auto;
+}
+
+.playground-result-round .playground-input {
+    border-radius: 50%;
+}
+
+.playground-photo {
+    max-width: 320px;
+    margin-top: 24px;
+    border-radius: var(--radius-m);
+}
+
+/* Tijdens bijsnijden staat de bijsnijder in plaats van de foto of het resultaat */
+.playground-crop {
+    margin-top: 24px;
+}
+
+.is-cropping .playground-grid,
+.is-cropping .playground-photo {
+    display: none;
+}
+
+/* .link-button staat verderop en zou .hidden overrulen: de download-knop pas tonen als er een resultaat is */
+.playground-download.hidden {
+    display: none;
+}
+
 @media (max-width: 900px) {
     .steps-4 {
         grid-template-columns: repeat(2, 1fr);

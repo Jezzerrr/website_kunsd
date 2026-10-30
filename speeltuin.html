@@ -53,44 +53,220 @@
 
             <p class="section-intro">
                 Niet alles hoeft een puzzel te zijn. Hier staan bewerkingen om gewoon mee te spelen: upload
-                een foto, schuif wat met de instellingen en download wat je mooi vindt. Je foto wordt niet
+                een foto, kies een bewerking en download wat je mooi vindt. Je foto wordt niet
                 bewaard. Zin om zelf te tekenen? Op <a href="/jouw_kunst">Jouw Kunsd</a> staan de tekenpuzzels.
             </p>
         </section>
 
-        <section class="home-section workspace playground">
-            <h2>RedBlack Dots</h2>
+        <section class="home-section workspace playground-upload-box needs-photo">
+            <h2 class="step-title" data-step="1">Kies Je Foto</h2>
+
+            <p class="section-intro">
+                Eén keer uploaden is genoeg: dezelfde foto werkt voor alle bewerkingen hieronder.
+            </p>
+
+            <div class="button-row image-actions">
+                <label for="playground-upload" class="upload-label" data-track="speeltuin-kies-foto">Kies Een Foto</label>
+                <input type="file" id="playground-upload" accept="image/*">
+
+                <button type="button" id="playground-crop-button" class="secondary-button hidden">
+                    Bijsnijden
+                </button>
+
+                <button type="button" id="playground-crop-reset-button" class="secondary-button hidden">
+                    Hele Foto
+                </button>
+            </div>
+
+            <div id="playground-photo" class="photo-frame playground-photo hidden">
+                <img alt="Je gekozen foto">
+            </div>
+
+            <!-- De bijsnijder: staat hier, en schuift naar Negative Circles bij "Kies Het Rondje" -->
+            <div id="crop-container" class="playground-crop hidden">
+                <div id="crop-stage" class="crop-stage">
+                    <img id="crop-image" alt="Foto om bij te snijden" draggable="false">
+
+                    <div id="crop-box" class="crop-box">
+                        <span class="crop-edge crop-edge-n" data-handle="n"></span>
+                        <span class="crop-edge crop-edge-e" data-handle="e"></span>
+                        <span class="crop-edge crop-edge-s" data-handle="s"></span>
+                        <span class="crop-edge crop-edge-w" data-handle="w"></span>
+                        <span class="crop-handle" data-handle="nw"></span>
+                        <span class="crop-handle" data-handle="ne"></span>
+                        <span class="crop-handle" data-handle="sw"></span>
+                        <span class="crop-handle" data-handle="se"></span>
+                    </div>
+                </div>
+
+                <p id="crop-hint" class="crop-hint"></p>
+
+                <div class="button-row image-actions">
+                    <button type="button" id="crop-cancel-button" class="secondary-button">Annuleren</button>
+                    <button type="button" id="crop-ok-button" class="create-button">OK</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Elke bewerking is een blok met dezelfde opbouw; js/speeltuin.js leest de instellingen
+             uit de data-attributen: welk adres (data-endpoint), welke slider-waarde (data-param),
+             extra vaste waarden (data-extra), de naam (data-name), de naam van de download (data-file)
+             en of de bewerking een rondje uit de foto gebruikt (data-round). Zonder foto is een blok
+             "locked": de knoppen zijn grijs en je ziet een voorbeeld. -->
+        <section class="home-section workspace playground locked"
+                 data-endpoint="/api/negative-circles"
+                 data-param="circles"
+                 data-name="Negative Circles"
+                 data-file="kunsd-negative-circles.png"
+                 data-round="true">
+            <h2 class="step-title" data-step="2">Negative Circles</h2>
+
+            <p class="section-intro">
+                Je foto vol cirkels. In de cirkels zie je de foto zoals hij is, ertussen het negatief. En het
+                geheel is zelf ook een rondje: kies zelf welk rondje uit je foto.
+            </p>
+
+            <div class="playground-grid">
+                <div class="playground-controls">
+                    <div class="slider-header">
+                        <label for="circles-slider">Aantal Cirkels</label>
+                        <output for="circles-slider">11</output>
+                    </div>
+
+                    <input type="range" id="circles-slider" class="art-slider"
+                           min="3" max="20" step="1" value="11" data-unit="" disabled>
+
+                    <div class="slider-scale">
+                        <span>Weinig, Groot</span>
+                        <span>Veel, Klein</span>
+                    </div>
+
+                    <label class="switch-row" for="circles-gray">
+                        <strong>Zwart-Wit</strong>
+
+                        <span class="switch">
+                            <input type="checkbox" id="circles-gray" name="gray" disabled>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <div class="button-row">
+                        <button type="button" id="negative-circles-button" class="create-button" disabled>
+                            Maak Negative Circles
+                        </button>
+
+                        <button type="button" class="secondary-button circle-choose-button">
+                            Kies Het Rondje
+                        </button>
+
+                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-negative-circles">
+                            Download Afbeelding
+                        </a>
+                    </div>
+
+                    <p class="status-message hidden"></p>
+                </div>
+
+                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: jouw foto (of het rondje),
+                     en na "Maak": het resultaat. -->
+                <figure class="playground-result playground-result-round">
+                    <img
+                        class="playground-output"
+                        src="mijn_kunsd/voorbeelden/negative-circles.jpg"
+                        alt="Voorbeeld van Negative Circles: portret in een rondje vol cirkels"
+                        width="800"
+                        height="800">
+
+                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
+
+                    <div class="photo-frame playground-input hidden">
+                        <img alt="Jouw foto">
+                    </div>
+                </figure>
+            </div>
+        </section>
+
+        <section class="home-section workspace playground locked"
+                 data-endpoint="/api/square-drift"
+                 data-param="strength"
+                 data-name="Square Drift"
+                 data-file="kunsd-square-drift.jpg">
+            <h2 class="step-title" data-step="2">Square Drift</h2>
+
+            <p class="section-intro">
+                Honderden rechthoekjes uit je foto, gekopieerd en een stukje verder van het midden weer
+                geplakt. Het midden blijft heel, naar buiten toe valt je foto uiteen. Elke keer net anders:
+                klik nog eens voor een nieuwe versie.
+            </p>
+
+            <div class="playground-grid">
+                <div class="playground-controls">
+                    <div class="slider-header">
+                        <label for="drift-slider">Uiteenvallen</label>
+                        <output for="drift-slider">60%</output>
+                    </div>
+
+                    <input type="range" id="drift-slider" class="art-slider"
+                           min="20" max="100" step="10" value="60" data-unit="%" disabled>
+
+                    <div class="slider-scale">
+                        <span>Een Beetje</span>
+                        <span>Helemaal</span>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="button" id="square-drift-button" class="create-button" disabled>
+                            Maak Square Drift
+                        </button>
+
+                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-square-drift">
+                            Download Afbeelding
+                        </a>
+                    </div>
+
+                    <p class="status-message hidden"></p>
+                </div>
+
+                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: jouw foto (of het rondje),
+                     en na "Maak": het resultaat. -->
+                <figure class="playground-result">
+                    <img
+                        class="playground-output"
+                        src="mijn_kunsd/voorbeelden/square-drift.jpg"
+                        alt="Voorbeeld van Square Drift: portret waarvan rechthoekjes naar buiten zijn verschoven"
+                        width="800"
+                        height="800">
+
+                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
+
+                    <div class="photo-frame playground-input hidden">
+                        <img alt="Jouw foto">
+                    </div>
+                </figure>
+            </div>
+        </section>
+
+        <section class="home-section workspace playground locked"
+                 data-endpoint="/api/ranked-dots"
+                 data-param="grid_size_percent"
+                 data-extra="fill=false"
+                 data-name="RedBlack Dots"
+                 data-file="kunsd-redblack-dots.png">
+            <h2 class="step-title" data-step="2">RedBlack Dots</h2>
 
             <p class="section-intro">
                 Je foto in rode en zwarte stippen, met een grafisch, poster-achtig effect.
             </p>
 
             <div class="playground-grid">
-                <div>
-                    <label for="playground-upload" class="upload-label" data-track="speeltuin-kies-foto">Kies Een Foto</label>
-                    <input type="file" id="playground-upload" accept="image/*">
-
+                <div class="playground-controls">
                     <div class="slider-header">
-                        <label for="playground-dot-slider">
-                            Puntgrootte
-                        </label>
-
-                        <output
-                            id="playground-dot-value"
-                            for="playground-dot-slider">
-                            3%
-                        </output>
+                        <label for="playground-dot-slider">Puntgrootte</label>
+                        <output for="playground-dot-slider">3%</output>
                     </div>
 
-                    <input
-                        type="range"
-                        id="playground-dot-slider"
-                        class="art-slider"
-                        min="0.5"
-                        max="5"
-                        step="0.5"
-                        value="3"
-                    >
+                    <input type="range" id="playground-dot-slider" class="art-slider"
+                           min="0.5" max="5" step="0.5" value="3" data-unit="%" disabled>
 
                     <div class="slider-scale">
                         <span>Klein</span>
@@ -102,21 +278,29 @@
                             Maak RedBlack Dots
                         </button>
 
-                        <a id="playground-download" class="secondary-button link-button hidden" download="kunsd-redblack-dots.png">
+                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-redblack-dots">
                             Download Afbeelding
                         </a>
                     </div>
 
-                    <p id="playground-status" class="status-message hidden"></p>
+                    <p class="status-message hidden"></p>
                 </div>
 
+                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: jouw foto (of het rondje),
+                     en na "Maak": het resultaat. -->
                 <figure class="playground-result">
                     <img
-                        id="playground-image"
+                        class="playground-output"
                         src="mijn_kunsd/voorbeelden/redblack-dots.png"
                         alt="Voorbeeld van RedBlack Dots: portret van rode en zwarte stippen"
                         width="640"
                         height="802">
+
+                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
+
+                    <div class="photo-frame playground-input hidden">
+                        <img alt="Jouw foto">
+                    </div>
                 </figure>
             </div>
         </section>

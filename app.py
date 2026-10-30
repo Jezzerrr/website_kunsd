@@ -25,6 +25,8 @@ from src.shape_numbers import (
 from src.chordinates import image_to_chordinates
 from src.hatchwork import image_to_hatchwork
 from src.penpath import image_to_penpath
+from src.negative_circles import image_to_negative_circles
+from src.square_drift import image_to_square_drift
 
 app = Flask(__name__)
 
@@ -510,6 +512,29 @@ def hatchwork():
     return pages_to_json(result) if template else image_to_json(result)
 
 
+@app.route("/api/negative-circles", methods=["POST"])
+@image_endpoint
+def negative_circles():
+    # Speeltuin: vol cirkels, ertussen het negatief, en het geheel als rondje (PNG, doorzichtig erbuiten).
+    # Het rondje is het grootste vierkant in het midden van de uitsnede ("Kies Het Rondje" stuurt een vierkant mee).
+    return image_to_json(image_to_negative_circles(
+        load_input_image(),
+        circles_across=int(read_number("circles", 11, 3, 20)),
+        gray=read_flag("gray", default=False)
+    ))
+
+
+@app.route("/api/square-drift", methods=["POST"])
+@image_endpoint
+def square_drift():
+    # Speeltuin: rechthoekjes die van het midden naar buiten verschoven zijn. Elke keer anders (toeval).
+    # Een foto vol kleurverloop: als JPEG veel kleiner dan als PNG.
+    return photo_to_json(image_to_square_drift(
+        load_input_image(),
+        strength=read_number("strength", 60, 20, 100) / 100
+    ))
+
+
 @app.route("/api/orient", methods=["POST"])
 @image_endpoint
 def orient():
@@ -750,6 +775,14 @@ def image_to_json(image):
     image_base64 = base64.b64encode(output.getvalue()).decode("utf-8")
 
     return jsonify({"image": f"data:image/png;base64,{image_base64}"})
+
+
+def photo_to_json(image):
+    """Als image_to_json, maar als JPEG: voor resultaten die eruitzien als een foto."""
+    output = io.BytesIO()
+    image.save(output, format="JPEG", quality=90)
+
+    return jsonify({"image": "data:image/jpeg;base64," + base64.b64encode(output.getvalue()).decode("ascii")})
 
 
 def pages_to_json(pages):
