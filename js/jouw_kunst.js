@@ -9,7 +9,6 @@ const croppedPreviewImage = document.getElementById("cropped-preview-image");
 const algorithmSection = document.getElementById("algorithm-section");
 const algorithmButtons = document.querySelectorAll(".algorithm-button");
 const algorithmSettings = document.querySelectorAll(".algorithm-settings");
-const rankedGridSizeSlider = document.getElementById("ranked-grid-size-slider");
 const dotsGridSizeSlider = document.getElementById("dots-grid-size-slider");
 const dotsFill = document.getElementById("dots-fill");
 const shapeSelect = document.getElementById("shape-select");
@@ -17,11 +16,16 @@ const shapeGridSizeSlider = document.getElementById("shape-grid-size-slider");
 const shapeColorsSlider = document.getElementById("shape-colors-slider");
 const shapeFill = document.getElementById("shape-fill");
 const shapeButton = document.getElementById("shape-button");
-const rankedDotsButton = document.getElementById("ranked-dots-button");
 const dotsButton = document.getElementById("dots-button");
 const chordinatesCountSlider = document.getElementById("chordinates-count-slider");
 const chordinatesFill = document.getElementById("chordinates-fill");
 const chordinatesButton = document.getElementById("chordinates-button");
+const penpathCountSlider = document.getElementById("penpath-count-slider");
+const penpathFill = document.getElementById("penpath-fill");
+const penpathButton = document.getElementById("penpath-button");
+const hatchworkColumnsSlider = document.getElementById("hatchwork-columns-slider");
+const hatchworkFill = document.getElementById("hatchwork-fill");
+const hatchworkButton = document.getElementById("hatchwork-button");
 const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
@@ -78,7 +82,8 @@ const FILE_NAMES = {
     "shape-division-settings": "shape-division",
     "chordinates-settings": "chordinates",
     "dots-settings": "coloring-dots",
-    "ranked-dots-settings": "redblack-dots"
+    "penpath-settings": "penpath",
+    "hatchwork-settings": "hatchwork"
 };
 
 // Kleinste toegestane uitsnede, als fractie van de afbeelding (0.08 = 8%).
@@ -97,7 +102,7 @@ const EXTRA_COLORS = ["#2a9d8f", "#f4a261", "#8ecae6", "#9b5de5", "#e76f51", "#6
 // Bevat het laatste resultaat, of null als er (nog) niets te downloaden is.
 let resultSource = null;
 
-// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates): alle bladen, alle
+// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates, Penpath en Hatchwork): alle bladen, alle
 // bladen naast elkaar in één afbeelding (voor "Download Afbeelding"), en samen als pdf. Anders null.
 let resultPages = null;
 let resultCombined = null;
@@ -122,8 +127,7 @@ let dragState = null;
 // Na het uploaden gaat die bewerking vanzelf open.
 let pendingAlgorithm = null;
 
-// De laatst uitgevoerde bewerking: de "Tekenvel"-schakelaar en de "Maak ..."-knop ervan
-// (bij RedBlack Dots is er geen schakelaar: null).
+// De laatst uitgevoerde bewerking: de "Tekenvel"-schakelaar en de "Maak ..."-knop ervan.
 let lastFillSwitch = null;
 let lastCreateButton = null;
 
@@ -633,7 +637,7 @@ document.querySelectorAll(".example-card").forEach(function (card) {
 
 // "Probeer Deze": met een foto gaat de bewerking meteen open. Zonder foto gaan we naar "Aan De Slag",
 // met uitleg bij de knop "Kies Een Foto"; na het uploaden gaat de gekozen bewerking vanzelf open.
-document.querySelectorAll(".try-button").forEach(function (button) {
+document.querySelectorAll(".try-button[data-algorithm]").forEach(function (button) {
     button.addEventListener("click", function () {
         if (originalFile) {
             selectAlgorithm(button.dataset.algorithm);
@@ -699,21 +703,6 @@ shapeButton.addEventListener("click", async function () {
 });
 
 
-rankedDotsButton.addEventListener("click", async function () {
-    track("maak-ranked-dots");
-    rememberAlgorithm(null, rankedDotsButton);
-
-    await runPythonAlgorithm(
-        "/api/ranked-dots",
-        {
-            grid_size_percent: rankedGridSizeSlider.value,
-            fill: false
-        },
-        rankedDotsButton
-    );
-});
-
-
 dotsButton.addEventListener("click", async function () {
     track("maak-dots");
     rememberAlgorithm(dotsFill, dotsButton);
@@ -725,6 +714,36 @@ dotsButton.addEventListener("click", async function () {
             fill: !dotsFill.checked
         },
         dotsButton
+    );
+});
+
+
+penpathButton.addEventListener("click", async function () {
+    track("maak-penpath");
+    rememberAlgorithm(penpathFill, penpathButton);
+
+    await runPythonAlgorithm(
+        "/api/penpath",
+        {
+            n_lines: penpathCountSlider.value,
+            fill: !penpathFill.checked
+        },
+        penpathButton
+    );
+});
+
+
+hatchworkButton.addEventListener("click", async function () {
+    track("maak-hatchwork");
+    rememberAlgorithm(hatchworkFill, hatchworkButton);
+
+    await runPythonAlgorithm(
+        "/api/hatchwork",
+        {
+            columns: hatchworkColumnsSlider.value,
+            fill: !hatchworkFill.checked
+        },
+        hatchworkButton
     );
 });
 

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Speeltuin · KUNSD</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Favicon (icoontje in het browsertabblad) -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/mijn_kunsd/delen/favicon/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="/mijn_kunsd/delen/favicon/apple-touch-icon.png">
+
+    <!-- Deel-tags: titel, tekst en plaatje bij een gedeelde link (WhatsApp, Signal, LinkedIn, ...) -->
+    <meta name="description" content="Speel met je foto: bewerkingen om alleen te bekijken, te downloaden of op te hangen. Op KUNSD maak je ook van je eigen foto een tekenpuzzel om zelf na te tekenen.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="KUNSD">
+    <meta property="og:locale" content="nl_NL">
+    <meta property="og:url" content="https://jesses-kunsd.onrender.com/speeltuin">
+    <meta property="og:title" content="Speeltuin - KUNSD">
+    <meta property="og:description" content="Speel met je foto: bewerkingen om alleen te bekijken, te downloaden of op te hangen. Op KUNSD maak je ook van je eigen foto een tekenpuzzel om zelf na te tekenen.">
+    <meta property="og:image" content="https://jesses-kunsd.onrender.com/mijn_kunsd/delen/deel_afbeelding.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="KUNSD: maak kunst van je eigen foto, met een kleurrijk abstract portret en een foto van Jesse">
+    <meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body>
+
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/jouw_kunst">Jouw Kunsd</a>
+            <a href="/mijn_kunst">Mijn Kunsd</a>
+            <a href="/contact">Contact</a>
+        </nav>
+    </header>
+
+    <main>
+
+        <!-- De Speeltuin: fotobewerkingen om alleen te bekijken. Geen puzzel, geen tekenvel.
+             De tekenpuzzels staan op Jouw Kunsd; dit is een extraatje. -->
+        <section class="home-section">
+            <p class="eyebrow">Extra</p>
+            <h1>Speeltuin</h1>
+
+            <p class="section-intro">
+                Niet alles hoeft een puzzel te zijn. Hier staan bewerkingen om gewoon mee te spelen: upload
+                een foto, schuif wat met de instellingen en download wat je mooi vindt. Je foto wordt niet
+                bewaard. Zin om zelf te tekenen? Op <a href="/jouw_kunst">Jouw Kunsd</a> staan de tekenpuzzels.
+            </p>
+        </section>
+
+        <section class="home-section workspace playground">
+            <h2>RedBlack Dots</h2>
+
+            <p class="section-intro">
+                Je foto in rode en zwarte stippen, met een grafisch, poster-achtig effect.
+            </p>
+
+            <div class="playground-grid">
+                <div>
+                    <label for="playground-upload" class="upload-label" data-track="speeltuin-kies-foto">Kies Een Foto</label>
+                    <input type="file" id="playground-upload" accept="image/*">
+
+                    <div class="slider-header">
+                        <label for="playground-dot-slider">
+                            Puntgrootte
+                        </label>
+
+                        <output
+                            id="playground-dot-value"
+                            for="playground-dot-slider">
+                            3%
+                        </output>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="playground-dot-slider"
+                        class="art-slider"
+                        min="0.5"
+                        max="5"
+                        step="0.5"
+                        value="3"
+                    >
+
+                    <div class="slider-scale">
+                        <span>Klein</span>
+                        <span>Groot</span>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="button" id="playground-button" class="create-button" disabled>
+                            Maak RedBlack Dots
+                        </button>
+
+                        <a id="playground-download" class="secondary-button link-button hidden" download="kunsd-redblack-dots.png">
+                            Download Afbeelding
+                        </a>
+                    </div>
+
+                    <p id="playground-status" class="status-message hidden"></p>
+                </div>
+
+                <figure class="playground-result">
+                    <img
+                        id="playground-image"
+                        src="mijn_kunsd/voorbeelden/redblack-dots.png"
+                        alt="Voorbeeld van RedBlack Dots: portret van rode en zwarte stippen"
+                        width="640"
+                        height="802">
+                </figure>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <p>
+            Ideeën, feedback of zin om te sparren? Over kunst, nieuwe mogelijkheden of websites bouwen:
+            ik denk graag samen.
+            <a href="/contact" data-track="uitnodiging-contact">Stuur me een bericht</a>
+        </p>
+        <p class="footer-credit">&copy; 2026 Jesse Metz &middot; KUNSD</p>
+    </footer>
+
+    <script src="js/speeltuin.js"></script>
+    <script src="js/analytics.js"></script>
+    <script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+</body>
+</html>

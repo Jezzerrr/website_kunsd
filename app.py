@@ -23,6 +23,8 @@ from src.shape_numbers import (
     suggest_shape_palette,
 )
 from src.chordinates import image_to_chordinates
+from src.hatchwork import image_to_hatchwork
+from src.penpath import image_to_penpath
 
 app = Flask(__name__)
 
@@ -70,7 +72,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico"}
 
 # De pagina's met een net adres: /mijn_kunst toont mijn_kunst.html. De homepagina (index.html) staat op /.
-PAGES = {"mijn_kunst", "jouw_kunst", "muziek", "contact", "bedankt"}
+PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt"}
 
 # Verhuisde pagina's: oud adres -> nieuw adres. "Over mij" en "Kunsd" zijn samen "Mijn Kunsd" geworden.
 MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
@@ -466,6 +468,34 @@ def chordinates():
     result = image_to_chordinates(
         load_input_image(),
         n_lines=int(read_number("n_lines", 600, 250, 800)),
+        template=template
+    )
+
+    return pages_to_json(result) if template else image_to_json(result)
+
+
+@app.route("/api/penpath", methods=["POST"])
+@image_endpoint
+def penpath():
+    # Zonder "fill" krijg je het tekenvel: twee A4-bladen (het puntenraster, en de routes)
+    template = not read_flag("fill", default=True)
+    result = image_to_penpath(
+        load_input_image(),
+        n_lines=int(read_number("n_lines", 800, 400, 1000)),
+        template=template
+    )
+
+    return pages_to_json(result) if template else image_to_json(result)
+
+
+@app.route("/api/hatchwork", methods=["POST"])
+@image_endpoint
+def hatchwork():
+    # Zonder "fill" krijg je het tekenvel: twee A4-bladen (het ruitjesraster, en de lijst per ronde)
+    template = not read_flag("fill", default=True)
+    result = image_to_hatchwork(
+        load_input_image(),
+        columns=int(read_number("columns", 70, 50, 110)),
         template=template
     )
 

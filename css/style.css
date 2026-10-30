@@ -111,10 +111,10 @@ main {
     margin-top: 0;
 }
 
-/* Homepage: de vier bewerkingen als kleine plaatjes naast elkaar */
+/* Homepage: de vijf tekenpuzzels als kleine plaatjes naast elkaar */
 .style-strip {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
     margin-top: 20px;
 }
@@ -498,7 +498,8 @@ body.lightbox-open {
 }
 
 /* Het echte bestandsveld is onzichtbaar; het label ziet eruit als een knop */
-#image-upload {
+#image-upload,
+#playground-upload {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -1684,6 +1685,31 @@ body.lightbox-open {
 
 
 /* ---------- 11. Kleine schermen ---------- */
+/* Speeltuin: instellingen links, het plaatje rechts */
+.playground-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+}
+
+.playground-grid .upload-label {
+    margin-bottom: 24px;
+}
+
+.playground-result {
+    margin: 0;
+    padding: 12px;
+    background: white;
+    border-radius: var(--radius-m);
+}
+
+.playground-result img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
 @media (max-width: 900px) {
     .steps-4 {
         grid-template-columns: repeat(2, 1fr);
@@ -1691,6 +1717,10 @@ body.lightbox-open {
 }
 
 @media (max-width: 700px) {
+    .playground-grid {
+        grid-template-columns: 1fr;
+    }
+
     body {
         padding: 16px;
     }
@@ -1720,9 +1750,9 @@ body.lightbox-open {
         grid-template-columns: 1fr;
     }
 
-    /* Vier bewerkingen: twee bij twee op een telefoon */
+    /* Vijf tekenpuzzels: drie naast elkaar op een telefoon */
     .style-strip {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
     }
 

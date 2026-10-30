@@ -70,8 +70,8 @@
             <div class="before-after">
                 <figure class="paper paper-left">
                     <img
-                        src="mijn_kunsd/voorbeelden/chordinates-leeg.png"
-                        alt="Een tekenvel van Chordinates: een cirkel met 150 genummerde punten om lijnen tussen te trekken"
+                        src="mijn_kunsd/voorbeelden/penpath-leeg.png"
+                        alt="Een tekenvel van Penpath: een raster van punten met letters en cijfers, zoals bij zeeslag"
                         width="800"
                         height="1132">
                     <figcaption>1. Print</figcaption>
@@ -79,10 +79,10 @@
 
                 <figure class="paper paper-right">
                     <img
-                        src="mijn_kunsd/voorbeelden/chordinates.jpg"
-                        alt="Hetzelfde tekenvel met alle lijnen getekend: een portret van alleen rechte lijnen"
+                        src="mijn_kunsd/voorbeelden/penpath.jpg"
+                        alt="Hetzelfde tekenvel met alle lijnen getekend: een portret van korte rechte lijnen"
                         width="640"
-                        height="640">
+                        height="841">
                     <figcaption>2. Teken</figcaption>
                 </figure>
             </div>
@@ -112,20 +112,89 @@
             </ol>
         </section>
 
-        <!-- De puzzels: één foto, vier bewerkingen. Bij de tekenpuzzels kun je wisselen tussen
+        <!-- De puzzels: één foto, vijf tekenpuzzels, en onderaan een verwijzing naar de Speeltuin. Bij de tekenpuzzels kun je wisselen tussen
              hoe het wordt als het af is en het tekenvel om te printen. -->
         <section id="voorbeelden" class="home-section">
             <h2>Kies Je Puzzel</h2>
 
             <p class="section-intro">
-                Alle voorbeelden zijn gemaakt van hetzelfde portret van mij. Bij elke tekenpuzzel zie je wat je
+                Vijf tekenpuzzels, van rustig inkleuren tot honderden lijnen trekken. Alle voorbeelden zijn
+                gemaakt van hetzelfde portret van mij. Bij elke tekenpuzzel zie je wat je
                 nodig hebt, hoe lang je ongeveer bezig bent en hoe pittig het is.
             </p>
 
             <div class="examples">
 
                 <article class="example-card example-card-featured">
-                    <div class="example-image example-image-square">
+                    <div class="example-image">
+                        <img
+                            src="mijn_kunsd/voorbeelden/penpath.jpg"
+                            data-filled="mijn_kunsd/voorbeelden/penpath.jpg"
+                            data-empty="mijn_kunsd/voorbeelden/penpath-leeg.png"
+                            alt="Penpath: portret van korte rechte lijnen tussen de punten van een raster"
+                            width="640"
+                            height="841"
+                            loading="lazy">
+                    </div>
+
+                    <div class="example-text">
+                        <h3>Penpath <span class="tag tag-new">Nieuw</span> <span class="tag tag-diy">Tekenpuzzel</span></h3>
+                        <p>
+                            Een raster van punten met coördinaten, zoals bij zeeslag. Zet je pen op M12 en trek
+                            met je liniaal een lijn naar P15, dan naar N19, en verder zonder op te tillen. Route
+                            na route verschijnen ogen, neus en mond. Alle routes passen op één A4.
+                        </p>
+
+                        <dl class="puzzle-specs">
+                            <div><dt>Nodig</dt><dd>Liniaal, fineliner (0,3 mm)</dd></div>
+                            <div><dt>Tijd</dt><dd>2 tot 3 uur</dd></div>
+                            <div><dt>Niveau</dt><dd><span class="level" style="--level: 3" aria-label="3 van 5"></span></dd></div>
+                        </dl>
+
+                        <div class="view-toggle" role="group" aria-label="Voorbeeld van Penpath">
+                            <button type="button" class="active" data-view="filled" data-track="voorbeeld-penpath-af">Zo Wordt Het</button>
+                            <button type="button" data-view="empty" data-track="voorbeeld-penpath-om-te-printen">Tekenvel</button>
+                        </div>
+
+                        <button type="button" class="secondary-button try-button" data-algorithm="penpath-settings" data-name="Penpath" data-track="probeer-penpath">Probeer Deze</button>
+                    </div>
+                </article>
+
+                <article class="example-card">
+                    <div class="example-image">
+                        <img
+                            src="mijn_kunsd/voorbeelden/hatchwork.jpg"
+                            data-filled="mijn_kunsd/voorbeelden/hatchwork.jpg"
+                            data-empty="mijn_kunsd/voorbeelden/hatchwork-leeg.png"
+                            alt="Hatchwork: portret van liggende en staande lijntjes op ruitjespapier"
+                            width="640"
+                            height="902"
+                            loading="lazy">
+                    </div>
+
+                    <div class="view-toggle" role="group" aria-label="Voorbeeld van Hatchwork">
+                        <button type="button" class="active" data-view="filled" data-track="voorbeeld-hatchwork-af">Zo Wordt Het</button>
+                        <button type="button" data-view="empty" data-track="voorbeeld-hatchwork-om-te-printen">Tekenvel</button>
+                    </div>
+
+                    <h3>Hatchwork <span class="tag tag-new">Nieuw</span> <span class="tag tag-diy">Tekenpuzzel</span></h3>
+                    <p>
+                        Arceren zoals graveurs vroeger deden, maar dan op ruitjespapier. In vier rondes trek je
+                        liggende en staande lijntjes: "rij 15, van 9 tot 52". Elke ronde wordt het donkerder,
+                        en lijkt het meer op je foto.
+                    </p>
+
+                    <dl class="puzzle-specs">
+                        <div><dt>Nodig</dt><dd>Liniaal, fineliner (0,3 mm)</dd></div>
+                        <div><dt>Tijd</dt><dd>1 tot 2 uur</dd></div>
+                        <div><dt>Niveau</dt><dd><span class="level" style="--level: 2" aria-label="2 van 5"></span></dd></div>
+                    </dl>
+
+                    <button type="button" class="secondary-button try-button" data-algorithm="hatchwork-settings" data-name="Hatchwork" data-track="probeer-hatchwork">Probeer Deze</button>
+                </article>
+
+                <article class="example-card">
+                    <div class="example-image">
                         <img
                             src="mijn_kunsd/voorbeelden/chordinates.jpg"
                             data-filled="mijn_kunsd/voorbeelden/chordinates.jpg"
@@ -136,28 +205,25 @@
                             loading="lazy">
                     </div>
 
-                    <div class="example-text">
-                        <h3>Chordinates <span class="tag tag-new">Nieuw</span> <span class="tag tag-diy">Tekenpuzzel</span></h3>
-                        <p>
-                            Een cirkel met 150 genummerde punten en een lijst met een paar honderd lijnen. Leg je
-                            liniaal op punt 12, trek een lijn naar 87, en nog een, en nog een. Eerst lijkt het een
-                            wirwar, maar waar veel lijnen elkaar kruisen ontstaat langzaam je foto. Werkt het
-                            best met één duidelijk portret.
-                        </p>
-
-                        <dl class="puzzle-specs">
-                            <div><dt>Nodig</dt><dd>Liniaal, fineliner (0,3 mm)</dd></div>
-                            <div><dt>Tijd</dt><dd>2 tot 4 uur</dd></div>
-                            <div><dt>Niveau</dt><dd><span class="level" style="--level: 4" aria-label="4 van 5"></span></dd></div>
-                        </dl>
-
-                        <div class="view-toggle" role="group" aria-label="Voorbeeld van Chordinates">
-                            <button type="button" class="active" data-view="filled" data-track="voorbeeld-chordinates-af">Zo Wordt Het</button>
-                            <button type="button" data-view="empty" data-track="voorbeeld-chordinates-om-te-printen">Tekenvel</button>
-                        </div>
-
-                        <button type="button" class="secondary-button try-button" data-algorithm="chordinates-settings" data-name="Chordinates" data-track="probeer-chordinates">Probeer Deze</button>
+                    <div class="view-toggle" role="group" aria-label="Voorbeeld van Chordinates">
+                        <button type="button" class="active" data-view="filled" data-track="voorbeeld-chordinates-af">Zo Wordt Het</button>
+                        <button type="button" data-view="empty" data-track="voorbeeld-chordinates-om-te-printen">Tekenvel</button>
                     </div>
+
+                    <h3>Chordinates <span class="tag tag-diy">Tekenpuzzel</span></h3>
+                    <p>
+                        Een cirkel met 150 genummerde punten en honderden lange lijnen. Eerst lijkt het een
+                        wirwar, maar waar veel lijnen elkaar kruisen ontstaat langzaam je silhouet. Abstracter
+                        dan de andere puzzels, en werkt het best met één duidelijk portret.
+                    </p>
+
+                    <dl class="puzzle-specs">
+                        <div><dt>Nodig</dt><dd>Liniaal, fineliner (0,3 mm)</dd></div>
+                        <div><dt>Tijd</dt><dd>2 tot 4 uur</dd></div>
+                        <div><dt>Niveau</dt><dd><span class="level" style="--level: 4" aria-label="4 van 5"></span></dd></div>
+                    </dl>
+
+                    <button type="button" class="secondary-button try-button" data-algorithm="chordinates-settings" data-name="Chordinates" data-track="probeer-chordinates">Probeer Deze</button>
                 </article>
 
                 <article class="example-card">
@@ -235,13 +301,13 @@
                     </div>
 
                     <div class="example-text">
-                        <h3>RedBlack Dots <span class="tag">Alleen Kijken</span></h3>
+                        <h3>Liever Alleen Kijken? <span class="tag">Speeltuin</span></h3>
                         <p>
-                            Geen puzzel, wel een mooi plaatje: je foto in rode en zwarte stippen, met een grafisch,
-                            poster-achtig effect. Om te downloaden of op te hangen.
+                            Niet elke bewerking is een puzzel. In de Speeltuin staan fotobewerkingen die je alleen
+                            downloadt of ophangt, zoals RedBlack Dots: je foto in rode en zwarte stippen.
                         </p>
 
-                        <button type="button" class="secondary-button try-button" data-algorithm="ranked-dots-settings" data-name="RedBlack Dots" data-track="probeer-redblack-dots">Probeer Deze</button>
+                        <a href="/speeltuin" class="secondary-button link-button try-button" data-track="naar-speeltuin">Naar De Speeltuin</a>
                     </div>
                 </article>
 
@@ -365,6 +431,22 @@
                         <button
                             type="button"
                             class="algorithm-button"
+                            data-settings="penpath-settings">
+                            <img src="mijn_kunsd/voorbeelden/knoppen/penpath.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                            Penpath
+                        </button>
+
+                        <button
+                            type="button"
+                            class="algorithm-button"
+                            data-settings="hatchwork-settings">
+                            <img src="mijn_kunsd/voorbeelden/knoppen/hatchwork.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                            Hatchwork
+                        </button>
+
+                        <button
+                            type="button"
+                            class="algorithm-button"
                             data-settings="chordinates-settings">
                             <img src="mijn_kunsd/voorbeelden/knoppen/chordinates.jpg" alt="" class="algorithm-thumb" width="40" height="40">
                             Chordinates
@@ -388,59 +470,149 @@
                     </div>
                 </div>
 
-                <div class="algorithm-group">
-                    <p class="algorithm-group-title">Alleen een mooi plaatje</p>
-
-                    <div class="algorithm-buttons">
-                        <button
-                            type="button"
-                            class="algorithm-button"
-                            data-settings="ranked-dots-settings">
-                            <img src="mijn_kunsd/voorbeelden/knoppen/redblack-dots.jpg" alt="" class="algorithm-thumb" width="40" height="40">
-                            RedBlack Dots
-                        </button>
-                    </div>
-                </div>
-
                 <div
-                    id="ranked-dots-settings"
+                    id="penpath-settings"
                     class="algorithm-settings hidden">
 
-                    <h3>RedBlack Dots</h3>
+                    <h3>Penpath</h3>
+
+                    <p class="palette-hint">
+                        Werkt het best met <strong>één duidelijk portret</strong>, rechtop en dichtbij. Het
+                        algoritme neemt een staand stuk (3 bij 4) uit het midden van je foto; snijd je foto
+                        bij als het gezicht niet in het midden staat.
+                    </p>
 
                     <div class="slider-header">
-                        <label for="ranked-grid-size-slider">
-                            Puntgrootte
+                        <label for="penpath-count-slider">
+                            Aantal lijnen
                         </label>
 
                         <output
-                            id="ranked-grid-size-value"
-                            for="ranked-grid-size-slider">
-                            3%
+                            id="penpath-count-value"
+                            for="penpath-count-slider">
+                            800
                         </output>
                     </div>
 
                     <input
                         type="range"
-                        id="ranked-grid-size-slider"
+                        id="penpath-count-slider"
                         class="art-slider"
-                        min="0.5"
-                        max="5"
-                        step="0.5"
-                        value="3"
+                        min="400"
+                        max="1000"
+                        step="100"
+                        value="800"
                     >
 
                     <div class="slider-scale">
-                        <span>Klein</span>
-                        <span>Groot</span>
+                        <span>Snel klaar</span>
+                        <span>Meer details</span>
                     </div>
+
+                    <label
+                        class="switch-row switch-row-diy"
+                        for="penpath-fill">
+
+                        <span>
+                            <strong>Tekenvel</strong>
+
+                            <small>
+                                Zet aan voor twee bladen: het raster met punten om op te tekenen, en de routes
+                                die je tekent, met je foto en het "antwoord" klein erbij.
+                            </small>
+                        </span>
+
+                        <span class="switch">
+                            <input
+                                type="checkbox"
+                                id="penpath-fill"
+                                data-offer="Mooi geworden? Maak dan het tekenvel: een raster van punten en de routes die je tekent. Precies dezelfde lijnen als hierboven.">
+
+                            <span class="switch-slider"></span>
+                        </span>
+
+                    </label>
 
                     <div class="button-row">
                         <button
                             type="button"
-                            id="ranked-dots-button"
+                            id="penpath-button"
                             class="create-button">
-                            Maak RedBlack Dots
+                            Maak Penpath
+                        </button>
+                    </div>
+
+                </div>
+
+                <div
+                    id="hatchwork-settings"
+                    class="algorithm-settings hidden">
+
+                    <h3>Hatchwork</h3>
+
+                    <p class="palette-hint">
+                        Werkt het best met een portret of een foto met duidelijke lichte en donkere vlakken.
+                        Het algoritme neemt een staand stuk uit het midden van je foto, zo groot als het
+                        raster op A4.
+                    </p>
+
+                    <div class="slider-header">
+                        <label for="hatchwork-columns-slider">
+                            Hokjes in de breedte
+                        </label>
+
+                        <output
+                            id="hatchwork-columns-value"
+                            for="hatchwork-columns-slider">
+                            70
+                        </output>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="hatchwork-columns-slider"
+                        class="art-slider"
+                        min="50"
+                        max="110"
+                        step="10"
+                        value="70"
+                    >
+
+                    <div class="slider-scale">
+                        <span>Grof en snel</span>
+                        <span>Fijn en precies</span>
+                    </div>
+
+                    <label
+                        class="switch-row switch-row-diy"
+                        for="hatchwork-fill">
+
+                        <span>
+                            <strong>Tekenvel</strong>
+
+                            <small>
+                                Zet aan voor twee bladen: het ruitjesraster om op te tekenen, en per ronde de
+                                lijntjes die je trekt, met je foto en het "antwoord" klein erbij.
+                            </small>
+                        </span>
+
+                        <span class="switch">
+                            <input
+                                type="checkbox"
+                                id="hatchwork-fill"
+                                data-offer="Mooi geworden? Maak dan het tekenvel: een ruitjesraster en per ronde de lijntjes die je trekt. Precies dezelfde lijntjes als hierboven.">
+
+                            <span class="switch-slider"></span>
+                        </span>
+
+                    </label>
+
+                    <div class="button-row">
+                        <button
+                            type="button"
+                            id="hatchwork-button"
+                            class="create-button">
+                            Maak Hatchwork
                         </button>
                     </div>
 
@@ -898,8 +1070,8 @@
                 </li>
                 <li>
                     <strong>Goed Gereedschap</strong>
-                    Voor Chordinates: een doorzichtige liniaal en een fineliner van 0,3 mm. Een te dikke
-                    stift maakt alles snel zwart. Voor Coloring Dots juist een stift met een ronde punt.
+                    Voor Penpath, Hatchwork en Chordinates: een doorzichtige liniaal en een fineliner van
+                    0,3 mm. Een te dikke stift maakt alles snel zwart. Voor Coloring Dots juist een stift met een ronde punt.
                 </li>
                 <li>
                     <strong>Streep Af Wat Klaar Is</strong>
