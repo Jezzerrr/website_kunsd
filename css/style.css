@@ -696,14 +696,16 @@ body.lightbox-open {
     vector-effect: non-scaling-stroke;   /* dikte in schermpixels, hoe groot de foto ook is */
 }
 
+/* Diktes gedeeld door de zoom: bij inzoomen wordt alles groter, de lijn moet even dik blijven.
+   Het vergrootglas zoomt niet zo, daar is --cutout-zoom gewoon 1. */
 .cutout-line-under {
     stroke: var(--ink);
-    stroke-width: 5;
+    stroke-width: calc(5px / var(--cutout-zoom, 1));
 }
 
 .cutout-line {
     stroke: var(--sun);
-    stroke-width: 2.5;
+    stroke-width: calc(2.5px / var(--cutout-zoom, 1));
 }
 
 /* Puntjes om te verslepen, en het startpunt waar je naar terug moet */
@@ -712,17 +714,17 @@ body.lightbox-open {
     fill: none;
     stroke-linecap: round;
     vector-effect: non-scaling-stroke;
-    filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.9));
+    filter: drop-shadow(0 0 calc(1.5px / var(--cutout-zoom, 1)) rgba(0, 0, 0, 0.9));
 }
 
 .cutout-dots {
     stroke: white;
-    stroke-width: 9;
+    stroke-width: calc(9px / var(--cutout-zoom, 1));
 }
 
 .cutout-start {
     stroke: var(--sun);
-    stroke-width: 20;
+    stroke-width: calc(20px / var(--cutout-zoom, 1));
 }
 
 /* Vergrootglas bovenin, aan de andere kant dan je vinger */
@@ -765,6 +767,93 @@ body.lightbox-open {
     box-sizing: border-box;
     border: 2px solid var(--accent);
     border-radius: 50%;
+}
+
+/* Zoomen bij uitknippen: de foto (met lijn) wordt groter binnen het kader */
+.cutout-view {
+    --cutout-zoom: 1;
+    position: relative;
+    transform-origin: 0 0;
+}
+
+.cutout-view-animate {
+    transition: transform 0.3s ease;
+}
+
+.cutout-panning {
+    cursor: grabbing;
+}
+
+.cutout-zoom {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 3;
+    display: flex;
+    gap: 6px;
+    line-height: 1;
+}
+
+.cutout-zoom-button {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    color: var(--ink);
+    background: white;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    font: inherit;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cutout-zoom-button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.cutout-zoom-button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.cutout-zoom-fit {
+    font-size: 0.9rem;
+}
+
+/* Op een telefoon is de foto klein: dan ook kleinere zoomknoppen */
+@media (max-width: 600px) {
+    .cutout-zoom {
+        right: 6px;
+        bottom: 6px;
+        gap: 4px;
+    }
+
+    .cutout-zoom-button {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 9px;
+        font-size: 1.1rem;
+    }
+
+    .cutout-zoom-fit {
+        font-size: 0.8rem;
+    }
+}
+
+/* Icoontje in een knop (Draaien, Spiegelen) */
+.button-icon {
+    width: 1.15em;
+    height: 1.15em;
+    margin-right: 0.35em;
+    vertical-align: -0.2em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .cutout-intro {

@@ -7,6 +7,9 @@
 // - Kom je terug bij het startpunt, dan gaat de vorm dicht. Of klik op OK.
 // - Daarna kun je de puntjes verslepen, aan de lijn trekken voor een nieuw puntje, of
 //   binnen de vorm slepen om hem te verplaatsen.
+// - Is de vorm klein, dan zoomt het beeld vanzelf in, zodat bijwerken geen priegelwerk is.
+//   Zelf zoomen kan met de knoppen + en -, knijpen met twee vingers, of Ctrl + scrollwiel.
+//   Ingezoomd schuif je met twee vingers, het scrollwiel, of door naast de vorm te slepen.
 //
 // De punten zijn fracties van de foto (0 t/m 1), net als de uitsnede. De server knipt
 // (zie apply_cutout in app.py); hier wordt alleen getekend, zonder canvas.
@@ -16,6 +19,10 @@
 
 const cutoutContainer = document.getElementById("cutout-container");
 const cutoutStage = document.getElementById("cutout-stage");
+const cutoutView = document.getElementById("cutout-view");
+const cutoutZoomIn = document.getElementById("cutout-zoom-in");
+const cutoutZoomOut = document.getElementById("cutout-zoom-out");
+const cutoutZoomFit = document.getElementById("cutout-zoom-fit");
 const cutoutImage = document.getElementById("cutout-image");
 const cutoutShade = document.getElementById("cutout-shade");
 const cutoutLine = document.getElementById("cutout-line");
@@ -63,6 +70,15 @@ const LOUPE_MAX_SIZE = 130;
 const LOUPE_PART = 0.45;
 const LOUPE_ZOOM = 2.5;
 
+// Zoomen: hoogstens zo ver, en zoveel per klik op + of -.
+const CUTOUT_MAX_ZOOM = 8;
+const CUTOUT_ZOOM_STEP = 1.6;
+
+// Vanzelf inzoomen als de vorm op het scherm in beide richtingen kleiner is dan dit deel van
+// het beeld; daarna vult hij ongeveer CUTOUT_ZOOM_FILL van het beeld.
+const CUTOUT_AUTO_ZOOM_BELOW = 0.45;
+const CUTOUT_ZOOM_FILL = 0.7;
+
 const CUTOUT_HINTS = {
     empty: "Zet je vinger of muis op de rand van wat je wilt houden en teken eromheen. " +
         "Loslaten mag: tik of teken daarna verder, dan gaat de lijn verder waar je was.",
@@ -70,6 +86,8 @@ const CUTOUT_HINTS = {
         "Of klik op OK: dan maken we de vorm vanzelf dicht.",
     closed: "Klaar! Niet helemaal goed? Versleep de puntjes, trek aan de lijn voor een extra " +
         "puntje, of sleep binnen de vorm om hem te verplaatsen. Klik daarna op OK.",
+    zoomed: "Ingezoomd, zodat je de rand makkelijk bijwerkt: versleep de puntjes of trek aan de lijn. " +
+        "Schuiven: sleep naast de vorm, of met twee vingers. Hele Foto laat alles weer zien. Klik daarna op OK.",
     tooFew: "Teken eerst een lijn om wat je wilt houden.",
     tooSmall: "Die vorm is wel heel klein. Teken een grotere vorm, of zoom eerst in met Bijsnijden."
 };
@@ -78,6 +96,13 @@ let cutoutPoints = [];       // [[x, y], ...] als fracties van de foto
 let cutoutClosed = false;
 let cutoutHistory = [];      // eerdere toestanden, voor "Ongedaan Maken"
 let cutoutDrag = null;
+
+// Zoomen: vergroting en verschuiving (in schermpixels) van de foto binnen het kader.
+let cutoutZoom = { scale: 1, x: 0, y: 0 };
+
+// Vingers die nu het scherm raken (voor knijpen), en het knijpen zelf.
+const cutoutTouches = new Map();
+let cutoutPinch = null;
 
 
 /* ---------- Openen en sluiten ---------- */
@@ -96,11 +121,18 @@ cutoutStartButton.addEventListener("click", function () {
     cutoutPoints = appliedShape ? appliedShape.map(function (point) { return [...point]; }) : [];
     cutoutClosed = Boolean(appliedShape);
     cutoutHistory = [];
-    renderCutout();
 
     originalContainer.classList.add("hidden");
     algorithmSection.classList.add("hidden");
     cutoutContainer.classList.remove("hidden");
+
+    setCutoutZoom(1, 0, 0, false);
+    renderCutout();
+
+    // Een eerder getekende kleine vorm: meteen ingezoomd (zodra de foto er staat)
+    cutoutImage.decode().catch(function () {}).then(function () {
+        zoomToShape(false);
+    });
 
     cutoutContainer.scrollIntoView({
         behavior: "smooth",
@@ -111,6 +143,8 @@ cutoutStartButton.addEventListener("click", function () {
 
 function closeCutoutEditor() {
     cutoutDrag = null;
+    cutoutPinch = null;
+    cutoutTouches.clear();
     cutoutLoupe.classList.add("hidden");
 
     cutoutContainer.classList.add("hidden");
@@ -206,9 +240,26 @@ function undoCutout() {
 /* ---------- Tekenen en slepen ---------- */
 
 cutoutStage.addEventListener("pointerdown", function (event) {
-    // Alleen de linkermuisknop (of een aanraking).
-    if (event.button !== undefined && event.button !== 0) {
+    // Alleen de linkermuisknop (of een aanraking), en niet op de zoomknoppen.
+    if ((event.button !== undefined && event.button !== 0) || event.target.closest(".cutout-zoom")) {
         return;
+    }
+
+    if (event.pointerType === "touch") {
+        cutoutTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+        // Tweede vinger: knijpen en schuiven. Wat de eerste vinger net begon, telt niet.
+        if (cutoutTouches.size === 2) {
+            cancelCutoutDrag();
+            startPinch();
+            cutoutStage.setPointerCapture(event.pointerId);
+            event.preventDefault();
+            return;
+        }
+
+        if (cutoutTouches.size > 2 || cutoutPinch) {
+            return;
+        }
     }
 
     const point = getCutoutPoint(event);
@@ -221,7 +272,7 @@ cutoutStage.addEventListener("pointerdown", function (event) {
 
         if (index >= 0) {
             rememberCutout();
-            cutoutDrag = { mode: "point", index: index };
+            cutoutDrag = { mode: "point", index: index, remembered: true };
         } else {
             const segment = nearestSegment(point, grab);
 
@@ -229,10 +280,14 @@ cutoutStage.addEventListener("pointerdown", function (event) {
                 // Aan de lijn trekken: er komt een nieuw puntje bij
                 rememberCutout();
                 cutoutPoints.splice(segment + 1, 0, clampPoint(point));
-                cutoutDrag = { mode: "point", index: segment + 1 };
+                cutoutDrag = { mode: "point", index: segment + 1, remembered: true };
             } else if (insideShape(point)) {
                 rememberCutout();
-                cutoutDrag = { mode: "move", last: point };
+                cutoutDrag = { mode: "move", last: point, remembered: true };
+            } else if (cutoutZoom.scale > 1) {
+                // Naast de vorm slepen: het beeld verschuiven
+                cutoutDrag = { mode: "pan", startX: event.clientX, startY: event.clientY, start: { ...cutoutZoom } };
+                cutoutStage.classList.add("cutout-panning");
             } else {
                 showCutoutHint("closed", true);
                 return;
@@ -245,14 +300,21 @@ cutoutStage.addEventListener("pointerdown", function (event) {
         if (cutoutPoints.length >= 3 && distanceInPixels(point, cutoutPoints[0]) <= grab) {
             cutoutClosed = true;
             renderCutout();
+            zoomToShape(true);
             return;
         }
 
         cutoutPoints.push(clampPoint(point));
-        cutoutDrag = { mode: "draw", grab: grab, moved: false };
+        cutoutDrag = { mode: "draw", grab: grab, moved: false, remembered: true };
     }
 
     cutoutDrag.pointerId = event.pointerId;
+
+    if (cutoutDrag.mode === "pan") {
+        cutoutStage.setPointerCapture(event.pointerId);
+        event.preventDefault();
+        return;
+    }
 
     // Blijf de beweging volgen, ook als de muis of vinger buiten de foto komt.
     cutoutStage.setPointerCapture(event.pointerId);
@@ -264,7 +326,23 @@ cutoutStage.addEventListener("pointerdown", function (event) {
 
 
 cutoutStage.addEventListener("pointermove", function (event) {
+    if (cutoutTouches.has(event.pointerId)) {
+        cutoutTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+
+    if (cutoutPinch) {
+        movePinch();
+        return;
+    }
+
     if (!cutoutDrag || event.pointerId !== cutoutDrag.pointerId) {
+        return;
+    }
+
+    if (cutoutDrag.mode === "pan") {
+        const start = cutoutDrag.start;
+        setCutoutZoom(start.scale, start.x + event.clientX - cutoutDrag.startX,
+            start.y + event.clientY - cutoutDrag.startY, false);
         return;
     }
 
@@ -290,9 +368,21 @@ cutoutStage.addEventListener("pointermove", function (event) {
 
 
 function endCutoutDrag(event) {
+    cutoutTouches.delete(event.pointerId);
+
+    if (cutoutPinch) {
+        // Pas weer tekenen als alle vingers los zijn
+        if (cutoutTouches.size === 0) {
+            cutoutPinch = null;
+        }
+        return;
+    }
+
     if (!cutoutDrag || event.pointerId !== cutoutDrag.pointerId) {
         return;
     }
+
+    let justClosed = false;
 
     if (cutoutDrag.mode === "draw") {
         cutoutPoints = simplifyLine(cutoutPoints, CUTOUT_SIMPLIFY);
@@ -305,12 +395,30 @@ function endCutoutDrag(event) {
             distanceInPixels(first, last) <= cutoutDrag.grab) {
             cutoutPoints.pop();
             cutoutClosed = true;
+            justClosed = true;
         }
     }
 
     cutoutDrag = null;
+    cutoutStage.classList.remove("cutout-panning");
     cutoutLoupe.classList.add("hidden");
     renderCutout();
+
+    if (justClosed) {
+        zoomToShape(true);
+    }
+}
+
+
+// Een tweede vinger kwam erbij: wat de eerste vinger deed, terugdraaien.
+function cancelCutoutDrag() {
+    if (cutoutDrag && cutoutDrag.remembered) {
+        undoCutout();
+    }
+
+    cutoutDrag = null;
+    cutoutStage.classList.remove("cutout-panning");
+    cutoutLoupe.classList.add("hidden");
 }
 
 
@@ -334,9 +442,10 @@ function moveShape(dx, dy) {
 
 /* ---------- Rekenwerk ---------- */
 
-// Muis- of vingerpositie als fractie van de foto (kan buiten 0-1 vallen).
+// Muis- of vingerpositie als fractie van de foto (kan buiten 0-1 vallen). De foto zelf
+// (cutoutView) is ingezoomd groter dan het kader; zijn rechthoek houdt daar rekening mee.
 function getCutoutPoint(event) {
-    const bounds = cutoutStage.getBoundingClientRect();
+    const bounds = cutoutView.getBoundingClientRect();
 
     return [
         (event.clientX - bounds.left) / bounds.width,
@@ -352,7 +461,7 @@ function clampPoint(point) {
 
 // Afstand tussen twee punten in schermpixels (de foto is meestal niet vierkant).
 function distanceInPixels(a, b) {
-    const bounds = cutoutStage.getBoundingClientRect();
+    const bounds = cutoutView.getBoundingClientRect();
     return Math.hypot((a[0] - b[0]) * bounds.width, (a[1] - b[1]) * bounds.height);
 }
 
@@ -377,7 +486,7 @@ function nearestPoint(point, maxDistance) {
 
 // Het dichtstbijzijnde stuk lijn (van punt i naar punt i + 1) binnen maxDistance, of -1.
 function nearestSegment(point, maxDistance) {
-    const bounds = cutoutStage.getBoundingClientRect();
+    const bounds = cutoutView.getBoundingClientRect();
     const px = point[0] * bounds.width;
     const py = point[1] * bounds.height;
 
@@ -496,7 +605,16 @@ function renderCutout() {
     cutoutUndoButton.disabled = cutoutHistory.length === 0;
     cutoutClearButton.disabled = cutoutPoints.length === 0;
 
-    showCutoutHint(cutoutClosed ? "closed" : (cutoutPoints.length ? "open" : "empty"), false);
+    showCutoutHint(currentCutoutHint(), false);
+}
+
+
+function currentCutoutHint() {
+    if (!cutoutClosed) {
+        return cutoutPoints.length ? "open" : "empty";
+    }
+
+    return cutoutZoom.scale > 1 ? "zoomed" : "closed";
 }
 
 
@@ -548,14 +666,18 @@ function showCutoutHint(name, isWarning) {
 // Het vergrootglas laat zien wat er onder je vinger zit. Het staat bovenin, aan de andere
 // kant van de foto dan je vinger.
 function showLoupe(point) {
-    const bounds = cutoutStage.getBoundingClientRect();
-    const size = Math.round(Math.min(LOUPE_MAX_SIZE, LOUPE_PART * Math.min(bounds.width, bounds.height)));
-    const zoomedWidth = bounds.width * LOUPE_ZOOM;
-    const zoomedHeight = bounds.height * LOUPE_ZOOM;
+    const stage = cutoutStage.getBoundingClientRect();
+    const view = cutoutView.getBoundingClientRect();
+    const size = Math.round(Math.min(LOUPE_MAX_SIZE, LOUPE_PART * Math.min(stage.width, stage.height)));
+    const zoomedWidth = view.width * LOUPE_ZOOM;
+    const zoomedHeight = view.height * LOUPE_ZOOM;
+
+    // Waar je vinger op het scherm is (bij inzoomen niet hetzelfde als waar op de foto)
+    const screenX = view.left + point[0] * view.width - stage.left;
 
     cutoutLoupe.style.width = `${size}px`;
     cutoutLoupe.style.height = `${size}px`;
-    cutoutLoupe.classList.toggle("cutout-loupe-right", point[0] < 0.5);
+    cutoutLoupe.classList.toggle("cutout-loupe-right", screenX < stage.width / 2);
 
     cutoutLoupePhoto.style.backgroundSize = `${zoomedWidth}px ${zoomedHeight}px`;
     cutoutLoupePhoto.style.backgroundPosition =
@@ -569,3 +691,171 @@ function showLoupe(point) {
 
     cutoutLoupe.classList.remove("hidden");
 }
+
+
+/* ---------- Zoomen en schuiven ---------- */
+
+// Zet de vergroting (1 = hele foto) en verschuiving (schermpixels), altijd zo dat de foto
+// het hele kader vult. Met animate glijdt het beeld er rustig naartoe.
+function setCutoutZoom(scale, x, y, animate) {
+    const width = cutoutStage.clientWidth;
+    const height = cutoutStage.clientHeight;
+
+    scale = clamp(scale, 1, CUTOUT_MAX_ZOOM);
+    x = clamp(x, width - width * scale, 0);
+    y = clamp(y, height - height * scale, 0);
+
+    cutoutZoom = { scale: scale, x: x, y: y };
+
+    cutoutView.classList.toggle("cutout-view-animate", Boolean(animate));
+    cutoutView.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+
+    // De lijn en puntjes blijven even dik op het scherm (zie --cutout-zoom in css/style.css)
+    cutoutView.style.setProperty("--cutout-zoom", scale);
+
+    cutoutZoomOut.disabled = scale <= 1.001;
+    cutoutZoomIn.disabled = scale >= CUTOUT_MAX_ZOOM - 0.001;
+    cutoutZoomFit.classList.toggle("hidden", scale <= 1.001);
+
+    if (!cutoutHint.classList.contains("cutout-hint-warning")) {
+        showCutoutHint(currentCutoutHint(), false);
+    }
+}
+
+
+// In- of uitzoomen met factor, waarbij het punt (x, y) in het kader op zijn plek blijft.
+function zoomAround(factor, x, y, animate) {
+    const scale = clamp(cutoutZoom.scale * factor, 1, CUTOUT_MAX_ZOOM);
+    const k = scale / cutoutZoom.scale;
+
+    setCutoutZoom(scale, x - (x - cutoutZoom.x) * k, y - (y - cutoutZoom.y) * k, animate);
+}
+
+
+// Is de dichte vorm klein op het scherm? Dan inzoomen tot hij het beeld ongeveer vult.
+// Alleen inzoomen: wie zelf al verder ingezoomd is, blijft waar hij is.
+function zoomToShape(animate) {
+    if (!cutoutClosed || cutoutPoints.length < 3) {
+        return;
+    }
+
+    const width = cutoutStage.clientWidth;
+    const height = cutoutStage.clientHeight;
+
+    const xs = cutoutPoints.map(function (point) { return point[0]; });
+    const ys = cutoutPoints.map(function (point) { return point[1]; });
+    const shapeWidth = Math.max(Math.max(...xs) - Math.min(...xs), 0.001);
+    const shapeHeight = Math.max(Math.max(...ys) - Math.min(...ys), 0.001);
+
+    const isSmall = shapeWidth * cutoutZoom.scale < CUTOUT_AUTO_ZOOM_BELOW &&
+        shapeHeight * cutoutZoom.scale < CUTOUT_AUTO_ZOOM_BELOW;
+    const scale = Math.min(CUTOUT_ZOOM_FILL / shapeWidth, CUTOUT_ZOOM_FILL / shapeHeight, CUTOUT_MAX_ZOOM);
+
+    if (!width || !isSmall || scale < cutoutZoom.scale * 1.2) {
+        return;
+    }
+
+    const centerX = (Math.max(...xs) + Math.min(...xs)) / 2;
+    const centerY = (Math.max(...ys) + Math.min(...ys)) / 2;
+
+    setCutoutZoom(scale, width / 2 - centerX * width * scale, height / 2 - centerY * height * scale, animate);
+}
+
+
+cutoutZoomIn.addEventListener("click", function () {
+    track("uitknippen-inzoomen");
+    zoomAround(CUTOUT_ZOOM_STEP, cutoutStage.clientWidth / 2, cutoutStage.clientHeight / 2, true);
+});
+
+
+cutoutZoomOut.addEventListener("click", function () {
+    zoomAround(1 / CUTOUT_ZOOM_STEP, cutoutStage.clientWidth / 2, cutoutStage.clientHeight / 2, true);
+});
+
+
+cutoutZoomFit.addEventListener("click", function () {
+    setCutoutZoom(1, 0, 0, true);
+});
+
+
+// Ctrl + scrollwiel (en knijpen op een touchpad): zoomen rond de muis.
+// Gewoon scrollen: ingezoomd verschuift het beeld; aan de rand scrolt de pagina weer verder.
+cutoutStage.addEventListener("wheel", function (event) {
+    const stage = cutoutStage.getBoundingClientRect();
+    const lineHeight = event.deltaMode === 1 ? 33 : 1;      // sommige muizen tellen in regels
+    const deltaX = event.deltaX * lineHeight;
+    const deltaY = event.deltaY * lineHeight;
+
+    if (event.ctrlKey) {
+        event.preventDefault();
+        zoomAround(Math.exp(-deltaY * 0.002), event.clientX - stage.left, event.clientY - stage.top, false);
+        return;
+    }
+
+    if (cutoutZoom.scale <= 1) {
+        return;
+    }
+
+    const before = { ...cutoutZoom };
+    setCutoutZoom(before.scale, before.x - deltaX, before.y - deltaY, false);
+
+    if (cutoutZoom.x !== before.x || cutoutZoom.y !== before.y) {
+        event.preventDefault();
+    }
+}, { passive: false });
+
+
+// Knijpen met twee vingers: zoomen, en tegelijk schuiven met het midden tussen de vingers.
+function startPinch() {
+    const [a, b] = [...cutoutTouches.values()];
+
+    cutoutPinch = {
+        distance: Math.max(Math.hypot(a.x - b.x, a.y - b.y), 1),
+        middle: pinchMiddle(a, b),
+        start: { ...cutoutZoom }
+    };
+}
+
+
+function movePinch() {
+    if (cutoutTouches.size < 2) {
+        return;
+    }
+
+    const [a, b] = [...cutoutTouches.values()];
+    const start = cutoutPinch.start;
+    const scale = clamp(start.scale * Math.hypot(a.x - b.x, a.y - b.y) / cutoutPinch.distance, 1, CUTOUT_MAX_ZOOM);
+    const middle = pinchMiddle(a, b);
+
+    // Het stukje foto dat bij het begin onder het midden lag, blijft onder het midden
+    const photoX = (cutoutPinch.middle.x - start.x) / start.scale;
+    const photoY = (cutoutPinch.middle.y - start.y) / start.scale;
+
+    setCutoutZoom(scale, middle.x - photoX * scale, middle.y - photoY * scale, false);
+}
+
+
+// Het midden tussen twee vingers, in pixels binnen het kader.
+function pinchMiddle(a, b) {
+    const stage = cutoutStage.getBoundingClientRect();
+
+    return {
+        x: (a.x + b.x) / 2 - stage.left,
+        y: (a.y + b.y) / 2 - stage.top
+    };
+}
+
+
+// Wordt het kader smaller of breder (telefoon gedraaid, venster groter): zoom netjes meeschalen.
+let cutoutStageWidth = 0;
+
+new ResizeObserver(function () {
+    const width = cutoutStage.clientWidth;
+
+    if (cutoutStageWidth && width && width !== cutoutStageWidth) {
+        const ratio = width / cutoutStageWidth;
+        setCutoutZoom(cutoutZoom.scale, cutoutZoom.x * ratio, cutoutZoom.y * ratio, false);
+    }
+
+    cutoutStageWidth = width;
+}).observe(cutoutStage);

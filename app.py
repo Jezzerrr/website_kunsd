@@ -65,6 +65,9 @@ DOT_IMAGE_SIZE = 3600
 MAX_CUT_POINTS = 2000
 CUT_FEATHER = 0.0015
 
+# Draaien en spiegelen: JPEG-kwaliteit van de teruggestuurde foto (hoog, want hij wordt daarna nog bewerkt).
+ORIENT_JPEG_QUALITY = 95
+
 # Langste zijde van het resultaat bij Shape Division: houdt het snel en de download klein.
 MAX_SHAPE_SIZE = 2000
 
@@ -505,6 +508,36 @@ def hatchwork():
     )
 
     return pages_to_json(result) if template else image_to_json(result)
+
+
+@app.route("/api/orient", methods=["POST"])
+@image_endpoint
+def orient():
+    """De knoppen "Draaien" en "Spiegelen" op Jouw Kunsd: geeft de foto gedraaid en/of gespiegeld terug.
+
+    Eerst spiegelen (flip, links-rechts), dan rotate graden rechtsom (0, 90, 180 of 270). De browser
+    gebruikt het resultaat daarna als de foto, dus de uitsnede en alle bewerkingen gaan vanzelf mee.
+    Dit gebeurt hier en niet in de browser, omdat sommige browsers een canvas bewust verstoren.
+    """
+    image = ImageOps.exif_transpose(Image.open(request.files["image"])).convert("RGB")
+
+    if read_flag("flip", default=False):
+        image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+
+    rotate = int(read_number("rotate", 0, 0, 270)) // 90 * 90
+
+    if rotate:
+        # Pillow draait linksom: 270 graden linksom is 90 graden rechtsom
+        image = image.transpose({
+            90: Image.Transpose.ROTATE_270,
+            180: Image.Transpose.ROTATE_180,
+            270: Image.Transpose.ROTATE_90,
+        }[rotate])
+
+    output = io.BytesIO()
+    image.save(output, format="JPEG", quality=ORIENT_JPEG_QUALITY)
+
+    return jsonify({"image": "data:image/jpeg;base64," + base64.b64encode(output.getvalue()).decode("ascii")})
 
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,8 @@
 """Hatchwork: een portret van liggende en staande lijnstukjes op ruitjespapier, om zelf te tekenen.
 
 Zo werkten graveurs vroeger: hoe donkerder een plek, hoe meer lagen lijntjes eroverheen
-(arceren). Op het tekenvel staat een licht raster met genummerde rijen en kolommen. Op blad 2
+(arceren). Op het tekenvel staat een licht raster met genummerde rijen en kolommen, strak om je
+plaatje en zo groot als op A4 past (liggend A4 voor een liggend plaatje). Op blad 2
 staat per rij of kolom van welk tot welk punt je een lijn trekt, in vier rondes:
 
 1. liggende lijnen op de oneven rijen: geeft de vorm
@@ -22,6 +23,7 @@ from PIL import Image, ImageDraw
 from scipy import ndimage
 
 from src.helper_functions.drawing import LINE_COLOR, NUMBER_COLOR, get_font
+from src.helper_functions.grid_layout import A4_SIZE, fit_grid, fit_picture
 
 TOOL_NAME = "Hatchwork"
 
@@ -43,7 +45,6 @@ CENTER_WEIGHT = 0.4
 EDGE_BOOST = 1.0
 
 # Het tekenvel: A4 bij 300 dpi, met een witte rand van 5 mm
-A4_SIZE = (2480, 3508)
 PAGE_MARGIN = round(A4_SIZE[0] * 5 / 210)
 LABEL_SPACE = round(A4_SIZE[0] * 0.028)
 TITLE_SPACE = round(A4_SIZE[0] * 0.02)
@@ -58,8 +59,10 @@ def image_to_hatchwork(img, columns=70, template=False, output_size=1800):
     """Maak een gearceerd portret op een raster.
 
     Args:
-        img: PIL Image. Het midden (staand, zoals het raster op A4) wordt gebruikt.
-        columns: aantal kolommen van het raster. Meer = fijner, maar meer lijntjes.
+        img: PIL Image. De hele foto wordt gebruikt; het raster past zich aan zijn vorm aan.
+        columns: hoe fijn het raster is: zoveel kolommen zouden er op de korte kant van A4 passen.
+            Meer = fijner, maar meer lijntjes. Hoeveel kolommen en rijen het echt worden, hangt
+            af van de vorm van het plaatje.
         template: False = voorbeeld van hoe het eruitziet als het af is (één afbeelding),
             True = het tekenvel: een lijst van twee A4-bladen (het raster, en de lijst).
         output_size: breedte van het voorbeeld in pixels.
@@ -67,23 +70,15 @@ def image_to_hatchwork(img, columns=70, template=False, output_size=1800):
     Returns:
         PIL Image (RGB), of bij template=True een lijst van twee PIL Images.
     """
-    columns = int(columns)
-    rows = grid_rows(columns)
-    photo = _center_crop(img.convert("RGB"), columns, rows)
+    img = img.convert("RGB")
+    paper, columns, rows, step = fit_grid(img.size, int(columns), PAGE_MARGIN + LABEL_SPACE, TITLE_SPACE)
+    photo = _fit_to_grid(img, columns, rows)
     segments = find_segments(_darkness(photo, columns, rows))
 
     if template:
-        return [_draw_grid_page(columns, rows), _draw_list_page(segments, photo, columns, rows)]
+        return [_draw_grid_page(columns, rows, paper, step), _draw_list_page(segments, photo, columns, rows, step)]
 
-    return _draw_segments(segments, columns, rows, output_size)
-
-
-def grid_rows(columns):
-    """Zoveel rijen dat het raster met deze kolommen precies A4 vult."""
-    width, height = A4_SIZE
-    step = (width - 2 * (PAGE_MARGIN + LABEL_SPACE)) / (columns - 1)
-
-    return int((height - 2 * (PAGE_MARGIN + LABEL_SPACE) - TITLE_SPACE) / step) + 1
+    return _draw_segments(segments, columns, rows, step, output_size)
 
 
 def find_segments(darkness):
@@ -109,18 +104,23 @@ def find_segments(darkness):
     return segments
 
 
-def _center_crop(img, columns, rows):
-    """Het grootste stuk uit het midden van de foto met dezelfde verhouding als het raster."""
+def _fit_to_grid(img, columns, rows):
+    """De hele foto, aangevuld met wit tot precies dezelfde verhouding als het raster.
+
+    Niet bijsnijden: wie zelf een uitsnede of uitgeknipte vorm koos, wil die helemaal terugzien.
+    Het raster volgt de vorm van de foto al, dus er komt hoogstens een randje van een hokje bij.
+    """
     ratio = (columns - 1) / (rows - 1)
 
     if img.width / img.height > ratio:
-        width = round(img.height * ratio)
-        left = (img.width - width) // 2
-        return img.crop((left, 0, left + width, img.height))
+        size = (img.width, round(img.width / ratio))
+    else:
+        size = (round(img.height * ratio), img.height)
 
-    height = round(img.width / ratio)
-    top = (img.height - height) // 2
-    return img.crop((0, top, img.width, top + height))
+    canvas = Image.new("RGB", size, "white")
+    canvas.paste(img, ((size[0] - img.width) // 2, (size[1] - img.height) // 2))
+
+    return canvas
 
 
 def _darkness(photo, columns, rows):
@@ -156,7 +156,7 @@ def _darkness(photo, columns, rows):
 # Tekenen
 # ---------------------------------------------------------------------------
 
-def _draw_segments(segments, columns, rows, output_size):
+def _draw_segments(segments, columns, rows, paper_step, output_size):
     """Zo ziet het eruit als alle lijntjes getekend zijn."""
     scale = 2
     margin = round(output_size * 0.03) * scale
@@ -167,8 +167,8 @@ def _draw_segments(segments, columns, rows, output_size):
     image = Image.new("RGB", (width, height), PAPER_COLOR)
     draw = ImageDraw.Draw(image)
 
-    # Een fineliner van 0,3 mm op hokjes van ongeveer 2,7 mm (bij 70 kolommen)
-    step_mm = 190 / (columns - 1)
+    # Een fineliner van 0,3 mm op hokjes van ongeveer 2,7 mm (bij 70 kolommen); paper_step is in pixels bij 300 dpi
+    step_mm = paper_step / 300 * 25.4
     line_width = max(1, round(step * 0.3 / step_mm))
 
     for _, direction, index, start, end in segments:
@@ -182,18 +182,19 @@ def _draw_segments(segments, columns, rows, output_size):
     return image.resize((output_size, round(height / scale)), Image.LANCZOS)
 
 
-def _draw_grid_page(columns, rows):
-    """Blad 1: een licht raster met genummerde rijen en kolommen. Hierop teken je."""
-    width, height = A4_SIZE
-    step = (width - 2 * (PAGE_MARGIN + LABEL_SPACE)) / (columns - 1)
-    left = PAGE_MARGIN + LABEL_SPACE
-    top = (height - step * (rows - 1) + TITLE_SPACE) / 2
+def _draw_grid_page(columns, rows, paper, step):
+    """Blad 1: een licht raster met genummerde rijen en kolommen, in het midden van het (staande of
+    liggende) A4. Hierop teken je."""
+    width, height = paper
+    unit = A4_SIZE[0]       # lettergroottes naar de korte kant, dus liggend even groot als staand
+    left = (width - step * (columns - 1)) / 2
+    top = (height - step * (rows - 1)) / 2
     right = left + (columns - 1) * step
     bottom = top + (rows - 1) * step
 
     image = Image.new("RGB", (width, height), PAPER_COLOR)
     draw = ImageDraw.Draw(image)
-    label_font = get_font(round(width * 0.0105))
+    label_font = get_font(round(unit * 0.0105))
     offset = LABEL_SPACE * 0.55
 
     # Eerst de lichte lijnen, dan elke vijfde iets donkerder eroverheen
@@ -223,7 +224,7 @@ def _draw_grid_page(columns, rows):
             draw.text((left - offset, y), str(row + 1), fill=LINE_COLOR, font=label_font, anchor="mm")
             draw.text((right + offset, y), str(row + 1), fill=LINE_COLOR, font=label_font, anchor="mm")
 
-    small = get_font(round(width * 0.011))
+    small = get_font(round(unit * 0.011))
     draw.text((PAGE_MARGIN, PAGE_MARGIN), f"{TOOL_NAME} · blad 1: hierop teken je", fill=NUMBER_COLOR,
               font=small, anchor="lt")
     draw.text((width - PAGE_MARGIN, height - PAGE_MARGIN), "Wat je tekent staat op blad 2", fill=NUMBER_COLOR,
@@ -232,7 +233,7 @@ def _draw_grid_page(columns, rows):
     return image
 
 
-def _draw_list_page(segments, photo, columns, rows):
+def _draw_list_page(segments, photo, columns, rows, step):
     """Blad 2: per ronde per rij of kolom de lijnstukjes, met je foto en het antwoord klein onderaan.
 
     Het lettertype wordt zo groot als past, zodat alles op één A4 komt.
@@ -292,7 +293,7 @@ def _draw_list_page(segments, photo, columns, rows):
 
         y += block_height
 
-    _draw_answer(image, segments, photo, columns, rows, margin, picture_height)
+    _draw_answer(image, segments, photo, columns, rows, step, margin, picture_height)
 
     return image
 
@@ -336,18 +337,19 @@ def _layout_rounds(segments, column_width, font_size, list_columns):
     return blocks
 
 
-def _draw_answer(image, segments, photo, columns, rows, margin, picture_height):
-    """Onderaan, achter een gestippelde knip- of vouwlijn: je foto en het antwoord."""
+def _draw_answer(image, segments, photo, columns, rows, step, margin, max_height):
+    """Onderaan, achter een gestippelde knip- of vouwlijn: je foto en het antwoord, naast elkaar."""
     width, height = image.size
     draw = ImageDraw.Draw(image)
     caption_font = get_font(round(width * 0.012))
 
-    picture_width = round(picture_height * (columns - 1) / (rows - 1))
-    pictures_top = height - margin - round(width * 0.03) - picture_height
     gap = round(width * 0.06)
+    picture_width, picture_height = fit_picture((columns - 1, rows - 1), (width - 2 * margin - gap) / 2,
+                                                max_height)
+    pictures_top = height - margin - round(width * 0.03) - max_height + (max_height - picture_height) // 2
     pictures_left = (width - 2 * picture_width - gap) // 2
 
-    fold_y = pictures_top - round(width * 0.035)
+    fold_y = height - margin - round(width * 0.03) - max_height - round(width * 0.035)
     dash = round(width * 0.008)
 
     for x in range(margin, width - margin, 2 * dash):
@@ -356,7 +358,7 @@ def _draw_answer(image, segments, photo, columns, rows, margin, picture_height):
     draw.text((width / 2, fold_y), "  knip of vouw hier als je het antwoord nog niet wilt zien  ",
               fill=NUMBER_COLOR, font=caption_font, anchor="mm", stroke_width=8, stroke_fill=PAPER_COLOR)
 
-    answer = _draw_segments(segments, columns, rows, picture_width * 2)
+    answer = _draw_segments(segments, columns, rows, step, picture_width * 2)
     answer = answer.resize((picture_width, picture_height), Image.LANCZOS)
     pictures = [(photo.resize((picture_width, picture_height), Image.LANCZOS), "Je foto"),
                 (answer, "Zo wordt het")]

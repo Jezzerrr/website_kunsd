@@ -374,11 +374,38 @@
 
                     <button
                         type="button"
+                        id="rotate-button"
+                        class="secondary-button"
+                        title="Draai de foto een kwartslag rechtsom (met de klok mee)">
+                        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20.5 13.5a8.5 8.5 0 1 1-2.6-7.6"></path>
+                            <path d="M21 3.5v5h-5"></path>
+                        </svg>
+                        Draaien
+                    </button>
+
+                    <button
+                        type="button"
+                        id="flip-button"
+                        class="secondary-button"
+                        title="Spiegel de foto (links wordt rechts)">
+                        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3v18" stroke-dasharray="2 2.5"></path>
+                            <path d="M9 7 3 17h6z"></path>
+                            <path d="M15 7l6 10h-6z"></path>
+                        </svg>
+                        Spiegelen
+                    </button>
+
+                    <button
+                        type="button"
                         id="crop-reset-button"
                         class="secondary-button hidden">
                         Originele Foto Herstellen
                     </button>
                 </div>
+
+                <p id="orient-status" class="crop-hint hidden" aria-live="polite"></p>
             </section>
 
             <!-- Bijsnijden: alleen zichtbaar na een klik op "Bijsnijden" -->
@@ -433,15 +460,31 @@
                 </p>
 
                 <div id="cutout-stage" class="crop-stage cutout-stage">
-                    <img id="cutout-image" alt="Foto om uit te knippen" draggable="false">
+                    <!-- De foto met de lijn; bij inzoomen wordt dit hele stuk groter -->
+                    <div id="cutout-view" class="cutout-view">
+                        <img id="cutout-image" alt="Foto om uit te knippen" draggable="false">
 
-                    <svg id="cutout-svg" class="cutout-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
-                        <path id="cutout-shade" class="cutout-shade"></path>
-                        <path id="cutout-line-under" class="cutout-line-under"></path>
-                        <path id="cutout-line" class="cutout-line"></path>
-                        <path id="cutout-dots" class="cutout-dots"></path>
-                        <path id="cutout-start" class="cutout-start"></path>
-                    </svg>
+                        <svg id="cutout-svg" class="cutout-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+                            <path id="cutout-shade" class="cutout-shade"></path>
+                            <path id="cutout-line-under" class="cutout-line-under"></path>
+                            <path id="cutout-line" class="cutout-line"></path>
+                            <path id="cutout-dots" class="cutout-dots"></path>
+                            <path id="cutout-start" class="cutout-start"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Zoomen: ook knijpen met twee vingers, of Ctrl + scrollwiel -->
+                    <div class="cutout-zoom">
+                        <button type="button" id="cutout-zoom-fit" class="cutout-zoom-button cutout-zoom-fit hidden">
+                            Hele Foto
+                        </button>
+                        <button type="button" id="cutout-zoom-out" class="cutout-zoom-button" aria-label="Uitzoomen" title="Uitzoomen">
+                            &minus;
+                        </button>
+                        <button type="button" id="cutout-zoom-in" class="cutout-zoom-button" aria-label="Inzoomen" title="Inzoomen">
+                            +
+                        </button>
+                    </div>
 
                     <!-- Vergrootglas: je vinger zit anders precies op de plek waar je tekent -->
                     <div id="cutout-loupe" class="cutout-loupe hidden" aria-hidden="true">
@@ -549,8 +592,8 @@
 
                     <p class="palette-hint">
                         Werkt het best met <strong>één duidelijk portret</strong>, rechtop en dichtbij. Het
-                        algoritme neemt een staand stuk (3 bij 4) uit het midden van je foto; snijd je foto
-                        bij als het gezicht niet in het midden staat.
+                        raster komt strak om je hele foto (of uitsnede), zo groot als op A4 past: liggend
+                        bij een liggende foto. Snijd je foto dus bij tot wat je wilt tekenen.
                     </p>
 
                     <div class="slider-header">
@@ -623,13 +666,13 @@
 
                     <p class="palette-hint">
                         Werkt het best met een portret of een foto met duidelijke lichte en donkere vlakken.
-                        Het algoritme neemt een staand stuk uit het midden van je foto, zo groot als het
-                        raster op A4.
+                        Het raster komt strak om je hele foto (of uitsnede), zo groot als op A4 past:
+                        liggend bij een liggende foto.
                     </p>
 
                     <div class="slider-header">
                         <label for="hatchwork-columns-slider">
-                            Hokjes in de breedte
+                            Fijnheid van het raster
                         </label>
 
                         <output
@@ -1190,6 +1233,7 @@
     <script src="js/analytics.js"></script>
     <script src="js/jouw_kunst.js"></script>
     <script src="js/uitknippen.js"></script>
+    <script src="js/draaien.js"></script>
 
     <script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 

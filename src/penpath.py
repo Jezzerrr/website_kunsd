@@ -1,7 +1,8 @@
 """Penpath: een portret van korte rechte lijnen tussen punten op een raster, om zelf te tekenen.
 
-Op het tekenvel staat een raster van punten met coördinaten, zoals bij zeeslag: kolommen A t/m AE,
-rijen 1 t/m 41. Op blad 2 staan de lijnen als routes: zet je pen op het vetgedrukte punt en trek
+Op het tekenvel staat een raster van punten met coördinaten, zoals bij zeeslag: kolommen A, B, C, ...
+en rijen 1, 2, 3, ... Het raster zit strak om je plaatje en is zo groot als op A4 past (liggend A4
+voor een liggend plaatje). Op blad 2 staan de lijnen als routes: zet je pen op het vetgedrukte punt en trek
 zonder op te tillen van punt naar punt. Zo verschijnt langzaam het portret.
 
 Hoe het werkt (licht genoeg voor de Render free plan):
@@ -25,12 +26,13 @@ from PIL import Image, ImageDraw
 from scipy import ndimage, sparse
 
 from src.helper_functions.drawing import LINE_COLOR, NUMBER_COLOR, get_font
+from src.helper_functions.grid_layout import A4_SIZE, fit_grid, fit_picture
 
 TOOL_NAME = "Penpath"
 
-# Het raster: zoveel kolommen en rijen punten. Op A4 liggen ze ruim 6 mm uit elkaar.
-COLUMNS = 31
-ROWS = 41
+# Het raster: zo fijn dat er 31 punten op de korte kant van A4 passen (ruim 6 mm uit elkaar).
+# Hoeveel kolommen en rijen het worden, hangt af van de vorm van het plaatje.
+SHORT_POINTS = 31
 
 # Het rekenwerk gebeurt op een plaatje van zoveel pixels per rasterhokje
 WORK_STEP = 10
@@ -38,8 +40,12 @@ WORK_STEP = 10
 # Langste lijn, in hokjes (horizontaal of verticaal). Korte lijnen maken ogen en mond mogelijk.
 MAX_STEP = 5
 
-# Hoeveel donker één lijn oplevert (op een schaal waar 1 helemaal zwart is)
+# Hoeveel donker één lijn oplevert (op een schaal waar 1 helemaal zwart is), bij hoogstens
+# FULL_INK_LINES lijnen. Vraag je om meer lijnen, dan telt elke lijn lichter mee: anders is het
+# plaatje "af" voordat alle lijnen op zijn en maakt de schuif "Aantal lijnen" boven ~800 niets uit.
+# Zo geeft meer lijnen echt meer lijnen: donkerder, met meer tussentinten.
 INK = 0.5
+FULL_INK_LINES = 400
 
 # Doorgaan vanaf het eindpunt van de vorige lijn, tenzij de beste lijn daar minder dan zoveel
 # oplevert als de beste lijn ergens anders. Lager = langere routes, maar iets minder precies.
@@ -52,9 +58,10 @@ CENTER_WEIGHT = 0.4        # het midden telt zwaarder dan de randen
 EDGE_BOOST = 2.0
 BACKGROUND_PENALTY = 0.03
 
-# Het tekenvel: A4 bij 300 dpi, met een witte rand van 5 mm
-A4_SIZE = (2480, 3508)
+# Het tekenvel: A4 bij 300 dpi, met een witte rand van 5 mm, ruimte voor de coördinaten en de titel
 PAGE_MARGIN = round(A4_SIZE[0] * 5 / 210)
+LABEL_SPACE = round(A4_SIZE[0] * 0.03)
+TITLE_SPACE = round(A4_SIZE[0] * 0.02)
 
 PAPER_COLOR = (255, 255, 255)
 INK_COLOR = (25, 25, 30)
@@ -67,7 +74,7 @@ def image_to_penpath(img, n_lines=900, template=False, output_size=1800):
     """Maak een portret van korte lijnen tussen rasterpunten.
 
     Args:
-        img: PIL Image. Het midden (staand, 3 bij 4) wordt gebruikt.
+        img: PIL Image. De hele foto wordt gebruikt; het raster past zich aan zijn vorm aan.
         n_lines: hoogstens zoveel lijnen.
         template: False = voorbeeld van hoe het eruitziet als het af is (één afbeelding),
             True = het tekenvel: een lijst van twee A4-bladen (het raster, en de routes).
@@ -76,18 +83,20 @@ def image_to_penpath(img, n_lines=900, template=False, output_size=1800):
     Returns:
         PIL Image (RGB), of bij template=True een lijst van twee PIL Images.
     """
-    photo = _center_crop(img.convert("RGB"))
-    routes = find_routes(_target_darkness(photo), int(n_lines))
+    img = img.convert("RGB")
+    paper, columns, rows, step = fit_grid(img.size, SHORT_POINTS, PAGE_MARGIN + LABEL_SPACE, TITLE_SPACE)
+    photo = _fit_to_grid(img, columns, rows)
+    routes = find_routes(_target_darkness(photo, columns, rows), columns, rows, int(n_lines))
 
     if template:
-        return [_draw_grid_page(), _draw_route_page(routes, photo)]
+        return [_draw_grid_page(columns, rows, paper, step), _draw_route_page(routes, photo, columns, rows)]
 
-    return _draw_preview(routes, output_size)
+    return _draw_preview(routes, columns, rows, output_size)
 
 
-def point_name(point):
+def point_name(point, columns):
     """De naam van een punt, zoals bij zeeslag: kolom-letter(s) en rij-nummer, bijv. "M12" of "AB3"."""
-    row, column = divmod(point, COLUMNS)
+    row, column = divmod(point, columns)
 
     return _column_name(column) + str(row + 1)
 
@@ -100,12 +109,12 @@ def _column_name(column):
 # Rekenen
 # ---------------------------------------------------------------------------
 
-def find_routes(target, n_lines):
+def find_routes(target, columns, rows, n_lines):
     """De lijnen als routes: lijsten van punten (genummerd per rij, van links naar rechts)."""
     height, width = target.shape
-    points = _point_positions()
+    points = _point_positions(columns, rows)
 
-    starts, ends = _candidate_lines()
+    starts, ends = _candidate_lines(columns, rows)
 
     # Voor elke lijn de pixels waar hij overheen loopt (elk pixel één keer)
     length = np.hypot(*(points[ends] - points[starts]).T)
@@ -125,6 +134,7 @@ def find_routes(target, n_lines):
     pixels_of_line = crossings.T.tocsr()
     pixel_count = np.asarray(crossings.getnnz(axis=0), dtype=np.float64)
 
+    ink = INK * min(1.0, FULL_INK_LINES / max(1, n_lines))
     remaining = target.astype(np.float64).ravel()
     darkness_sum = pixels_of_line @ remaining
 
@@ -143,7 +153,7 @@ def find_routes(target, n_lines):
 
     for _ in range(n_lines):
         # Winst van elke lijn: hoeveel kleiner het verschil met de foto wordt (kleinste kwadraten)
-        gain = 2 * INK * darkness_sum - INK * INK * pixel_count
+        gain = 2 * ink * darkness_sum - ink * ink * pixel_count
         gain[used] = -np.inf
         best = int(np.argmax(gain))
 
@@ -170,23 +180,23 @@ def find_routes(target, n_lines):
 
         used[best] = True
         pixels = pixels_of_line[best].indices
-        remaining[pixels] -= INK
-        darkness_sum -= INK * np.asarray(crossings[pixels].sum(axis=0)).ravel()
+        remaining[pixels] -= ink
+        darkness_sum -= ink * np.asarray(crossings[pixels].sum(axis=0)).ravel()
 
     return _drawing_order(routes)
 
 
-def _candidate_lines():
+def _candidate_lines(columns, rows):
     """Alle lijnen tussen punten die hoogstens MAX_STEP hokjes uit elkaar liggen.
 
     Lijnen die precies over een ander punt lopen vallen af (die zijn twee kortere lijnen).
     """
-    columns = np.arange(COLUMNS * ROWS) % COLUMNS
-    rows = np.arange(COLUMNS * ROWS) // COLUMNS
-    starts, ends = np.triu_indices(COLUMNS * ROWS, 1)
+    column_of = np.arange(columns * rows) % columns
+    row_of = np.arange(columns * rows) // columns
+    starts, ends = np.triu_indices(columns * rows, 1)
 
-    dx = np.abs(columns[starts] - columns[ends])
-    dy = np.abs(rows[starts] - rows[ends])
+    dx = np.abs(column_of[starts] - column_of[ends])
+    dy = np.abs(row_of[starts] - row_of[ends])
     keep = (np.maximum(dx, dy) <= MAX_STEP) & (np.gcd(dx, dy) == 1)
 
     return starts[keep], ends[keep]
@@ -251,31 +261,36 @@ def _drawing_order(routes):
     return sorted(ordered, key=lambda route: route[0])
 
 
-def _point_positions(step=WORK_STEP):
+def _point_positions(columns, rows, step=WORK_STEP):
     """De punten als (x, y), per rij van links naar rechts."""
-    columns = np.arange(COLUMNS * ROWS) % COLUMNS
-    rows = np.arange(COLUMNS * ROWS) // COLUMNS
+    column_of = np.arange(columns * rows) % columns
+    row_of = np.arange(columns * rows) // columns
 
-    return np.stack([columns * step, rows * step], axis=1).astype(np.float64)
+    return np.stack([column_of * step, row_of * step], axis=1).astype(np.float64)
 
 
-def _center_crop(img):
-    """Het grootste staande stuk (zelfde verhouding als het raster) uit het midden van de foto."""
-    ratio = (COLUMNS - 1) / (ROWS - 1)
+def _fit_to_grid(img, columns, rows):
+    """De hele foto, aangevuld met wit tot precies dezelfde verhouding als het raster.
+
+    Niet bijsnijden: wie zelf een uitsnede of uitgeknipte vorm koos, wil die helemaal terugzien.
+    Het raster volgt de vorm van de foto al, dus er komt hoogstens een randje van een hokje bij.
+    """
+    ratio = (columns - 1) / (rows - 1)
 
     if img.width / img.height > ratio:
-        width = round(img.height * ratio)
-        left = (img.width - width) // 2
-        return img.crop((left, 0, left + width, img.height))
+        size = (img.width, round(img.width / ratio))
+    else:
+        size = (round(img.height * ratio), img.height)
 
-    height = round(img.width / ratio)
-    top = (img.height - height) // 2
-    return img.crop((0, top, img.width, top + height))
+    canvas = Image.new("RGB", size, "white")
+    canvas.paste(img, ((size[0] - img.width) // 2, (size[1] - img.height) // 2))
+
+    return canvas
 
 
-def _target_darkness(photo):
+def _target_darkness(photo, columns, rows):
     """Per pixel hoe donker het moet worden: 1 = zo donker als kan, 0 of minder = wit laten."""
-    width, height = (COLUMNS - 1) * WORK_STEP + 1, (ROWS - 1) * WORK_STEP + 1
+    width, height = (columns - 1) * WORK_STEP + 1, (rows - 1) * WORK_STEP + 1
     gray = np.asarray(photo.convert("L").resize((width, height), Image.LANCZOS), dtype=np.float32) / 255
 
     # Contrast oprekken: het donkerste en lichtste procent van de foto worden zwart en wit
@@ -313,15 +328,15 @@ def _route_lines(routes):
             yield a, b
 
 
-def _draw_preview(routes, output_size):
+def _draw_preview(routes, columns, rows, output_size):
     """Zo ziet het eruit als alle lijnen getekend zijn."""
     scale = 2   # dubbel zo groot tekenen en verkleinen geeft gladde lijnen
     margin = round(output_size * 0.03) * scale
-    step = (output_size * scale - 2 * margin) / (COLUMNS - 1)
-    points = _point_positions(step) + margin
+    step = (output_size * scale - 2 * margin) / (columns - 1)
+    points = _point_positions(columns, rows, step) + margin
 
     width = output_size * scale
-    height = round((ROWS - 1) * step) + 2 * margin
+    height = round((rows - 1) * step) + 2 * margin
     image = Image.new("RGB", (width, height), PAPER_COLOR)
     draw = ImageDraw.Draw(image)
 
@@ -332,7 +347,8 @@ def _draw_preview(routes, output_size):
         draw.ellipse((x - dot, y - dot, x + dot, y + dot), fill=(215, 215, 215))
 
     # Een fineliner van 0,3 mm op een raster van ruim 6 mm
-    line_width = max(1, round(step * 0.3 / 6.3))
+    step_mm = (A4_SIZE[0] - 2 * (PAGE_MARGIN + LABEL_SPACE)) / (SHORT_POINTS - 1) / 300 * 25.4
+    line_width = max(1, round(step * 0.3 / step_mm))
 
     for a, b in _route_lines(routes):
         draw.line((tuple(points[a]), tuple(points[b])), fill=INK_COLOR, width=line_width)
@@ -340,44 +356,41 @@ def _draw_preview(routes, output_size):
     return image.resize((output_size, round(height / scale)), Image.LANCZOS)
 
 
-def _draw_grid_page():
-    """Blad 1: het raster met coördinaten, zo groot als op A4 past. Hierop teken je."""
-    width, height = A4_SIZE
-    label_space = round(width * 0.03)
-    title_space = round(width * 0.02)
-    step = min((width - 2 * (PAGE_MARGIN + label_space)) / (COLUMNS - 1),
-               (height - 2 * (PAGE_MARGIN + label_space) - title_space) / (ROWS - 1))
-    left = (width - step * (COLUMNS - 1)) / 2
-    top = (height - step * (ROWS - 1) + title_space) / 2
+def _draw_grid_page(columns, rows, paper, step):
+    """Blad 1: het raster met coördinaten, in het midden van het (staande of liggende) A4. Hierop teken je."""
+    width, height = paper
+    unit = A4_SIZE[0]       # lettergroottes naar de korte kant, dus liggend even groot als staand
+    left = (width - step * (columns - 1)) / 2
+    top = (height - step * (rows - 1)) / 2
 
     image = Image.new("RGB", (width, height), PAPER_COLOR)
     draw = ImageDraw.Draw(image)
 
-    label_font = get_font(round(width * 0.0115))
-    label_offset = label_space * 0.6
+    label_font = get_font(round(unit * 0.0115))
+    label_offset = LABEL_SPACE * 0.6
 
     # Coördinaten rondom: letters boven en onder, nummers links en rechts
-    for column in range(COLUMNS):
+    for column in range(columns):
         x = left + column * step
         name = _column_name(column)
         draw.text((x, top - label_offset), name, fill=LINE_COLOR, font=label_font, anchor="mm")
-        draw.text((x, top + (ROWS - 1) * step + label_offset), name, fill=LINE_COLOR, font=label_font,
+        draw.text((x, top + (rows - 1) * step + label_offset), name, fill=LINE_COLOR, font=label_font,
                   anchor="mm")
 
-    for row in range(ROWS):
+    for row in range(rows):
         y = top + row * step
         draw.text((left - label_offset, y), str(row + 1), fill=LINE_COLOR, font=label_font, anchor="mm")
-        draw.text((left + (COLUMNS - 1) * step + label_offset, y), str(row + 1), fill=LINE_COLOR,
+        draw.text((left + (columns - 1) * step + label_offset, y), str(row + 1), fill=LINE_COLOR,
                   font=label_font, anchor="mm")
 
     # De punten, elke vijfde rij en kolom iets groter: dan vind je je plek sneller
-    for row in range(ROWS):
-        for column in range(COLUMNS):
+    for row in range(rows):
+        for column in range(columns):
             x, y = left + column * step, top + row * step
-            dot = width * (0.0024 if (row + 1) % 5 == 0 or (column + 1) % 5 == 0 else 0.0017)
+            dot = unit * (0.0024 if (row + 1) % 5 == 0 or (column + 1) % 5 == 0 else 0.0017)
             draw.ellipse((x - dot, y - dot, x + dot, y + dot), fill=DOT_COLOR)
 
-    small = get_font(round(width * 0.011))
+    small = get_font(round(unit * 0.011))
     draw.text((PAGE_MARGIN, PAGE_MARGIN), f"{TOOL_NAME} · blad 1: hierop teken je", fill=NUMBER_COLOR,
               font=small, anchor="lt")
     draw.text((width - PAGE_MARGIN, height - PAGE_MARGIN), "De routes staan op blad 2", fill=NUMBER_COLOR,
@@ -386,7 +399,7 @@ def _draw_grid_page():
     return image
 
 
-def _draw_route_page(routes, photo):
+def _draw_route_page(routes, photo, columns, rows):
     """Blad 2: de routes, met je foto en het "antwoord" klein onderaan.
 
     Elke route begint met een vetgedrukt punt: daar zet je je pen neer. Daarna trek je zonder op te
@@ -400,20 +413,20 @@ def _draw_route_page(routes, photo):
     list_top = margin + round(width * 0.105)
     list_height = height - margin - bottom_block - list_top
 
-    columns = 5
+    list_columns = 5
     column_gap = round(width * 0.02)
-    column_width = (width - 2 * margin - (columns - 1) * column_gap) / columns
+    column_width = (width - 2 * margin - (list_columns - 1) * column_gap) / list_columns
 
     # Grootste lettertype waarbij de lijst past
     for font_size in range(30, 15, -1):
-        layout = _layout_routes(routes, column_width, font_size)
-        rows = math.ceil(len(layout) / columns)
+        layout = _layout_routes(routes, columns, column_width, font_size)
+        lines_per_column = math.ceil(len(layout) / list_columns)
 
-        if rows * round(font_size * 1.45) <= list_height:
+        if lines_per_column * round(font_size * 1.45) <= list_height:
             break
 
     line_height = round(font_size * 1.45)
-    rows = math.ceil(len(layout) / columns)
+    lines_per_column = math.ceil(len(layout) / list_columns)
 
     image = Image.new("RGB", (width, height), PAPER_COLOR)
     draw = ImageDraw.Draw(image)
@@ -434,7 +447,7 @@ def _draw_route_page(routes, photo):
     bold_offset = max(1, round(font_size / 22))
 
     for position, (start, points) in enumerate(layout):
-        column, row = divmod(position, rows)
+        column, row = divmod(position, lines_per_column)
         x = margin + column * (column_width + column_gap)
         y = list_top + row * line_height + line_height / 2
 
@@ -443,12 +456,12 @@ def _draw_route_page(routes, photo):
             draw.text((x + offset, y), text, fill=INK_COLOR if is_start else LINE_COLOR, font=regular,
                       anchor="lm", stroke_width=bold_offset if is_start else 0, stroke_fill=INK_COLOR)
 
-    _draw_answer(image, routes, photo, margin, picture_height)
+    _draw_answer(image, routes, photo, columns, rows, margin, picture_height)
 
     return image
 
 
-def _layout_routes(routes, column_width, font_size):
+def _layout_routes(routes, columns, column_width, font_size):
     """Elke route op eigen regel(s): per regel (begint hier een route, [(tekst, x), ...]).
 
     Past een route niet op één regel, dan loopt hij door op de volgende regel, iets ingesprongen.
@@ -459,7 +472,7 @@ def _layout_routes(routes, column_width, font_size):
     layout = []
 
     for route in routes:
-        names = [point_name(point) for point in route]
+        names = [point_name(point, columns) for point in route]
         line, x, first = [], 0.0, True
 
         for name in names:
@@ -477,18 +490,19 @@ def _layout_routes(routes, column_width, font_size):
     return layout
 
 
-def _draw_answer(image, routes, photo, margin, picture_height):
-    """Onderaan, achter een gestippelde knip- of vouwlijn: je foto en het antwoord."""
+def _draw_answer(image, routes, photo, columns, rows, margin, max_height):
+    """Onderaan, achter een gestippelde knip- of vouwlijn: je foto en het antwoord, naast elkaar."""
     width, height = image.size
     draw = ImageDraw.Draw(image)
     caption_font = get_font(round(width * 0.012))
 
-    picture_width = round(picture_height * (COLUMNS - 1) / (ROWS - 1))
-    pictures_top = height - margin - round(width * 0.03) - picture_height
     gap = round(width * 0.06)
+    picture_width, picture_height = fit_picture((columns - 1, rows - 1), (width - 2 * margin - gap) / 2,
+                                                max_height)
+    pictures_top = height - margin - round(width * 0.03) - max_height + (max_height - picture_height) // 2
     pictures_left = (width - 2 * picture_width - gap) // 2
 
-    fold_y = pictures_top - round(width * 0.035)
+    fold_y = height - margin - round(width * 0.03) - max_height - round(width * 0.035)
     dash = round(width * 0.008)
 
     for x in range(margin, width - margin, 2 * dash):
@@ -497,7 +511,7 @@ def _draw_answer(image, routes, photo, margin, picture_height):
     draw.text((width / 2, fold_y), "  knip of vouw hier als je het antwoord nog niet wilt zien  ",
               fill=NUMBER_COLOR, font=caption_font, anchor="mm", stroke_width=8, stroke_fill=PAPER_COLOR)
 
-    answer = _draw_preview(routes, picture_width * 2).resize((picture_width, picture_height), Image.LANCZOS)
+    answer = _draw_preview(routes, columns, rows, picture_width * 2).resize((picture_width, picture_height), Image.LANCZOS)
     pictures = [(photo.resize((picture_width, picture_height), Image.LANCZOS), "Je foto"),
                 (answer, "Zo wordt het")]
 

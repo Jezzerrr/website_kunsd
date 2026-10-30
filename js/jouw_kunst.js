@@ -111,9 +111,15 @@ let resultPdf = null;
 // Staat de bijsnijder in de stand "Kies Het Rondje" (vierkant, met een rond kader)?
 let cropIsCircle = false;
 
-// Wat de gebruiker heeft geüpload. Dit gaat altijd ongewijzigd naar de server.
+// De foto waar de bewerkingen mee werken. Dit gaat altijd ongewijzigd naar de server.
+// Na "Draaien" of "Spiegelen" (js/draaien.js) is dit de gedraaide foto.
 let originalFile = null;
 let originalDataUrl = null;
+
+// Het bestand precies zoals geüpload, en hoe originalFile daaruit gedraaid is:
+// eerst gespiegeld (flip), dan rotate graden rechtsom. Voor "Originele Foto Herstellen".
+let sourceFile = null;
+let orientation = { rotate: 0, flip: false };
 
 // De gekozen uitsnede (of null als er niet is bijgesneden).
 // De server snijdt de foto zelf bij; de browser hoeft dus niets te bewerken.
@@ -156,6 +162,8 @@ imageUpload.addEventListener("change", async function () {
 
     track("afbeelding-gekozen");
 
+    sourceFile = file;
+    orientation = { rotate: 0, flip: false };
     await showPhoto(file);
 
     // Nieuwe foto: het vorige resultaat en de bewerking zijn niet meer van toepassing.
@@ -334,7 +342,7 @@ function shapeClipPath(points) {
 }
 
 
-cropResetButton.addEventListener("click", function () {
+cropResetButton.addEventListener("click", async function () {
     if (!originalFile) {
         return;
     }
@@ -343,6 +351,13 @@ cropResetButton.addEventListener("click", function () {
 
     appliedCrop = null;
     appliedShape = null;
+
+    // Gedraaid of gespiegeld: terug naar het bestand zoals het geüpload is
+    if (isOriented()) {
+        orientation = { rotate: 0, flip: false };
+        await showPhoto(sourceFile);
+    }
+
     setCroppedState(false);
     renderCirclePreview();
 
@@ -428,7 +443,12 @@ function setCroppedState(isCropped) {
     originalTitle.textContent = isCropped ? "Uitsnede" : "Origineel";
     originalView.classList.toggle("hidden", isCropped);
     croppedPreview.classList.toggle("hidden", !isCropped);
-    cropResetButton.classList.toggle("hidden", !isCropped);
+    cropResetButton.classList.toggle("hidden", !isCropped && !isOriented());
+}
+
+
+function isOriented() {
+    return orientation.rotate !== 0 || orientation.flip;
 }
 
 
@@ -884,6 +904,22 @@ window.addEventListener("beforeprint", function () {
         `@page { size: A4 ${isLandscape ? "landscape" : "portrait"}; margin: ${margin}mm; } ` +
         // Alleen op papier: anders blijft het plaatje na het printen ook op het scherm uitgerekt
         `@media print { body.jouw-kunst-page.has-result .result-image { height: ${imageHeight}mm !important; max-height: none !important; } }`;
+
+    // Een tekenvel met bladen van verschillende richting (liggend raster, staande lijst):
+    // elk blad op een eigen pagina in zijn eigen richting (benoemde pagina's in CSS).
+    if (resultPages) {
+        resultContainer.querySelectorAll(".result-image").forEach(function (page) {
+            const pageIsLandscape = page.naturalWidth > page.naturalHeight;
+            page.classList.toggle("print-liggend", pageIsLandscape);
+            page.classList.toggle("print-staand", !pageIsLandscape);
+        });
+
+        printPageStyle.textContent +=
+            " @page staand { size: A4 portrait; margin: 0; } @page liggend { size: A4 landscape; margin: 0; }" +
+            " @media print {" +
+            " body.jouw-kunst-page.has-result .result-image.print-staand { page: staand; height: 296.5mm !important; }" +
+            " body.jouw-kunst-page.has-result .result-image.print-liggend { page: liggend; height: 209.5mm !important; } }";
+    }
 });
 
 window.addEventListener("afterprint", function () {
@@ -1562,6 +1598,8 @@ function writeProgress() {
         savedAt: Date.now(),
         visitId: visitId,
         file: originalFile,
+        sourceFile: sourceFile,
+        orientation: orientation,
         crop: appliedCrop,
         shape: appliedShape,
         algorithm: activeButton ? activeButton.dataset.settings : null,
@@ -1630,6 +1668,8 @@ async function restoreProgress() {
     isRestoring = true;
 
     try {
+        sourceFile = saved.sourceFile || saved.file;
+        orientation = saved.orientation || { rotate: 0, flip: false };
         await showPhoto(saved.file);
 
         if (saved.crop) {
