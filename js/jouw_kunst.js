@@ -119,6 +119,13 @@ let originalDataUrl = null;
 // De server snijdt de foto zelf bij; de browser hoeft dus niets te bewerken.
 let appliedCrop = null;
 
+// De uitgeknipte vorm (zie js/uitknippen.js): een lijst punten [x, y] als fracties van de
+// foto, of null. Alles daarbuiten maakt de server wit. Staat los van de uitsnede hierboven.
+let appliedShape = null;
+
+// Na "Uitknippen" wordt de uitsnede de vorm plus een klein randje (fractie van de vorm).
+const SHAPE_MARGIN = 0.05;
+
 // De rechthoek die nu in de bewerker staat.
 let cropRect = { ...DEFAULT_CROP };
 let dragState = null;
@@ -182,6 +189,7 @@ function showPhoto(file) {
             originalFile = file;
             originalDataUrl = event.target.result;
             appliedCrop = null;
+            appliedShape = null;
 
             uploadedImage.src = originalDataUrl;
             setCroppedState(false);
@@ -229,6 +237,7 @@ function openCropEditor(isCircle) {
     // We snijden altijd bij vanaf het origineel, zodat je een eerdere
     // uitsnede opnieuw kunt aanpassen.
     cropImage.src = originalDataUrl;
+    cropImage.style.clipPath = shapeClipPath(appliedShape);
 
     const startRect = appliedCrop ? { ...appliedCrop } : { ...DEFAULT_CROP };
     setCropRect(isCircle ? centerSquare(startRect, uploadedImage.naturalWidth, uploadedImage.naturalHeight) : startRect);
@@ -264,18 +273,65 @@ cropOkButton.addEventListener("click", function () {
     track("bijsnijden-ok");
 
     appliedCrop = { ...cropRect };
-    renderCroppedPreview(appliedCrop, naturalWidth, naturalHeight);
+    closeCropEditor();
+    showNewInput();
+});
+
+
+// Na "Uitknippen" (js/uitknippen.js): de vorm, en een uitsnede er net omheen.
+function applyShape(points) {
+    appliedShape = points;
+    appliedCrop = shapeBounds(points, SHAPE_MARGIN);
+    showNewInput();
+}
+
+
+// De kleinste rechthoek om de vorm, met een randje erbij (maar niet buiten de foto).
+function shapeBounds(points, margin) {
+    const xs = points.map(function (point) { return point[0]; });
+    const ys = points.map(function (point) { return point[1]; });
+
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+
+    const left = clamp(minX - margin * (maxX - minX), 0, 1);
+    const top = clamp(minY - margin * (maxY - minY), 0, 1);
+    const right = clamp(maxX + margin * (maxX - minX), 0, 1);
+    const bottom = clamp(maxY + margin * (maxY - minY), 0, 1);
+
+    return { x: left, y: top, w: right - left, h: bottom - top };
+}
+
+
+// Een nieuwe uitsnede of vorm tonen. Het vorige resultaat hoort er dan niet meer bij.
+function showNewInput() {
+    renderCroppedPreview(appliedCrop, uploadedImage.naturalWidth, uploadedImage.naturalHeight);
     setCroppedState(true);
     renderCirclePreview();
 
-    // Nieuwe invoer: het vorige resultaat hoort er niet meer bij.
     clearResult();
     resultContainer.classList.add("hidden");
     statusMessage.classList.add("hidden");
 
-    closeCropEditor();
     saveProgress();
-});
+}
+
+
+// De vorm als CSS clip-path: alles erbuiten wordt doorzichtig, dus wit op een witte achtergrond.
+// Zo zie je het uitgeknipte stuk zonder canvas. Zonder vorm: geen clip-path.
+function shapeClipPath(points) {
+    if (!points) {
+        return "";
+    }
+
+    const corners = points.map(function (point) {
+        return `${(point[0] * 100).toFixed(3)}% ${(point[1] * 100).toFixed(3)}%`;
+    });
+
+    return `polygon(evenodd, ${corners.join(", ")})`;
+}
 
 
 cropResetButton.addEventListener("click", function () {
@@ -286,6 +342,7 @@ cropResetButton.addEventListener("click", function () {
     track("bijsnijden-herstel");
 
     appliedCrop = null;
+    appliedShape = null;
     setCroppedState(false);
     renderCirclePreview();
 
@@ -316,6 +373,7 @@ function renderCroppedPreview(rect, naturalWidth, naturalHeight) {
     const ratio = (rect.h * naturalHeight) / (rect.w * naturalWidth);
 
     croppedPreviewImage.src = originalDataUrl;
+    croppedPreviewImage.style.clipPath = shapeClipPath(appliedShape);
     croppedPreviewFrame.style.paddingBottom = `${ratio * 100}%`;
     croppedPreviewImage.style.width = `${100 / rect.w}%`;
     croppedPreviewImage.style.left = `${-(rect.x / rect.w) * 100}%`;
@@ -355,6 +413,7 @@ function renderCirclePreview() {
     const square = centerSquare(appliedCrop || { x: 0, y: 0, w: 1, h: 1 }, naturalWidth, naturalHeight);
 
     circlePreviewImage.src = originalDataUrl;
+    circlePreviewImage.style.clipPath = shapeClipPath(appliedShape);
     circlePreviewImage.style.width = `${100 / square.w}%`;
     circlePreviewImage.style.left = `${-(square.x / square.w) * 100}%`;
     circlePreviewImage.style.top = `${-(square.y / square.h) * 100}%`;
@@ -1072,6 +1131,12 @@ function buildFormData(fields) {
         formData.append("crop_h", appliedCrop.h.toFixed(6));
     }
 
+    if (appliedShape) {
+        formData.append("cut_shape", JSON.stringify(appliedShape.map(function (point) {
+            return [+point[0].toFixed(5), +point[1].toFixed(5)];
+        })));
+    }
+
     return formData;
 }
 
@@ -1498,6 +1563,7 @@ function writeProgress() {
         visitId: visitId,
         file: originalFile,
         crop: appliedCrop,
+        shape: appliedShape,
         algorithm: activeButton ? activeButton.dataset.settings : null,
         controls: controls,
         palettes: {
@@ -1567,6 +1633,7 @@ async function restoreProgress() {
         await showPhoto(saved.file);
 
         if (saved.crop) {
+            appliedShape = saved.shape || null;
             await restoreCrop(saved.crop);
         }
 

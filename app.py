@@ -10,7 +10,7 @@ from functools import wraps
 from html import escape
 from pathlib import Path, PurePosixPath
 
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFilter, ImageOps, UnidentifiedImageError
 from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
@@ -59,6 +59,11 @@ MAX_IMAGE_SIZE = 3000
 # Langste zijde van het resultaat bij de stippen (Coloring Dots en RedBlack Dots). Stippen tekenen
 # kost bijna niets, dus we maken ze groot: scherp bij printen (A4 ongeveer 300 dpi).
 DOT_IMAGE_SIZE = 3600
+
+# Uitknippen: hoogstens zoveel punten in de getekende vorm, en de zachte rand
+# als fractie van de langste zijde (0.0015 is 3 pixels bij 2000 pixels).
+MAX_CUT_POINTS = 2000
+CUT_FEATHER = 0.0015
 
 # Langste zijde van het resultaat bij Shape Division: houdt het snel en de download klein.
 MAX_SHAPE_SIZE = 2000
@@ -514,10 +519,19 @@ def load_input_image():
     # een rotatie-tag). Zo kloppen de coördinaten van de uitsnede.
     image = ImageOps.exif_transpose(image).convert("RGB")
 
-    image = apply_crop(image)
-    image = limit_size(image, MAX_IMAGE_SIZE)
+    original_size = image.size
+    box = read_crop_box(original_size)
 
-    return ensure_min_size(image, MIN_IMAGE_SIZE)
+    if box:
+        image = image.crop(box)
+    else:
+        box = (0, 0) + original_size
+
+    image = ensure_min_size(limit_size(image, MAX_IMAGE_SIZE), MIN_IMAGE_SIZE)
+
+    # Uitgeknipt? Dan wordt alles buiten de getekende vorm wit. Pas na het schalen,
+    # zodat het masker niet groter is dan nodig en de rand scherp blijft.
+    return apply_cutout(image, original_size, box)
 
 
 def load_dot_image():
@@ -525,26 +539,65 @@ def load_dot_image():
     return limit_size(ensure_min_size(load_input_image(), DOT_IMAGE_SIZE), DOT_IMAGE_SIZE)
 
 
-def apply_crop(image):
-    """Snijdt de foto bij als de browser een uitsnede heeft meegestuurd.
+def read_crop_box(size):
+    """De uitsnede die de browser heeft meegestuurd, als (left, top, right, bottom) in pixels, of None.
 
     De uitsnede komt binnen als fracties van de foto (0 t/m 1):
     crop_x en crop_y zijn de linkerbovenhoek, crop_w en crop_h de afmetingen.
     """
     if "crop_x" not in request.form:
-        return image
+        return None
 
     try:
         x, y, w, h = (float(request.form[name]) for name in ("crop_x", "crop_y", "crop_w", "crop_h"))
     except (KeyError, ValueError):
+        return None
+
+    width, height = size
+    left = max(0, min(width - 1, round(x * width)))
+    top = max(0, min(height - 1, round(y * height)))
+    right = max(left + 1, min(width, round((x + w) * width)))
+    bottom = max(top + 1, min(height, round((y + h) * height)))
+
+    return left, top, right, bottom
+
+
+def apply_cutout(image, original_size, box):
+    """Maakt alles buiten de uitgeknipte vorm wit (de knop "Uitknippen" op Jouw Kunsd).
+
+    De vorm komt binnen als cut_shape: een JSON-lijst met punten [x, y], als fracties van de
+    originele foto. box is de uitsnede in pixels van het origineel; image is die uitsnede,
+    eventueel geschaald. De rand wordt een heel klein beetje zacht gemaakt, zodat er geen
+    trapjes in komen.
+    """
+    try:
+        points = json.loads(request.form.get("cut_shape", "null"))
+    except ValueError:
         return image
 
-    left = max(0, min(image.width - 1, round(x * image.width)))
-    top = max(0, min(image.height - 1, round(y * image.height)))
-    right = max(left + 1, min(image.width, round((x + w) * image.width)))
-    bottom = max(top + 1, min(image.height, round((y + h) * image.height)))
+    if not isinstance(points, list) or not 3 <= len(points) <= MAX_CUT_POINTS:
+        return image
 
-    return image.crop((left, top, right, bottom))
+    left, top, right, bottom = box
+    scale_x = image.width / (right - left)
+    scale_y = image.height / (bottom - top)
+
+    try:
+        polygon = [
+            ((float(x) * original_size[0] - left) * scale_x, (float(y) * original_size[1] - top) * scale_y)
+            for x, y in points
+        ]
+    except (TypeError, ValueError):
+        return image
+
+    mask = Image.new("L", image.size, 0)
+    ImageDraw.Draw(mask).polygon(polygon, fill=255)
+
+    feather = max(1.0, max(image.size) * CUT_FEATHER)
+    mask = mask.filter(ImageFilter.GaussianBlur(feather))
+
+    white = Image.new("RGB", image.size, (255, 255, 255))
+    return Image.composite(image, white, mask)
 
 
 def ensure_min_size(image, min_side):

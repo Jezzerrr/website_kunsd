@@ -367,6 +367,13 @@
 
                     <button
                         type="button"
+                        id="cutout-start-button"
+                        class="secondary-button">
+                        Uitknippen
+                    </button>
+
+                    <button
+                        type="button"
                         id="crop-reset-button"
                         class="secondary-button hidden">
                         Originele Foto Herstellen
@@ -410,6 +417,70 @@
                     <button
                         type="button"
                         id="crop-ok-button"
+                        class="create-button">
+                        OK
+                    </button>
+                </div>
+            </section>
+
+            <!-- Uitknippen: zelf een vorm om (bijvoorbeeld) een gezicht tekenen; de rest wordt wit -->
+            <section id="cutout-container" class="image-section hidden">
+                <h2>Foto Uitknippen</h2>
+
+                <p class="crop-hint cutout-intro">
+                    Teken met je vinger of muis een lijn om wat je wilt houden, bijvoorbeeld één
+                    gezicht. Alles daarbuiten wordt wit, zodat een drukke achtergrond niet stoort.
+                </p>
+
+                <div id="cutout-stage" class="crop-stage cutout-stage">
+                    <img id="cutout-image" alt="Foto om uit te knippen" draggable="false">
+
+                    <svg id="cutout-svg" class="cutout-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+                        <path id="cutout-shade" class="cutout-shade"></path>
+                        <path id="cutout-line-under" class="cutout-line-under"></path>
+                        <path id="cutout-line" class="cutout-line"></path>
+                        <path id="cutout-dots" class="cutout-dots"></path>
+                        <path id="cutout-start" class="cutout-start"></path>
+                    </svg>
+
+                    <!-- Vergrootglas: je vinger zit anders precies op de plek waar je tekent -->
+                    <div id="cutout-loupe" class="cutout-loupe hidden" aria-hidden="true">
+                        <div id="cutout-loupe-photo" class="cutout-loupe-photo"></div>
+                        <svg id="cutout-loupe-svg" class="cutout-svg" preserveAspectRatio="none">
+                            <path id="cutout-loupe-line-under" class="cutout-line-under"></path>
+                            <path id="cutout-loupe-line" class="cutout-line"></path>
+                        </svg>
+                        <span class="cutout-loupe-cross"></span>
+                    </div>
+                </div>
+
+                <p id="cutout-hint" class="crop-hint cutout-hint" aria-live="polite"></p>
+
+                <div class="button-row image-actions">
+                    <button
+                        type="button"
+                        id="cutout-undo-button"
+                        class="secondary-button">
+                        Ongedaan Maken
+                    </button>
+
+                    <button
+                        type="button"
+                        id="cutout-clear-button"
+                        class="secondary-button">
+                        Opnieuw Tekenen
+                    </button>
+
+                    <button
+                        type="button"
+                        id="cutout-cancel-button"
+                        class="secondary-button">
+                        Annuleren
+                    </button>
+
+                    <button
+                        type="button"
+                        id="cutout-ok-button"
                         class="create-button">
                         OK
                     </button>
@@ -1118,6 +1189,7 @@
     <!-- Volgorde: eerst analytics.js, dan jouw_kunst.js -->
     <script src="js/analytics.js"></script>
     <script src="js/jouw_kunst.js"></script>
+    <script src="js/uitknippen.js"></script>
 
     <script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 
