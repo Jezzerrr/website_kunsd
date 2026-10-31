@@ -515,12 +515,14 @@ def hatchwork():
 @app.route("/api/negative-circles", methods=["POST"])
 @image_endpoint
 def negative_circles():
-    # Speeltuin: vol cirkels, ertussen het negatief, en het geheel als rondje (PNG, doorzichtig erbuiten).
+    # Speeltuin: zwart-wit vol cirkels, ertussen het negatief, en het geheel als rondje (PNG, doorzichtig erbuiten).
+    # shift_x en shift_y verschuiven het raster van cirkels (sleep in de voorvertoning, zie js/speeltuin.js).
     # Het rondje is het grootste vierkant in het midden van de uitsnede ("Kies Het Rondje" stuurt een vierkant mee).
     return image_to_json(image_to_negative_circles(
         load_input_image(),
-        circles_across=int(read_number("circles", 11, 3, 20)),
-        gray=read_flag("gray", default=False)
+        circles_across=int(read_number("circles", 6, 3, 9)),
+        shift_x=read_number("shift_x", 0, 0, 1),
+        shift_y=read_number("shift_y", 0, 0, 1)
     ))
 
 

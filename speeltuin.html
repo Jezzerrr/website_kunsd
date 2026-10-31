@@ -122,33 +122,29 @@
             <h2 class="step-title" data-step="2">Negative Circles</h2>
 
             <p class="section-intro">
-                Je foto vol cirkels. In de cirkels zie je de foto zoals hij is, ertussen het negatief. En het
-                geheel is zelf ook een rondje: kies zelf welk rondje uit je foto.
+                Je foto in zwart-wit, vol cirkels. In de cirkels zie je de foto zoals hij is, ertussen het
+                negatief. En het geheel is zelf ook een rondje: kies zelf welk rondje uit je foto.
             </p>
 
             <div class="playground-grid">
                 <div class="playground-controls">
                     <div class="slider-header">
                         <label for="circles-slider">Aantal Cirkels</label>
-                        <output for="circles-slider">11</output>
+                        <output for="circles-slider">6</output>
                     </div>
 
                     <input type="range" id="circles-slider" class="art-slider"
-                           min="3" max="20" step="1" value="11" data-unit="" disabled>
+                           min="3" max="9" step="1" value="6" data-unit="" disabled>
 
                     <div class="slider-scale">
                         <span>Weinig, Groot</span>
                         <span>Veel, Klein</span>
                     </div>
 
-                    <label class="switch-row" for="circles-gray">
-                        <strong>Zwart-Wit</strong>
-
-                        <span class="switch">
-                            <input type="checkbox" id="circles-gray" name="gray" disabled>
-                            <span class="switch-slider"></span>
-                        </span>
-                    </label>
+                    <p class="drag-hint">
+                        Sleep in je foto om de cirkels te verschuiven, zodat bijvoorbeeld een oog precies op een
+                        overgang valt.
+                    </p>
 
                     <div class="button-row">
                         <button type="button" id="negative-circles-button" class="create-button" disabled>
@@ -157,6 +153,10 @@
 
                         <button type="button" class="secondary-button circle-choose-button">
                             Kies Het Rondje
+                        </button>
+
+                        <button type="button" class="secondary-button circle-center-button hidden">
+                            Terug Naar Het Midden
                         </button>
 
                         <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-negative-circles">
@@ -179,8 +179,14 @@
 
                     <span class="example-tag" aria-hidden="true">Voorbeeld</span>
 
-                    <div class="photo-frame playground-input hidden">
-                        <img alt="Jouw foto">
+                    <!-- Live voorvertoning: onderaan het negatief, daarboven de foto, alleen zichtbaar in de
+                         cirkels (een CSS-masker). Slepen verschuift het masker, zie js/speeltuin.js. -->
+                    <div class="photo-frame playground-input circles-preview hidden">
+                        <img alt="" class="circles-negative">
+
+                        <div class="circles-mask">
+                            <img alt="Jouw foto met cirkels">
+                        </div>
                     </div>
                 </figure>
             </div>

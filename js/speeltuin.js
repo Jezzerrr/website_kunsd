@@ -87,7 +87,7 @@ playgroundUpload.addEventListener("change", function () {
                 });
             });
 
-            showNewInput();
+            showNewInput(true);
         };
 
         image.src = event.target.result;
@@ -97,22 +97,34 @@ playgroundUpload.addEventListener("change", function () {
 });
 
 
-// Na een nieuwe foto of uitsnede: overal de nieuwe invoer tonen; oude resultaten horen er niet meer bij
-function showNewInput() {
+// Na een nieuwe foto of uitsnede: overal de nieuwe invoer tonen
+function showNewInput(isNewPhoto) {
     showPart(photoFrame, appliedCrop || FULL_PHOTO);
     cropResetButton.classList.toggle("hidden", !appliedCrop);
 
-    playgroundTools.forEach(showToolInput);
+    playgroundTools.forEach(function (tool) {
+        showToolInput(tool, isNewPhoto);
+    });
 }
 
 
-function showToolInput(tool) {
+// Een nieuwe foto: oude resultaten horen er niet meer bij, dus geen download. Een andere uitsnede:
+// de download blijft staan, maar maakt eerst het nieuwe resultaat (zie "dirty" in setUpTool).
+function showToolInput(tool, isNewPhoto) {
     tool.classList.add("has-photo");
     tool.classList.remove("has-result");
-    tool.querySelector(".playground-download").classList.add("hidden");
     tool.querySelector(".status-message").classList.add("hidden");
+    tool.dirty = true;
+
+    if (isNewPhoto) {
+        tool.querySelector(".playground-download").classList.add("hidden");
+    }
 
     showPart(tool.querySelector(".playground-input"), toolCrop(tool));
+
+    if (tool.querySelector(".circles-preview")) {
+        updateCirclesPreview(tool);
+    }
 }
 
 
@@ -129,13 +141,16 @@ function toolCrop(tool) {
 // Toont alleen het stuk rect van de foto in een kader: het kader krijgt de juiste verhouding (aspect-ratio),
 // de foto erin wordt groter gemaakt en verschoven (zonder canvas, dat sommige browsers blokkeren).
 function showPart(frame, rect) {
-    const image = frame.querySelector("img");
-
     frame.style.aspectRatio = `${rect.w * photoWidth} / ${rect.h * photoHeight}`;
-    image.src = photoUrl;
-    image.style.width = `${100 / rect.w}%`;
-    image.style.left = `${-(rect.x / rect.w) * 100}%`;
-    image.style.top = `${-(rect.y / rect.h) * 100}%`;
+
+    // Meestal één foto; bij de voorvertoning van Negative Circles twee lagen (negatief en foto)
+    frame.querySelectorAll("img").forEach(function (image) {
+        image.src = photoUrl;
+        image.style.width = `${100 / rect.w}%`;
+        image.style.left = `${-(rect.x / rect.w) * 100}%`;
+        image.style.top = `${-(rect.y / rect.h) * 100}%`;
+    });
+
     frame.classList.remove("hidden");
 }
 
@@ -446,11 +461,30 @@ function setUpTool(tool) {
 
     slider.addEventListener("input", function () {
         value.textContent = slider.value + (slider.dataset.unit || "");
+        tool.dirty = true;
     });
 
-    button.addEventListener("click", async function () {
-        if (!photoFile) {
+    button.addEventListener("click", make);
+
+    // "Download Afbeelding" blijft staan als je daarna iets verandert (de slider, de uitsnede, de cirkels
+    // verschuiven). Dan is het resultaat verouderd ("dirty"): de knop maakt eerst het nieuwe resultaat
+    // en downloadt dat. Zo download je altijd wat je ziet.
+    download.addEventListener("click", async function (event) {
+        if (!tool.dirty) {
             return;
+        }
+
+        event.preventDefault();
+
+        if (await make()) {
+            download.click();
+        }
+    });
+
+    // Maakt het resultaat; geeft true als dat gelukt is
+    async function make() {
+        if (!photoFile || button.disabled) {
+            return false;
         }
 
         const crop = toolCrop(tool);
@@ -465,10 +499,11 @@ function setUpTool(tool) {
             formData.append("crop_h", crop.h.toFixed(6));
         }
 
-        // Schakelaars (zoals Zwart-Wit) gaan mee onder hun name, als "true" of "false"
-        tool.querySelectorAll('input[type="checkbox"][name]').forEach(function (checkbox) {
-            formData.append(checkbox.name, checkbox.checked ? "true" : "false");
-        });
+        // Negative Circles: hoe ver het raster van cirkels verschoven is
+        if (tool.circleShift) {
+            formData.append("shift_x", tool.circleShift.x.toFixed(4));
+            formData.append("shift_y", tool.circleShift.y.toFixed(4));
+        }
 
         (tool.dataset.extra || "").split("&").filter(Boolean).forEach(function (pair) {
             const [key, val] = pair.split("=");
@@ -497,15 +532,135 @@ function setUpTool(tool) {
             output.src = data.image;
             output.alt = "Je foto als " + name;
             tool.classList.add("has-result");
+            tool.dirty = false;
             download.href = data.image;
             download.classList.remove("hidden");
+            return true;
         } catch (error) {
             // Alleen een echte fout krijgt een (rode) melding
             status.textContent = error.message;
             status.classList.remove("hidden");
+            return false;
         } finally {
             button.disabled = false;
             button.textContent = buttonText;
         }
+    }
+}
+
+
+/* ---------- Negative Circles: de cirkels verschuiven ---------- */
+
+// De voorvertoning rekent hetzelfde raster uit als src/negative_circles.py: OUTER_MARGIN en een
+// cirkel precies in het midden, verschoven met circleShift (fracties van de afstand tussen twee cirkels).
+const CIRCLES_OUTER_MARGIN = 0.01;
+
+document.querySelectorAll(".circles-preview").forEach(function (frame) {
+    const tool = frame.closest("section.playground");
+    const slider = tool.querySelector(".art-slider");
+    const centerButton = tool.querySelector(".circle-center-button");
+    let drag = null;
+
+    tool.circleShift = { x: 0, y: 0 };
+
+    // Meer of minder cirkels, of na een resultaat aan de cirkels schuiven: terug naar de voorvertoning
+    slider.addEventListener("input", function () {
+        backToPreview(tool);
     });
+
+    frame.addEventListener("pointerdown", function (event) {
+        if (event.button !== undefined && event.button !== 0) {
+            return;
+        }
+
+        drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, start: { ...tool.circleShift } };
+        frame.setPointerCapture(event.pointerId);
+        event.preventDefault();
+    });
+
+    frame.addEventListener("pointermove", function (event) {
+        if (!drag || event.pointerId !== drag.pointerId) {
+            return;
+        }
+
+        const spacing = circleSpacing(tool);
+        tool.dirty = true;
+        tool.circleShift = {
+            x: wrap(drag.start.x + (event.clientX - drag.x) / spacing),
+            y: wrap(drag.start.y + (event.clientY - drag.y) / spacing)
+        };
+        updateCirclesPreview(tool);
+    });
+
+    function endDrag(event) {
+        if (drag && event.pointerId === drag.pointerId) {
+            drag = null;
+        }
+    }
+
+    frame.addEventListener("pointerup", endDrag);
+    frame.addEventListener("pointercancel", endDrag);
+
+    // Een resultaat is er al: klikken op het resultaat brengt de voorvertoning terug om verder te schuiven
+    tool.querySelector(".playground-output").addEventListener("pointerdown", function () {
+        if (tool.classList.contains("has-result")) {
+            backToPreview(tool);
+        }
+    });
+
+    centerButton.addEventListener("click", function () {
+        tool.circleShift = { x: 0, y: 0 };
+        backToPreview(tool);
+    });
+
+    window.addEventListener("resize", function () {
+        updateCirclesPreview(tool);
+    });
+});
+
+
+function backToPreview(tool) {
+    if (!photoUrl) {
+        return;
+    }
+
+    tool.classList.remove("has-result");
+    tool.dirty = true;
+    updateCirclesPreview(tool);
+}
+
+
+// Afstand tussen twee cirkels in de voorvertoning, in pixels op het scherm
+function circleSpacing(tool) {
+    const frame = tool.querySelector(".circles-preview");
+    const count = Number(tool.querySelector(".art-slider").value);
+
+    return frame.clientWidth * (1 - 2 * CIRCLES_OUTER_MARGIN) / count;
+}
+
+
+// Het masker: een herhaald rondje per hokje, met een cirkel in het midden plus de verschuiving
+function updateCirclesPreview(tool) {
+    const frame = tool.querySelector(".circles-preview");
+    const mask = frame.querySelector(".circles-mask");
+    const spacing = circleSpacing(tool);
+    const shift = tool.circleShift || { x: 0, y: 0 };
+
+    if (!spacing) {
+        return;
+    }
+
+    const x = frame.clientWidth / 2 + (shift.x - 0.5) * spacing;
+    const y = frame.clientHeight / 2 + (shift.y - 0.5) * spacing;
+
+    mask.style.webkitMaskSize = mask.style.maskSize = `${spacing}px ${spacing}px`;
+    mask.style.webkitMaskPosition = mask.style.maskPosition = `${x}px ${y}px`;
+
+    tool.querySelector(".circle-center-button").classList.toggle("hidden", !shift.x && !shift.y);
+}
+
+
+// Een verschuiving van een hele cirkel is hetzelfde als geen verschuiving: houd hem tussen 0 en 1
+function wrap(value) {
+    return ((value % 1) + 1) % 1;
 }

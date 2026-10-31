@@ -1988,6 +1988,40 @@ body.lightbox-open {
     border-radius: 50%;
 }
 
+/* Negative Circles: live voorvertoning. Onderaan het negatief (in zwart-wit), daarboven de foto,
+   alleen zichtbaar in de cirkeltjes. js/speeltuin.js zet de grootte en plek van het masker. */
+.circles-preview {
+    cursor: move;
+    touch-action: none;             /* slepen verschuift de cirkels, niet de pagina */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.circles-preview img {
+    pointer-events: none;
+    filter: grayscale(1) contrast(1.1);
+}
+
+.circles-preview .circles-negative {
+    filter: grayscale(1) contrast(1.1) invert(1);
+}
+
+.circles-mask {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: radial-gradient(circle closest-side, #000 calc(100% - 1px), transparent 100%);
+    mask-image: radial-gradient(circle closest-side, #000 calc(100% - 1px), transparent 100%);
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+}
+
+.drag-hint {
+    margin: 20px 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
 .playground-photo {
     max-width: 320px;
     margin-top: 24px;
