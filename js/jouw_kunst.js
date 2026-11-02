@@ -872,16 +872,37 @@ function rememberAlgorithm(fillSwitch, createButton) {
 /* ---------- Na het resultaat: tekenvel maken, printen ---------- */
 
 // "Maak Het Tekenvel": zet "Tekenvel" aan en maak dezelfde bewerking opnieuw.
+// Deze knop wordt dan ook grijs met "Tekenvel wordt gemaakt...", net als de knop "Maak ...",
+// tot het tekenvel klaar is (zie runPythonAlgorithm).
+let diyOfferBusy = false;
+
 diyOfferButton.addEventListener("click", function () {
-    if (!lastFillSwitch || !lastCreateButton) {
+    if (!lastFillSwitch || !lastCreateButton || diyOfferBusy) {
         return;
     }
 
     track("maak-het-tekenvel");
 
+    diyOfferBusy = true;
+    setLoadingState(diyOfferButton, true);
+    diyOfferButton.textContent = "Tekenvel wordt gemaakt...";
+
     lastFillSwitch.checked = true;
     lastCreateButton.click();
+
+    // Begon de bewerking niet (bijv. geen foto), dan meteen terug naar de gewone knop
+    if (!lastCreateButton.disabled) {
+        resetDiyOfferButton();
+    }
 });
+
+
+function resetDiyOfferButton() {
+    if (diyOfferBusy) {
+        diyOfferBusy = false;
+        setLoadingState(diyOfferButton, false);
+    }
+}
 
 
 // Printen: style.css zorgt dat alleen het resultaat op papier komt (zie "Printen").
@@ -1223,6 +1244,7 @@ async function runPythonAlgorithm(url, fields, button) {
         showError(friendlyError(error));
     } finally {
         setLoadingState(button, false);
+        resetDiyOfferButton();
     }
 }
 
