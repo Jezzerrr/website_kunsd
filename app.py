@@ -27,6 +27,7 @@ from src.hatchwork import image_to_hatchwork
 from src.penpath import image_to_penpath
 from src.negative_circles import image_to_negative_circles
 from src.square_drift import image_to_square_drift
+from src.shadow_stripes import darkness_map, image_to_shadow_stripes
 
 app = Flask(__name__)
 
@@ -535,6 +536,32 @@ def square_drift():
         load_input_image(),
         strength=read_number("strength", 60, 20, 100) / 100
     ))
+
+
+@app.route("/api/shadow-stripes", methods=["POST"])
+@image_endpoint
+def shadow_stripes():
+    # Speeltuin: de foto als zwarte strepen onder één hoek. Dit is de download; de live voorvertoning
+    # rekent de browser zelf uit met /api/shadow-stripes-map (zie js/speeltuin.js).
+    return image_to_json(image_to_shadow_stripes(
+        load_input_image(),
+        angle=read_number("angle", 20, -90, 90)
+    ))
+
+
+@app.route("/api/shadow-stripes-map", methods=["POST"])
+@image_endpoint
+def shadow_stripes_map():
+    """Het kleine grijswaardenkaartje (500 pixels op de langste zijde) waarmee de browser de strepen
+    live uitrekent bij elke stand van de slider. Als ruwe bytes (0 = wit, 255 = zwart), in base64:
+    zo hoeft de browser geen plaatje te ontleden met een canvas (dat sommige browsers verstoren)."""
+    dark = darkness_map(load_input_image())
+
+    return jsonify({
+        "width": dark.width,
+        "height": dark.height,
+        "map": base64.b64encode(dark.tobytes()).decode("ascii")
+    })
 
 
 @app.route("/api/orient", methods=["POST"])

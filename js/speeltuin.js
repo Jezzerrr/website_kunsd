@@ -125,6 +125,10 @@ function showToolInput(tool, isNewPhoto) {
     if (tool.querySelector(".circles-preview")) {
         updateCirclesPreview(tool);
     }
+
+    if (tool.querySelector(".stripes-preview")) {
+        loadStripesMap(tool);
+    }
 }
 
 
@@ -511,9 +515,11 @@ function setUpTool(tool) {
         });
 
         // Bezig: de knop wordt grijs en zegt het zelf. Geen (rode) melding, want er is niets mis.
+        // Shadow Stripes heeft geen Maak-knop (de voorvertoning is live): daar zegt de download-knop het.
         button.disabled = true;
         button.textContent = "Even Bezig...";
         status.classList.add("hidden");
+        setDownloadBusy(download, true);
 
         try {
             const response = await fetch(tool.dataset.endpoint, { method: "POST", body: formData });
@@ -544,8 +550,22 @@ function setUpTool(tool) {
         } finally {
             button.disabled = false;
             button.textContent = buttonText;
+            setDownloadBusy(download, false);
         }
     }
+}
+
+
+// De download-knop grijs met "Even Bezig..." (alleen bij Shadow Stripes, data-live)
+function setDownloadBusy(download, busy) {
+    const tool = download.closest("section.playground");
+
+    if (!tool.dataset.live) {
+        return;
+    }
+
+    download.classList.toggle("is-busy", busy);
+    download.textContent = busy ? "Even Bezig..." : "Download Afbeelding";
 }
 
 
@@ -662,5 +682,223 @@ function updateCirclesPreview(tool) {
 
 // Een verschuiving van een hele cirkel is hetzelfde als geen verschuiving: houd hem tussen 0 en 1
 function wrap(value) {
+    return ((value % 1) + 1) % 1;
+}
+
+
+/* ---------- Shadow Stripes: live voorvertoning ---------- */
+
+// De server stuurt één keer een klein grijswaardenkaartje van de foto (/api/shadow-stripes-map, zie
+// data-live). Daarmee rekent de browser bij elke stand van de slider de strepen uit en tekent ze als
+// SVG (geen canvas, dat sommige browsers verstoren). De download maakt de server, met precies dezelfde
+// berekening in src/shadow_stripes.py: pas de getallen hieronder ALLEEN samen met die daar aan.
+const STRIPES = {
+    across: 240,        // STRIPES_ACROSS
+    light: 0.22,        // LIGHT
+    dark: 0.78,         // DARK
+    wave: 0.04,         // WAVE
+    waveLength: 0.25,   // WAVE_LENGTH
+    minLength: 2.5      // MIN_LENGTH
+};
+const GOLDEN = (Math.sqrt(5) - 1) / 2;
+
+document.querySelectorAll(".stripes-preview").forEach(function (frame) {
+    const tool = frame.closest("section.playground");
+    const slider = tool.querySelector(".art-slider");
+    let pending = false;
+
+    // Bij het slepen: hoogstens één keer per beeldverversing tekenen
+    slider.addEventListener("input", function () {
+        if (!tool.stripesMap) {
+            return;
+        }
+
+        tool.classList.remove("has-result");
+        tool.dirty = true;
+
+        if (!pending) {
+            pending = true;
+            requestAnimationFrame(function () {
+                pending = false;
+                drawStripes(tool);
+            });
+        }
+    });
+
+    // Na een download staat het (scherpere) resultaat er; klikken brengt de voorvertoning terug
+    tool.querySelector(".playground-output").addEventListener("pointerdown", function () {
+        if (tool.classList.contains("has-result") && tool.stripesMap) {
+            tool.classList.remove("has-result");
+            drawStripes(tool);
+        }
+    });
+});
+
+
+// Haalt het grijswaardenkaartje van de (bijgesneden) foto op en tekent de strepen
+async function loadStripesMap(tool) {
+    const frame = tool.querySelector(".stripes-preview");
+    const download = tool.querySelector(".playground-download");
+    const status = tool.querySelector(".status-message");
+    const crop = toolCrop(tool);
+    const request = {};
+    const formData = new FormData();
+
+    // Alleen het antwoord op de laatste vraag telt (bij snel na elkaar een andere uitsnede kiezen)
+    tool.stripesRequest = request;
+    tool.stripesMap = null;
+    frame.classList.add("is-loading");
+    frame.querySelector("path").setAttribute("d", "");
+    download.classList.remove("hidden");
+    setDownloadBusy(download, true);
+
+    formData.append("image", photoFile);
+
+    if (crop !== FULL_PHOTO) {
+        formData.append("crop_x", crop.x.toFixed(6));
+        formData.append("crop_y", crop.y.toFixed(6));
+        formData.append("crop_w", crop.w.toFixed(6));
+        formData.append("crop_h", crop.h.toFixed(6));
+    }
+
+    try {
+        const response = await fetch(tool.dataset.live, { method: "POST", body: formData });
+        let data = null;
+
+        try {
+            data = await response.json();
+        } catch (error) {
+            data = null;
+        }
+
+        if (tool.stripesRequest !== request) {
+            return;
+        }
+
+        if (!response.ok || !data || !data.map) {
+            throw new Error((data && data.error) || "Er ging iets mis. Probeer het nog eens.");
+        }
+
+        const bytes = atob(data.map);
+        const values = new Float32Array(bytes.length);
+
+        for (let i = 0; i < bytes.length; i++) {
+            values[i] = bytes.charCodeAt(i) / 255;
+        }
+
+        tool.stripesMap = { width: data.width, height: data.height, values: values };
+        frame.querySelector("svg").setAttribute("viewBox", `0 0 ${data.width} ${data.height}`);
+        frame.classList.remove("is-loading");
+        drawStripes(tool);
+        setDownloadBusy(download, false);
+    } catch (error) {
+        if (tool.stripesRequest !== request) {
+            return;
+        }
+
+        download.classList.add("hidden");
+        setDownloadBusy(download, false);
+        status.textContent = error.message;
+        status.classList.remove("hidden");
+    }
+}
+
+
+// Tekent de strepen bij de hoek van de slider: zelfde berekening als stripe_segments in src/shadow_stripes.py
+function drawStripes(tool) {
+    const map = tool.stripesMap;
+    const angle = Number(tool.querySelector(".art-slider").value);
+    const path = tool.querySelector(".stripes-preview path");
+    const width = map.width;
+    const height = map.height;
+    const longest = Math.max(width, height);
+    const spacing = longest / STRIPES.across;
+    const waveLength = longest * STRIPES.waveLength;
+    const minLength = STRIPES.minLength * spacing;
+
+    const theta = angle * Math.PI / 180;
+    const ux = Math.cos(theta);
+    const uy = -Math.sin(theta);
+    const nx = -uy;
+    const ny = ux;
+    const reach = Math.hypot(width, height) / 2;
+    const uMax = Math.ceil(reach);
+    const nHalf = Math.floor(reach / spacing) + 1;
+    const parts = [];
+
+    for (let i = -nHalf; i <= nHalf; i++) {
+        const ox = width / 2 + i * spacing * nx;
+        const oy = height / 2 + i * spacing * ny;
+        const base = STRIPES.light + (STRIPES.dark - STRIPES.light) * positiveFraction(i * GOLDEN);
+        const phase = positiveFraction(i * 0.7548776662) * 2 * Math.PI;
+
+        let previousExcess = 0;
+        let start = null;
+
+        // Langs de lijn: u is de afstand tot het midden van de lijn, in pixels van het kaartje
+        for (let u = -uMax; u <= uMax; u++) {
+            const x = ox + u * ux;
+            const y = oy + u * uy;
+            const inside = x >= 0 && x <= width - 1 && y >= 0 && y <= height - 1;
+            const threshold = base + STRIPES.wave * Math.sin(u * 2 * Math.PI / waveLength + phase);
+            const excess = (inside ? sampleMap(map, x, y) : 0) - threshold;
+
+            if (excess > 0 && start === null) {
+                // Begin precies waar de drempel gepasseerd wordt (behalve op het allereerste punt)
+                start = u > -uMax ? crossingU(u - 1, u, previousExcess, excess) : u;
+            } else if (excess <= 0 && start !== null) {
+                addStripe(parts, ox, oy, ux, uy, start, crossingU(u - 1, u, previousExcess, excess), minLength);
+                start = null;
+            }
+
+            previousExcess = excess;
+        }
+
+        // Een streep die tot het eind van de lijn doorloopt
+        if (start !== null) {
+            addStripe(parts, ox, oy, ux, uy, start, uMax, minLength);
+        }
+    }
+
+    path.setAttribute("d", parts.join(""));
+    path.setAttribute("stroke-width", (spacing * 1.05).toFixed(3));
+}
+
+
+function addStripe(parts, ox, oy, ux, uy, start, end, minLength) {
+    if (end - start >= minLength) {
+        parts.push(
+            "M" + (ox + start * ux).toFixed(1) + " " + (oy + start * uy).toFixed(1) +
+            "L" + (ox + end * ux).toFixed(1) + " " + (oy + end * uy).toFixed(1)
+        );
+    }
+}
+
+
+// Waar tussen u1 en u2 de drempel precies gepasseerd wordt (excess wisselt van teken)
+function crossingU(u1, u2, excess1, excess2) {
+    return u1 + (u2 - u1) * excess1 / (excess1 - excess2);
+}
+
+
+// Bilineair bemonsteren van het kaartje (x, y binnen het kaartje)
+function sampleMap(map, x, y) {
+    const width = map.width;
+    const values = map.values;
+    const x0 = Math.min(Math.floor(x), width - 2);
+    const y0 = Math.min(Math.floor(y), map.height - 2);
+    const fx = x - x0;
+    const fy = y - y0;
+    const i = y0 * width + x0;
+
+    const top = values[i] * (1 - fx) + values[i + 1] * fx;
+    const bottom = values[i + width] * (1 - fx) + values[i + width + 1] * fx;
+
+    return top * (1 - fy) + bottom * fy;
+}
+
+
+// Het deel achter de komma, ook voor negatieve getallen (zoals % 1 in Python)
+function positiveFraction(value) {
     return ((value % 1) + 1) % 1;
 }

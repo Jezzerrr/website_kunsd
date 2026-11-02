@@ -192,6 +192,75 @@
             </div>
         </section>
 
+        <!-- Shadow Stripes: geen Maak-knop. De strepen bewegen live mee met de slider (de browser rekent
+             ze uit met een klein grijswaardenkaartje van de server, data-live); de download maakt de server. -->
+        <section class="home-section workspace playground locked"
+                 data-endpoint="/api/shadow-stripes"
+                 data-live="/api/shadow-stripes-map"
+                 data-param="angle"
+                 data-name="Shadow Stripes"
+                 data-file="kunsd-shadow-stripes.png">
+            <h2 class="step-title" data-step="2">Shadow Stripes</h2>
+
+            <p class="section-intro">
+                Je foto als zwarte strepen, allemaal in dezelfde richting. Waar je foto donker is, liggen de
+                strepen tegen elkaar aan; waar hij licht is, blijft het wit. Draai aan de hoek en kijk hoe
+                je foto meebeweegt.
+            </p>
+
+            <div class="playground-grid">
+                <div class="playground-controls">
+                    <div class="slider-header">
+                        <label for="stripes-slider">Hoek</label>
+                        <output for="stripes-slider">20°</output>
+                    </div>
+
+                    <input type="range" id="stripes-slider" class="art-slider"
+                           min="-90" max="90" step="1" value="20" data-unit="°" disabled>
+
+                    <div class="slider-scale">
+                        <span>Schuin Omlaag</span>
+                        <span>Schuin Omhoog</span>
+                    </div>
+
+                    <div class="button-row">
+                        <!-- Verborgen: de voorvertoning is live. "Download Afbeelding" gebruikt deze knop wel. -->
+                        <button type="button" class="create-button hidden" disabled>
+                            Maak Shadow Stripes
+                        </button>
+
+                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-shadow-stripes">
+                            Download Afbeelding
+                        </a>
+                    </div>
+
+                    <p class="status-message hidden"></p>
+                </div>
+
+                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: de live strepen (SVG),
+                     en na een download het scherpere resultaat van de server. -->
+                <figure class="playground-result">
+                    <img
+                        class="playground-output"
+                        src="mijn_kunsd/voorbeelden/shadow-stripes.jpg"
+                        alt="Voorbeeld van Shadow Stripes: portret van schuine zwarte strepen"
+                        width="800"
+                        height="800">
+
+                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
+
+                    <div class="photo-frame playground-input stripes-preview hidden">
+                        <img alt="" class="stripes-photo">
+
+                        <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" role="img"
+                             aria-label="Jouw foto als Shadow Stripes">
+                            <path d="" stroke="#111" fill="none"></path>
+                        </svg>
+                    </div>
+                </figure>
+            </div>
+        </section>
+
         <section class="home-section workspace playground locked"
                  data-endpoint="/api/square-drift"
                  data-param="strength"

@@ -2015,6 +2015,33 @@ body.lightbox-open {
     mask-repeat: repeat;
 }
 
+/* Shadow Stripes: live voorvertoning. De strepen zijn een SVG over het hele kader; zolang het
+   grijswaardenkaartje nog onderweg is, zie je je foto vaag in zwart-wit. */
+.stripes-preview svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.stripes-preview .stripes-photo {
+    visibility: hidden;
+    filter: grayscale(1);
+    opacity: 0.3;
+}
+
+.stripes-preview.is-loading .stripes-photo {
+    visibility: visible;
+}
+
+/* De download-knop terwijl er iets gemaakt wordt (alleen bij Shadow Stripes) */
+.playground-download.is-busy {
+    pointer-events: none;
+    color: white;
+    background: #b5b5b5;
+    border-color: #b5b5b5;
+}
+
 .drag-hint {
     margin: 20px 0 0;
     color: var(--muted);
