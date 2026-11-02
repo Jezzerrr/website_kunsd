@@ -26,6 +26,10 @@ const penpathButton = document.getElementById("penpath-button");
 const hatchworkColumnsSlider = document.getElementById("hatchwork-columns-slider");
 const hatchworkFill = document.getElementById("hatchwork-fill");
 const hatchworkButton = document.getElementById("hatchwork-button");
+const penUpLinesSlider = document.getElementById("pen-up-lines-slider");
+const penUpContrastSlider = document.getElementById("pen-up-contrast-slider");
+const penUpFill = document.getElementById("pen-up-fill");
+const penUpButton = document.getElementById("pen-up-button");
 const statusMessage = document.getElementById("status-message");
 const resultContainer = document.getElementById("result-container");
 const resultImage = document.getElementById("result-image");
@@ -83,7 +87,8 @@ const FILE_NAMES = {
     "chordinates-settings": "chordinates",
     "dots-settings": "coloring-dots",
     "penpath-settings": "penpath",
-    "hatchwork-settings": "hatchwork"
+    "hatchwork-settings": "hatchwork",
+    "pen-up-settings": "pen-up"
 };
 
 // Kleinste toegestane uitsnede, als fractie van de afbeelding (0.08 = 8%).
@@ -102,7 +107,7 @@ const EXTRA_COLORS = ["#2a9d8f", "#f4a261", "#8ecae6", "#9b5de5", "#e76f51", "#6
 // Bevat het laatste resultaat, of null als er (nog) niets te downloaden is.
 let resultSource = null;
 
-// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates, Penpath en Hatchwork): alle bladen, alle
+// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates, Penpath, Hatchwork en Pen Up): alle bladen, alle
 // bladen naast elkaar in één afbeelding (voor "Download Afbeelding"), en samen als pdf. Anders null.
 let resultPages = null;
 let resultCombined = null;
@@ -823,6 +828,22 @@ hatchworkButton.addEventListener("click", async function () {
             fill: !hatchworkFill.checked
         },
         hatchworkButton
+    );
+});
+
+
+penUpButton.addEventListener("click", async function () {
+    track("maak-pen-up");
+    rememberAlgorithm(penUpFill, penUpButton);
+
+    await runPythonAlgorithm(
+        "/api/pen-up",
+        {
+            lines: penUpLinesSlider.value,
+            contrast: penUpContrastSlider.value,
+            fill: !penUpFill.checked
+        },
+        penUpButton
     );
 });
 

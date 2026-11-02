@@ -112,13 +112,13 @@
             </ol>
         </section>
 
-        <!-- De puzzels: één foto, vijf tekenpuzzels, en onderaan een verwijzing naar de Speeltuin. Bij de tekenpuzzels kun je wisselen tussen
+        <!-- De puzzels: één foto, zes tekenpuzzels, en onderaan een verwijzing naar de Speeltuin. Bij de tekenpuzzels kun je wisselen tussen
              hoe het wordt als het af is en het tekenvel om te printen. -->
         <section id="voorbeelden" class="home-section">
             <h2>Kies Je Puzzel</h2>
 
             <p class="section-intro">
-                Vijf tekenpuzzels, van rustig inkleuren tot honderden lijnen trekken. Alle voorbeelden zijn
+                Zes tekenpuzzels, van rustig inkleuren tot honderden lijnen trekken. Alle voorbeelden zijn
                 gemaakt van hetzelfde portret van mij. Bij elke tekenpuzzel zie je wat je
                 nodig hebt, hoe lang je ongeveer bezig bent en hoe pittig het is.
             </p>
@@ -191,6 +191,39 @@
                     </dl>
 
                     <button type="button" class="secondary-button try-button" data-algorithm="hatchwork-settings" data-name="Hatchwork" data-track="probeer-hatchwork">Probeer Deze</button>
+                </article>
+
+                <article class="example-card">
+                    <div class="example-image">
+                        <img
+                            src="mijn_kunsd/voorbeelden/pen-up.jpg"
+                            data-filled="mijn_kunsd/voorbeelden/pen-up.jpg"
+                            data-empty="mijn_kunsd/voorbeelden/pen-up-leeg.png"
+                            alt="Pen Up: portret van evenwijdige schuine lijnstukjes"
+                            width="640"
+                            height="840"
+                            loading="lazy">
+                    </div>
+
+                    <div class="view-toggle" role="group" aria-label="Voorbeeld van Pen Up">
+                        <button type="button" class="active" data-view="filled" data-track="voorbeeld-pen-up-af">Zo Wordt Het</button>
+                        <button type="button" data-view="empty" data-track="voorbeeld-pen-up-om-te-printen">Tekenvel</button>
+                    </div>
+
+                    <h3>Pen Up <span class="tag tag-new">Nieuw</span> <span class="tag tag-diy">Tekenpuzzel</span></h3>
+                    <p>
+                        Een blad vol puntjes op schuine lijnen, en een lijst getallen: "lijn 62, van 1 tot 14 en
+                        van 31 tot 37". Pen erop, lijn trekken, pen eraf. Op het tekenvel zie je nog niets; pas als
+                        je tekent, komt je portret tevoorschijn.
+                    </p>
+
+                    <dl class="puzzle-specs">
+                        <div><dt>Nodig</dt><dd>Liniaal, fineliner (0,4 mm)</dd></div>
+                        <div><dt>Tijd</dt><dd>1 tot 2 uur</dd></div>
+                        <div><dt>Niveau</dt><dd><span class="level" style="--level: 2" aria-label="2 van 5"></span></dd></div>
+                    </dl>
+
+                    <button type="button" class="secondary-button try-button" data-algorithm="pen-up-settings" data-name="Pen Up" data-track="probeer-pen-up">Probeer Deze</button>
                 </article>
 
                 <article class="example-card">
@@ -561,6 +594,14 @@
                         <button
                             type="button"
                             class="algorithm-button"
+                            data-settings="pen-up-settings">
+                            <img src="mijn_kunsd/voorbeelden/knoppen/pen-up.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                            Pen Up
+                        </button>
+
+                        <button
+                            type="button"
+                            class="algorithm-button"
                             data-settings="chordinates-settings">
                             <img src="mijn_kunsd/voorbeelden/knoppen/chordinates.jpg" alt="" class="algorithm-thumb" width="40" height="40">
                             Chordinates
@@ -727,6 +768,106 @@
                             id="hatchwork-button"
                             class="create-button">
                             Maak Hatchwork
+                        </button>
+                    </div>
+
+                </div>
+
+                <div
+                    id="pen-up-settings"
+                    class="algorithm-settings hidden">
+
+                    <h3>Pen Up</h3>
+
+                    <p class="palette-hint">
+                        Werkt het best met <strong>één duidelijk portret</strong> voor een lichte achtergrond.
+                        Je hele foto (of uitsnede) komt zo groot als past op A4: liggend bij een liggende foto.
+                    </p>
+
+                    <div class="slider-header">
+                        <label for="pen-up-lines-slider">
+                            Lijnen per 10 cm
+                        </label>
+
+                        <output
+                            id="pen-up-lines-value"
+                            for="pen-up-lines-slider">
+                            40
+                        </output>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="pen-up-lines-slider"
+                        class="art-slider"
+                        min="25"
+                        max="50"
+                        step="5"
+                        value="40"
+                    >
+
+                    <div class="slider-scale">
+                        <span>Grof en snel</span>
+                        <span>Fijn en precies</span>
+                    </div>
+
+                    <div class="slider-header">
+                        <label for="pen-up-contrast-slider">
+                            Contrast
+                        </label>
+
+                        <output
+                            id="pen-up-contrast-value"
+                            for="pen-up-contrast-slider">
+                            50%
+                        </output>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="pen-up-contrast-slider"
+                        class="art-slider"
+                        min="0"
+                        max="100"
+                        step="10"
+                        value="50"
+                    >
+
+                    <div class="slider-scale">
+                        <span>Grote vlakken</span>
+                        <span>Randen en details</span>
+                    </div>
+
+                    <label
+                        class="switch-row switch-row-diy"
+                        for="pen-up-fill">
+
+                        <span>
+                            <strong>Tekenvel</strong>
+
+                            <small>
+                                Zet aan voor twee bladen: de puntjes op schuine lijnen om op te tekenen, en per lijn
+                                de stukjes die je tekent, met je foto en het "antwoord" klein erbij.
+                            </small>
+                        </span>
+
+                        <span class="switch">
+                            <input
+                                type="checkbox"
+                                id="pen-up-fill"
+                                data-offer="Mooi geworden? Maak dan het tekenvel: puntjes op schuine lijnen en per lijn de stukjes die je tekent. Precies dezelfde lijntjes als hierboven.">
+
+                            <span class="switch-slider"></span>
+                        </span>
+
+                    </label>
+
+                    <div class="button-row">
+                        <button
+                            type="button"
+                            id="pen-up-button"
+                            class="create-button">
+                            Maak Pen Up
                         </button>
                     </div>
 
@@ -1184,7 +1325,7 @@
                 </li>
                 <li>
                     <strong>Goed Gereedschap</strong>
-                    Voor Penpath, Hatchwork en Chordinates: een doorzichtige liniaal en een fineliner van
+                    Voor Penpath, Hatchwork, Pen Up en Chordinates: een doorzichtige liniaal en een fineliner van
                     0,3 mm. Een te dikke stift maakt alles snel zwart. Voor Coloring Dots juist een stift met een ronde punt.
                 </li>
                 <li>

@@ -25,6 +25,7 @@ from src.shape_numbers import (
 from src.chordinates import image_to_chordinates
 from src.hatchwork import image_to_hatchwork
 from src.penpath import image_to_penpath
+from src.pen_up import image_to_pen_up
 from src.negative_circles import image_to_negative_circles
 from src.square_drift import image_to_square_drift
 from src.shadow_stripes import darkness_map, image_to_shadow_stripes
@@ -493,6 +494,21 @@ def penpath():
     result = image_to_penpath(
         load_input_image(),
         n_lines=int(read_number("n_lines", 800, 400, 1000)),
+        template=template
+    )
+
+    return pages_to_json(result) if template else image_to_json(result)
+
+
+@app.route("/api/pen-up", methods=["POST"])
+@image_endpoint
+def pen_up():
+    # Zonder "fill" krijg je het tekenvel: twee A4-bladen (de puntjes op schuine lijnen, en per lijn de stukjes)
+    template = not read_flag("fill", default=True)
+    result = image_to_pen_up(
+        load_input_image(),
+        lines_per_10cm=int(read_number("lines", 40, 25, 50)),
+        contrast=read_number("contrast", 50, 0, 100),
         template=template
     )
 

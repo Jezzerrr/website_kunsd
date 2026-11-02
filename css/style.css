@@ -114,7 +114,7 @@ main {
 /* Homepage: de vijf tekenpuzzels als kleine plaatjes naast elkaar */
 .style-strip {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 16px;
     margin-top: 20px;
 }
@@ -2110,7 +2110,7 @@ body.lightbox-open {
         grid-template-columns: 1fr;
     }
 
-    /* Vijf tekenpuzzels: drie naast elkaar op een telefoon */
+    /* Zes tekenpuzzels: drie naast elkaar op een telefoon (twee rijen) */
     .style-strip {
         grid-template-columns: repeat(3, 1fr);
         gap: 12px;
