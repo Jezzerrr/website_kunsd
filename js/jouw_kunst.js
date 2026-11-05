@@ -926,9 +926,27 @@ const PAGE_TITLE = document.title;
 // en in het midden gezet, zonder vervormen. Zo past het altijd op één pagina.
 // Een tekenvel (meerdere bladen) heeft zijn eigen witte rand al: dat krijgt geen extra marge,
 // zodat het precies even groot op papier komt als in de pdf van "Download Pdf".
+//
+// Telefoons en tablets negeren de papierrichting uit de CSS: daar kiest het printvenster van
+// Android/iOS het papier, en dat staat standaard op staand. Een liggend plaatje werd dan
+// liggend opgemaakt en verkleind op een staand vel gezet (half leeg). Daarom zetten we het
+// daar zelf een kwartslag gedraaid op een staand vel: op papier is dat precies een liggende afdruk.
 const PRINT_MARGIN_MM = 7;
+const PRINT_ROTATE_LANDSCAPE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.userAgentData && navigator.userAgentData.mobile) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);   // iPad als "Mac"
 const printPageStyle = document.createElement("style");
 document.head.appendChild(printPageStyle);
+
+// Een kwartslag gedraaid, passend op de pagina (vw/vh zijn bij printen de bedrukbare breedte/hoogte,
+// dus dit past op A4 én Letter). Het vak is eerst pagina-hoog x pagina-breed; de negatieve marges
+// laten het in de opmaak precies pagina-breed x pagina-hoog innemen, en de draaiing zet het daarin.
+const PRINT_ROTATED_CSS =
+    " @media print { body.jouw-kunst-page.has-result .result-image.print-gedraaid {" +
+    " width: calc(100vh - 1mm) !important; height: 100vw !important;" +
+    " max-width: none !important; max-height: none !important;" +
+    " margin: 0 calc(100vw - 100vh + 1mm) calc(100vh - 1mm - 100vw) 0 !important;" +
+    " transform-origin: top left; transform: translateY(calc(100vh - 1mm)) rotate(-90deg); } }";
 
 window.addEventListener("beforeprint", function () {
     if (resultSource) {
@@ -937,6 +955,20 @@ window.addEventListener("beforeprint", function () {
 
     const isLandscape = resultImage.naturalWidth > resultImage.naturalHeight;
     const margin = resultPages ? 0 : PRINT_MARGIN_MM;
+
+    resultContainer.querySelectorAll(".result-image").forEach(function (page) {
+        page.classList.toggle("print-gedraaid",
+            PRINT_ROTATE_LANDSCAPE && page.naturalWidth > page.naturalHeight);
+    });
+
+    if (PRINT_ROTATE_LANDSCAPE) {
+        // Alles staand; liggende plaatjes/bladen gedraaid
+        printPageStyle.textContent =
+            `@page { size: A4 portrait; margin: ${margin}mm; } ` +
+            `@media print { body.jouw-kunst-page.has-result .result-image { height: calc(100vh - 1mm) !important; max-height: none !important; } }` +
+            PRINT_ROTATED_CSS;
+        return;
+    }
 
     // A4 is 210 x 297 mm; min de marge aan twee kanten, en wat speling tegen een lege extra pagina
     const pageHeight = isLandscape ? 210 : 297;
