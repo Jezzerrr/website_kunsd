@@ -4,7 +4,9 @@ Het idee: schuine hulplijnen over het hele plaatje. Op elke hulplijn teken je al
 de foto donker is: pen erop, lijn trekken, pen eraf ("pen up"). Zo ontstaat het portret.
 
 Het tekenvel verraadt niets: op blad 1 staat alleen een gelijkmatig raster van puntjes op heel lichte
-hulplijnen, met een nummer bij het begin van elke lijn. Op blad 2 staat per lijn welke stukjes je tekent,
+hulplijnen, met een nummer bij het begin van elke lijn. Het nummeren begint rechtsonder: zo krijgen de
+nummers onder het plaatje maar twee cijfers en passen ze op één rij. Elke lijn loopt met een dun lijntje
+door tot aan zijn eigen nummer, zodat je niet hoeft te raden welk nummer bij welke lijn hoort. Op blad 2 staat per lijn welke stukjes je tekent,
 bijvoorbeeld "62   1-14   31-37": op lijn 62 teken je van punt 1 tot punt 14 en van punt 31 tot punt 37.
 Je telt steeds vanaf het begin van de lijn, dus een telfout werkt niet door. Pas tijdens het tekenen zie
 je wat het wordt.
@@ -45,6 +47,13 @@ INK = 0.30
 
 # Een stukje bestaat uit minstens zoveel punten (2 = een lijntje van één puntafstand)
 MIN_RUN = 2
+
+# Lijnnummers: lettergrootte, en hoe ver onder of naast het kader het nummer staat (in mm). Het
+# verbindingslijntje (de lijn, doorgetrokken tot zijn nummer) is iets donkerder dan de hulplijnen.
+LABEL_FONT_MM = 2.0
+LABEL_DROP_MM = 2.4
+LABEL_PAD_MM = 0.35
+LEADER_GRAY = 185
 
 # Het tekenvel: witte rand, ruimte voor de lijnnummers en de titel (in mm)
 PAGE_MARGIN_MM = 8
@@ -120,8 +129,9 @@ def _layout(image_size):
 
 
 def find_lines(img, frame, spacing, angle, contrast):
-    """De hulplijnen. Elke lijn: dict met "points" (N x 2, pixels op het A4), "offset" (afstand van het
-    midden, loodrecht op de lijnen), "start" (waar punt 1 ligt: ("left", y) of ("bottom", x)) en
+    """De hulplijnen, van linksboven naar rechtsonder. Elke lijn: dict met "points" (N x 2, pixels op het
+    A4), "offset" (afstand van het midden, loodrecht op de lijnen), "start" (waar de lijn het kader
+    binnenkomt: ("left", y) of ("bottom", x)), "number" (lijnnummer: 1 is de lijn rechtsonder) en
     "runs" (lijst van (van, tot), puntnummers vanaf 1)."""
     left, top, width, height = frame
     darkness = _darkness(img, width, height, spacing, contrast)
@@ -151,8 +161,10 @@ def find_lines(img, frame, spacing, angle, contrast):
 
     threshold = np.quantile(np.concatenate([line["dark"] for line in lines]), 1 - INK)
 
-    for line in lines:
+    for index, line in enumerate(lines):
         line["runs"] = _runs(line.pop("dark") >= threshold)
+        # Nummeren vanaf rechtsonder: de nummers onder het plaatje blijven dan klein (twee cijfers)
+        line["number"] = len(lines) - index
 
     return lines
 
@@ -389,37 +401,78 @@ def _draw_grid_page(lines, frame, paper, spacing, angle):
     image = _guide_layer(paper, lines, angle, spacing, width_px=GUIDE_WIDTH_MM * MM)
     _draw_marks(image, lines, angle)
     image = image.convert("RGB")
+
+    _draw_labels(image, lines, frame, angle)
     draw = ImageDraw.Draw(image)
-
-    # Lijnnummers: links in één kolom (rechts uitgelijnd), onder op één rij. Liggen de nummers onder
-    # het kader te dicht op elkaar (steile lijnen), dan om en om op twee rijen.
-    label_font = get_font(round(1.75 * MM))
-    gap = 1.6 * MM
-    bottom = [(number, position) for number, line in enumerate(lines, 1)
-              for side, position in [line["start"]] if side == "bottom"]
-    widest = max((label_font.getlength(str(number)) for number, _ in bottom), default=0)
-    distance = min((b[1] - a[1] for a, b in zip(bottom, bottom[1:])), default=widest * 2)
-    two_rows = distance < widest + 0.6 * MM
-    row_height = 2.3 * MM
-
-    for number, line in enumerate(lines, 1):
-        side, position = line["start"]
-
-        if side == "left":
-            draw.text((left - gap, position), str(number), fill=LINE_COLOR, font=label_font, anchor="rm")
-
-    for index, (number, position) in enumerate(bottom):
-        y = top + frame_height + gap + (row_height if two_rows and index % 2 else 0)
-        draw.text((position, y), str(number), fill=LINE_COLOR, font=label_font, anchor="mt")
 
     small = get_font(round(2.6 * MM))
     margin = PAGE_MARGIN_MM * MM
     draw.text((margin, margin), f"{TOOL_NAME} · blad 1: hierop teken je", fill=NUMBER_COLOR, font=small,
               anchor="lt")
-    draw.text((width - margin, height - margin), "Wat je tekent staat op blad 2. Punt 1 ligt bij het nummer.",
+    draw.text((width - margin, height - margin),
+              "Wat je tekent staat op blad 2. Volg het dunne lijntje van het nummer naar punt 1.",
               fill=NUMBER_COLOR, font=small, anchor="rb")
 
     return image
+
+
+def _draw_labels(image, lines, frame, angle):
+    """De lijnnummers: onder het kader op één rij, links in één kolom (rechts uitgelijnd).
+
+    Elke lijn loopt met een dun lijntje schuin door tot net bij zijn eigen nummer. Zo is meteen duidelijk
+    welk nummer bij welke lijn hoort. Liggen de nummers onder het kader toch te dicht op elkaar, dan om
+    en om op twee rijen (met langere lijntjes naar de onderste rij).
+    """
+    left, top, frame_width, frame_height = frame
+    draw = ImageDraw.Draw(image)
+    font = get_font(round(LABEL_FONT_MM * MM))
+    direction, _ = _directions(angle)
+    back = -direction                           # van punt 1 terug, naar linksonder
+    drop = LABEL_DROP_MM * MM
+    pad = LABEL_PAD_MM * MM
+
+    bottom = sorted((line["start"][1], line) for line in lines if line["start"][0] == "bottom")
+    widest = max((font.getlength(str(line["number"])) for _, line in bottom), default=0)
+    distance = min((b[0] - a[0] for a, b in zip(bottom, bottom[1:])), default=widest * 2)
+    two_rows = distance < widest + 0.6 * MM
+    row_height = (LABEL_FONT_MM + 0.6) * MM
+    leaders = []
+
+    for index, (_, line) in enumerate(bottom):
+        first = line["points"][0]
+        down = top + frame_height + drop + (row_height if two_rows and index % 2 else 0) - first[1]
+        end = first + back * (down / back[1])
+        leaders.append((first, end))
+        draw.text((end[0], end[1] + pad), str(line["number"]), fill=LINE_COLOR, font=font, anchor="mt")
+
+    for line in lines:
+        if line["start"][0] == "left":
+            first = line["points"][0]
+            end = first + back * ((first[0] - (left - drop)) / -back[0])
+            leaders.append((first, end))
+            draw.text((end[0] - pad, end[1]), str(line["number"]), fill=LINE_COLOR, font=font, anchor="rm")
+
+    _draw_leaders(image, leaders, GUIDE_WIDTH_MM * MM)
+
+
+def _draw_leaders(image, segments, width_px, detail=4):
+    """Dunne rechte lijntjes met zachte randjes: getekend op detail x zo groot en verkleind, alleen in het
+    stukje van het blad waar ze liggen (zo blijft het licht voor het geheugen)."""
+    if not segments:
+        return
+
+    corners = np.array([point for segment in segments for point in segment])
+    x0, y0 = np.floor(corners.min(axis=0)).astype(int) - 2
+    x1, y1 = np.ceil(corners.max(axis=0)).astype(int) + 2
+    mask = Image.new("L", ((x1 - x0) * detail, (y1 - y0) * detail), 0)
+    draw = ImageDraw.Draw(mask)
+
+    for start, end in segments:
+        draw.line(((start[0] - x0) * detail, (start[1] - y0) * detail, (end[0] - x0) * detail,
+                   (end[1] - y0) * detail), fill=255, width=max(1, round(width_px * detail)))
+
+    mask = mask.resize((x1 - x0, y1 - y0), Image.BOX)
+    image.paste((LEADER_GRAY,) * 3, (int(x0), int(y0)), mask)
 
 
 def _draw_code_page(lines, photo, frame, angle):
@@ -431,7 +484,7 @@ def _draw_code_page(lines, photo, frame, angle):
     list_top = margin + round(width * 0.105)
     list_height = height - margin - bottom_block - list_top
 
-    entries = [(number, line["runs"]) for number, line in enumerate(lines, 1) if line["runs"]]
+    entries = sorted((line["number"], line["runs"]) for line in lines if line["runs"])
     list_columns = 4
     column_gap = round(width * 0.025)
     column_width = (width - 2 * margin - (list_columns - 1) * column_gap) / list_columns
@@ -453,7 +506,7 @@ def _draw_code_page(lines, photo, frame, angle):
               fill=INK_COLOR, font=get_font(round(width * 0.02)), anchor="lt")
     explanation = [
         "Per lijn: zet je pen op het eerste punt en trek met je liniaal een lijn tot het tweede punt.",
-        "Tel steeds vanaf punt 1, bij het nummer. Elk 5e punt heeft een streepje, elk 10e punt is groter.",
+        "Tel steeds vanaf punt 1, waar het lijntje van het nummer begint. Elk 5e punt heeft een streepje, elk 10e is groter.",
     ]
 
     for row, text in enumerate(explanation):

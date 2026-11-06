@@ -15,6 +15,7 @@ from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.helper_functions.color_helpers import get_palette
+from src.helper_functions.pdf_pages import pages_to_pdf
 from src.shape_division import image_to_shapes
 from src.shape_numbers import (
     image_to_numbered_shapes,
@@ -832,7 +833,7 @@ def photo_to_json(image):
 
 def pages_to_json(pages):
     """Een resultaat van meerdere bladen: elk blad als PNG (om te tonen en te printen), alle bladen
-    naast elkaar in één PNG (om als afbeelding te downloaden) en samen als pdf.
+    naast elkaar in één PNG (om als afbeelding te downloaden) en samen als pdf (verliesvrij, zie pdf_pages).
     In de pdf wordt een te lang blad verkleind tot het op A4 past."""
     page_width = pages[0].width
     a4 = (page_width, round(page_width * 297 / 210))
@@ -847,8 +848,8 @@ def pages_to_json(pages):
 
         pdf_pages.append(page.convert("RGB"))
 
-    pdf = io.BytesIO()
-    pdf_pages[0].save(pdf, format="PDF", save_all=True, append_images=pdf_pages[1:], resolution=300)
+    # Niet via Pillow: die zet de bladen als JPEG in de pdf, met wolkjes rond lijntjes en letters
+    pdf = pages_to_pdf(pdf_pages, dpi=300)
 
     images = [image_to_data_url(page) for page in pages]
 
@@ -869,7 +870,7 @@ def pages_to_json(pages):
         "image": images[0],
         "pages": images,
         "combined": image_to_data_url(combined),
-        "pdf": "data:application/pdf;base64," + base64.b64encode(pdf.getvalue()).decode("ascii"),
+        "pdf": "data:application/pdf;base64," + base64.b64encode(pdf).decode("ascii"),
     })
 
 
