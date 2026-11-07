@@ -35,7 +35,7 @@
     <meta name="twitter:card" content="summary_large_image">
 </head>
 
-<body>
+<body class="mijn-kunst-page">
 
     <header>
         <nav>
@@ -43,18 +43,20 @@
             <a href="/jouw_kunst">Jouw Kunsd</a>
             <a href="/mijn_kunst" aria-current="page">Mijn Kunsd</a>
             <a href="/contact">Contact</a>
+            <!-- Op brede schermen: altijd een knop naar het maken van je tekenpuzzel (op mobiel verborgen) -->
+            <a href="/jouw_kunst#aan-de-slag" class="nav-cta" data-track="menu-maak-tekenpuzzel">Maak Je Tekenpuzzel</a>
         </nav>
     </header>
 
     <main>
         <h1>Mijn Kunsd</h1>
 
-        <!-- Hoe het begon -->
-        <section class="featured-art">
+        <!-- Hoe het begon (op een groot scherm: foto links, verhaal rechts) -->
+        <section class="featured-art intro-foto">
             <img src="mijn_kunsd/square_moves/JesseMetzFotoPS.jpeg" alt="Portret van Jesse waarin blokjes een stukje zijn verschoven">
         </section>
 
-        <section class="story">
+        <section class="story intro-tekst">
             <p>
                 Overdag ben ik data scientist: ik laat computers patronen vinden in cijfers. Op een avond
                 vroeg ik me af wat er gebeurt als je dat loslaat op een foto in plaats van op een spreadsheet.
@@ -93,7 +95,7 @@
         </section>
 
         <!-- Mijn bijdrage aan De Portrettenparade in het Frans Hals Museum -->
-        <section class="home-section story">
+        <section class="home-section story parade-tekst">
             <h2>De Portrettenparade</h2>
 
             <p><strong>Frans Hals Museum, Haarlem, zomer 2025</strong></p>
@@ -115,15 +117,16 @@
             </p>
         </section>
 
-        <section class="featured-art">
-            <img src="mijn_kunsd/project_segments/frans_hals_fotos/franshals2.jpeg" alt="Mijn werk voor De Portrettenparade, ingelijst" width="2048" height="1153" loading="lazy">
-        </section>
+        <!-- De twee museumfoto's onder elkaar (op een groot scherm naast het verhaal) -->
+        <div class="parade-fotos">
+            <section class="featured-art">
+                <img src="mijn_kunsd/project_segments/frans_hals_fotos/franshals2.jpeg" alt="Mijn werk voor De Portrettenparade, ingelijst" width="2048" height="1153" loading="lazy">
+            </section>
 
-        <br>
-
-        <section class="featured-art">
-            <img src="mijn_kunsd/project_segments/frans_hals_fotos/franshals4.jpeg" alt="Mijn werk voor De Portrettenparade, ingelijst" width="1600" height="901" loading="lazy">
-        </section>
+            <section class="featured-art">
+                <img src="mijn_kunsd/project_segments/frans_hals_fotos/franshals4.jpeg" alt="Mijn werk voor De Portrettenparade, ingelijst" width="1600" height="901" loading="lazy">
+            </section>
+        </div>
 
     </main>
 
