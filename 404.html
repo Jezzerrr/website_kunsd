@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pagina Niet Gevonden · KUNSD</title>
+
+    <!-- Deze pagina verschijnt op elk onbekend adres (ook /iets/anders), dus alle links beginnen met / -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preload" href="/css/fonts/syne-latin.woff2" as="font" type="font/woff2" crossorigin>
+
+    <!-- Favicon (icoontje in het browsertabblad) -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/mijn_kunsd/delen/favicon/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="/mijn_kunsd/delen/favicon/apple-touch-icon.png">
+
+    <!-- Niet in Google -->
+    <meta name="robots" content="noindex">
+</head>
+
+<body>
+
+<header>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/jouw_kunst">Jouw Kunsd</a>
+        <a href="/mijn_kunst">Mijn Kunsd</a>
+        <a href="/contact">Contact</a>
+        <!-- Op brede schermen: altijd een knop naar het maken van je tekenpuzzel (op mobiel verborgen) -->
+        <a href="/jouw_kunst#aan-de-slag" class="nav-cta" data-track="menu-maak-tekenpuzzel">Maak Je Tekenpuzzel</a>
+    </nav>
+</header>
+
+<main class="niet-gevonden">
+
+    <p class="niet-gevonden-code">404</p>
+
+    <h1>Deze Pagina Bestaat Niet</h1>
+
+    <p class="hero-text">
+        Misschien is de link verouderd of zit er een typfout in het adres. Geen probleem:
+        hieronder vind je de weg terug.
+    </p>
+
+    <div class="hero-buttons">
+        <a href="/jouw_kunst" class="create-button link-button" data-track="404-maak-tekenpuzzel">Maak Je Tekenpuzzel</a>
+        <a href="/" class="secondary-button link-button" data-track="404-naar-home">Naar De Homepage</a>
+    </div>
+
+</main>
+
+<footer class="site-footer">
+    <p class="footer-links"><a href="/privacy" data-track="footer-privacy">Privacy</a></p>
+    <p class="footer-credit">&copy; 2026 Jesse Metz &middot; KUNSD</p>
+</footer>
+
+<script src="/js/analytics.js"></script>
+<script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+
+</body>
+</html>

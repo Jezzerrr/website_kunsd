@@ -186,9 +186,9 @@ def serve_file(filename):
     if parts and parts[0] in STATIC_FOLDERS:
         abort(404)
 
-    # Al het andere (bijv. een verkeerd getypt adres): naar de homepagina. Code 302 betekent
-    # "tijdelijk": zoekmachines onthouden die doorverwijzing niet als het echte adres.
-    return redirect("/", code=302)
+    # Al het andere (bijv. een verkeerd getypt adres of een oude link): een nette "bestaat niet"-pagina
+    # met code 404, zodat Google weet dat deze pagina er echt niet is.
+    return send_from_directory(".", "404.html"), 404
 
 
 @app.route("/api/slide-show")

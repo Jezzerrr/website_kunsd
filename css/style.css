@@ -439,6 +439,11 @@ body.lightbox-open {
     margin: 0;
 }
 
+/* Tot de foto's geladen zijn: onzichtbaar, maar de plek is al gereserveerd (zie js/slide_show.js) */
+.slide-show.wacht {
+    visibility: hidden;
+}
+
 /* De twee museumfoto's van De Portrettenparade onder elkaar */
 .parade-fotos {
     display: grid;
@@ -2768,4 +2773,18 @@ body.is-dragging .drop-overlay {
 /* Footer: link naar Privacy (later ook Steun KUNSD) */
 .site-footer .footer-links {
     margin-bottom: 4px;
+}
+
+/* 404-pagina: "Deze Pagina Bestaat Niet" */
+.niet-gevonden {
+    max-width: 720px;
+    padding: 60px 0 20px;
+}
+
+.niet-gevonden-code {
+    margin: 0;
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--sun);
 }

@@ -70,16 +70,20 @@ async function startSlideShow() {
         // Geen server, of een server zonder deze route (oude versie, nog niet herstart):
         // de sectie blijft verborgen. In de console (F12) staat waarom.
         console.warn("Diavoorstelling: de lijst met foto's kon niet worden opgehaald.", error);
+        slideShow.classList.add("hidden");
         return;
     }
 
     if (allPhotos.length === 0) {
+        slideShow.classList.add("hidden");
         return;
     }
 
     // Pas laten zien als de foto's geladen zijn, anders staan er even lege kaders.
+    // Tot dan is de sectie onzichtbaar maar neemt hij al wel zijn plek in (klasse "wacht"),
+    // zodat de rest van de pagina niet verspringt als de foto's verschijnen.
     await showNextPhotos();
-    slideShow.classList.remove("hidden");
+    slideShow.classList.remove("wacht");
 
     // Bij één foto heeft de knop geen nut.
     if (allPhotos.length < 2) {

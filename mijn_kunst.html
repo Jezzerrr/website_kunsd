@@ -7,6 +7,7 @@
     <title>Mijn Kunsd · KUNSD</title>
 
     <link rel="stylesheet" href="css/style.css">
+    <link rel="preload" href="/css/fonts/syne-latin.woff2" as="font" type="font/woff2" crossorigin>
 
     <!-- Favicon (icoontje in het browsertabblad) -->
     <link rel="icon" href="/favicon.ico" sizes="any">
@@ -49,7 +50,7 @@
 
         <!-- Hoe het begon (op een groot scherm: foto links, verhaal rechts) -->
         <section class="featured-art intro-foto">
-            <img src="mijn_kunsd/square_moves/JesseMetzFotoPS.jpeg" alt="Portret van Jesse waarin blokjes een stukje zijn verschoven">
+            <img src="mijn_kunsd/square_moves/JesseMetzFotoPS.jpeg" alt="Portret van Jesse waarin blokjes een stukje zijn verschoven" width="1600" height="900" fetchpriority="high">
         </section>
 
         <section class="story intro-tekst">
@@ -75,7 +76,7 @@
         </section>
 
         <!-- Twee willekeurige foto's uit mijn_kunsd/slide_show; het script vult ze in -->
-        <section id="slide-show" class="slide-show hidden">
+        <section id="slide-show" class="slide-show wacht">
             <div class="slide-show-header">
                 <h2>Een Greep Uit Mijn Verzameling</h2>
 
@@ -85,8 +86,8 @@
             </div>
 
             <div class="slide-show-photos">
-                <img id="slide-image-1" alt="Een willekeurige afbeelding uit mijn werk">
-                <img id="slide-image-2" alt="Nog een willekeurige afbeelding uit mijn werk">
+                <img id="slide-image-1" width="1000" height="1000" alt="Een willekeurige afbeelding uit mijn werk">
+                <img id="slide-image-2" width="1000" height="1000" alt="Nog een willekeurige afbeelding uit mijn werk">
             </div>
         </section>
 
@@ -140,7 +141,7 @@
     <script src="js/lightbox.js"></script>
     <script src="js/slide_show.js"></script>
 
-    <script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+    <script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
 </body>
 </html>
