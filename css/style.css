@@ -1557,6 +1557,13 @@ body.lightbox-open {
     color: var(--accent);
 }
 
+/* Tweede regel onder het resultaat (doneren): zonder extra streep erboven */
+.result-share.result-doneren {
+    margin-top: 6px !important;
+    padding-top: 0;
+    border-top: none;
+}
+
 .result-box-diy {
     background: white;
     border: 2px dashed var(--ink);
