@@ -42,6 +42,8 @@
             <a href="/jouw_kunst" aria-current="page">Jouw Kunsd</a>
             <a href="/mijn_kunst">Mijn Kunsd</a>
             <a href="/contact">Contact</a>
+            <!-- Op brede schermen: altijd een knop naar het maken van je tekenpuzzel (op mobiel verborgen) -->
+            <a href="#aan-de-slag" class="nav-cta" data-track="menu-maak-tekenpuzzel">Maak Je Tekenpuzzel</a>
         </nav>
     </header>
 
@@ -359,959 +361,987 @@
                 om je kunsd te maken en wordt niet bewaard.
             </p>
 
-            <section class="upload-section">
-                <label for="image-upload" id="main-upload-label" class="upload-label" data-track="jouw-kunst-kies-foto">
-                    Kies Een Foto
-                </label>
+            <!-- Op een groot scherm twee kolommen: links je foto en de instellingen, rechts het resultaat.
+                 Op een telefoon gewoon onder elkaar, in dezelfde volgorde. -->
+            <div class="werkbank">
 
-                <input type="file" id="image-upload" accept="image/*">
+                <!-- Links: foto kiezen, bijsnijden, bewerking kiezen en instellen -->
+                <div class="werkbank-instellingen">
 
-                <!-- Na "Probeer Deze" bij een voorbeeld, zolang er nog geen foto is -->
-                <p id="try-hint" class="try-hint hidden"></p>
-            </section>
-
-            <!-- De foto zoals die naar de algoritmes gaat (origineel of uitsnede) -->
-            <section id="original-container" class="image-section hidden">
-                <h2 id="original-title" class="step-title" data-step="1">Origineel</h2>
-
-                <!-- Zonder uitsnede: de foto zoals geüpload -->
-                <div id="original-view">
-                    <img
-                        id="uploaded-image"
-                        class="uploaded-image"
-                        alt="Geüploade afbeelding"
-                    >
-                </div>
-
-                <!-- Met uitsnede: alleen het gekozen stuk van dezelfde foto -->
-                <div id="cropped-preview" class="cropped-preview hidden">
-                    <div id="cropped-preview-frame" class="cropped-preview-frame">
-                        <img
-                            id="cropped-preview-image"
-                            alt="Uitsnede van de geüploade afbeelding"
-                        >
-                    </div>
-                </div>
-
-                <div class="button-row image-actions">
-                    <button
-                        type="button"
-                        id="crop-start-button"
-                        class="secondary-button">
-                        Bijsnijden
-                    </button>
-
-                    <button
-                        type="button"
-                        id="cutout-start-button"
-                        class="secondary-button">
-                        Uitknippen
-                    </button>
-
-                    <button
-                        type="button"
-                        id="rotate-button"
-                        class="secondary-button"
-                        title="Draai de foto een kwartslag rechtsom (met de klok mee)">
-                        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M20.5 13.5a8.5 8.5 0 1 1-2.6-7.6"></path>
-                            <path d="M21 3.5v5h-5"></path>
-                        </svg>
-                        Draaien
-                    </button>
-
-                    <button
-                        type="button"
-                        id="flip-button"
-                        class="secondary-button"
-                        title="Spiegel de foto (links wordt rechts)">
-                        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 3v18" stroke-dasharray="2 2.5"></path>
-                            <path d="M9 7 3 17h6z"></path>
-                            <path d="M15 7l6 10h-6z"></path>
-                        </svg>
-                        Spiegelen
-                    </button>
-
-                    <button
-                        type="button"
-                        id="crop-reset-button"
-                        class="secondary-button hidden">
-                        Originele Foto Herstellen
-                    </button>
-                </div>
-
-                <p id="orient-status" class="crop-hint hidden" aria-live="polite"></p>
-            </section>
-
-            <!-- Bijsnijden: alleen zichtbaar na een klik op "Bijsnijden" -->
-            <section id="crop-container" class="image-section hidden">
-                <h2 id="crop-title">Foto Bijsnijden</h2>
-
-                <div id="crop-stage" class="crop-stage">
-                    <img id="crop-image" alt="Foto om bij te snijden" draggable="false">
-
-                    <div id="crop-box" class="crop-box">
-                        <span class="crop-edge crop-edge-n" data-handle="n"></span>
-                        <span class="crop-edge crop-edge-e" data-handle="e"></span>
-                        <span class="crop-edge crop-edge-s" data-handle="s"></span>
-                        <span class="crop-edge crop-edge-w" data-handle="w"></span>
-                        <span class="crop-handle" data-handle="nw"></span>
-                        <span class="crop-handle" data-handle="ne"></span>
-                        <span class="crop-handle" data-handle="sw"></span>
-                        <span class="crop-handle" data-handle="se"></span>
-                    </div>
-                </div>
-
-                <p id="crop-hint" class="crop-hint">
-                    Sleep de hoekjes of de zijkanten om de uitsnede aan te passen. Je kunt ook de
-                    rechthoek zelf verplaatsen, of over de foto slepen om een
-                    nieuwe uitsnede te tekenen. Klik daarna op OK.
-                </p>
-
-                <div class="button-row image-actions">
-                    <button
-                        type="button"
-                        id="crop-cancel-button"
-                        class="secondary-button">
-                        Annuleren
-                    </button>
-
-                    <button
-                        type="button"
-                        id="crop-ok-button"
-                        class="create-button">
-                        OK
-                    </button>
-                </div>
-            </section>
-
-            <!-- Uitknippen: zelf een vorm om (bijvoorbeeld) een gezicht tekenen; de rest wordt wit -->
-            <section id="cutout-container" class="image-section hidden">
-                <h2>Foto Uitknippen</h2>
-
-                <p class="crop-hint cutout-intro">
-                    Teken met je vinger of muis een lijn om wat je wilt houden, bijvoorbeeld één
-                    gezicht. Alles daarbuiten wordt wit, zodat een drukke achtergrond niet stoort.
-                </p>
-
-                <div id="cutout-stage" class="crop-stage cutout-stage">
-                    <!-- De foto met de lijn; bij inzoomen wordt dit hele stuk groter -->
-                    <div id="cutout-view" class="cutout-view">
-                        <img id="cutout-image" alt="Foto om uit te knippen" draggable="false">
-
-                        <svg id="cutout-svg" class="cutout-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
-                            <path id="cutout-shade" class="cutout-shade"></path>
-                            <path id="cutout-line-under" class="cutout-line-under"></path>
-                            <path id="cutout-line" class="cutout-line"></path>
-                            <path id="cutout-dots" class="cutout-dots"></path>
-                            <path id="cutout-start" class="cutout-start"></path>
-                        </svg>
-                    </div>
-
-                    <!-- Zoomen: ook knijpen met twee vingers, of Ctrl + scrollwiel -->
-                    <div class="cutout-zoom">
-                        <button type="button" id="cutout-zoom-fit" class="cutout-zoom-button cutout-zoom-fit hidden">
-                            Hele Foto
-                        </button>
-                        <button type="button" id="cutout-zoom-out" class="cutout-zoom-button" aria-label="Uitzoomen" title="Uitzoomen">
-                            &minus;
-                        </button>
-                        <button type="button" id="cutout-zoom-in" class="cutout-zoom-button" aria-label="Inzoomen" title="Inzoomen">
-                            +
-                        </button>
-                    </div>
-
-                    <!-- Vergrootglas: je vinger zit anders precies op de plek waar je tekent -->
-                    <div id="cutout-loupe" class="cutout-loupe hidden" aria-hidden="true">
-                        <div id="cutout-loupe-photo" class="cutout-loupe-photo"></div>
-                        <svg id="cutout-loupe-svg" class="cutout-svg" preserveAspectRatio="none">
-                            <path id="cutout-loupe-line-under" class="cutout-line-under"></path>
-                            <path id="cutout-loupe-line" class="cutout-line"></path>
-                        </svg>
-                        <span class="cutout-loupe-cross"></span>
-                    </div>
-                </div>
-
-                <p id="cutout-hint" class="crop-hint cutout-hint" aria-live="polite"></p>
-
-                <div class="button-row image-actions">
-                    <button
-                        type="button"
-                        id="cutout-undo-button"
-                        class="secondary-button">
-                        Ongedaan Maken
-                    </button>
-
-                    <button
-                        type="button"
-                        id="cutout-clear-button"
-                        class="secondary-button">
-                        Opnieuw Tekenen
-                    </button>
-
-                    <button
-                        type="button"
-                        id="cutout-cancel-button"
-                        class="secondary-button">
-                        Annuleren
-                    </button>
-
-                    <button
-                        type="button"
-                        id="cutout-ok-button"
-                        class="create-button">
-                        OK
-                    </button>
-                </div>
-            </section>
-
-
-            <section id="algorithm-section" class="hidden">
-
-                <h2 class="step-title" data-step="2">Kies Een Bewerking</h2>
-
-                <div class="algorithm-group algorithm-group-diy">
-                    <p class="algorithm-group-title">
-                        Tekenpuzzels: print het en teken zelf
-                        <span>Met "Tekenvel" krijg je de versie om te printen</span>
-                    </p>
-
-                    <div class="algorithm-buttons">
-                        <button
-                            type="button"
-                            class="algorithm-button"
-                            data-settings="penpath-settings">
-                            <img src="mijn_kunsd/voorbeelden/knoppen/penpath.jpg" alt="" class="algorithm-thumb" width="40" height="40">
-                            Penpath
-                        </button>
-
-                        <button
-                            type="button"
-                            class="algorithm-button"
-                            data-settings="hatchwork-settings">
-                            <img src="mijn_kunsd/voorbeelden/knoppen/hatchwork.jpg" alt="" class="algorithm-thumb" width="40" height="40">
-                            Hatchwork
-                        </button>
-
-                        <button
-                            type="button"
-                            class="algorithm-button"
-                            data-settings="pen-up-settings">
-                            <img src="mijn_kunsd/voorbeelden/knoppen/pen-up.jpg" alt="" class="algorithm-thumb" width="40" height="40">
-                            Pen Up
-                        </button>
-
-                        <button
-                            type="button"
-                            class="algorithm-button"
-                            data-settings="chordinates-settings">
-                            <img src="mijn_kunsd/voorbeelden/knoppen/chordinates.jpg" alt="" class="algorithm-thumb" width="40" height="40">
-                            Chordinates
-                        </button>
-
-                        <button
-                            type="button"
-                            class="algorithm-button"
-                            data-settings="shape-division-settings">
-                            <img src="mijn_kunsd/voorbeelden/knoppen/shape-division.jpg" alt="" class="algorithm-thumb" width="40" height="40">
-                            Shape Division
-                        </button>
-
-                        <button
-                            type="button"
-                            class="algorithm-button"
-                            data-settings="dots-settings">
-                            <img src="mijn_kunsd/voorbeelden/knoppen/coloring-dots.jpg" alt="" class="algorithm-thumb" width="40" height="40">
-                            Coloring Dots
-                        </button>
-                    </div>
-                </div>
-
-                <div
-                    id="penpath-settings"
-                    class="algorithm-settings hidden">
-
-                    <h3>Penpath</h3>
-
-                    <p class="palette-hint">
-                        Werkt het best met <strong>één duidelijk portret</strong>, rechtop en dichtbij. Het
-                        raster komt strak om je hele foto (of uitsnede), zo groot als op A4 past: liggend
-                        bij een liggende foto. Snijd je foto dus bij tot wat je wilt tekenen.
-                    </p>
-
-                    <div class="slider-header">
-                        <label for="penpath-count-slider">
-                            Aantal lijnen
+                    <section class="upload-section">
+                        <label for="image-upload" id="main-upload-label" class="upload-label" data-track="jouw-kunst-kies-foto">
+                            Kies Een Foto
                         </label>
 
-                        <output
-                            id="penpath-count-value"
-                            for="penpath-count-slider">
-                            800
-                        </output>
-                    </div>
+                        <!-- Alleen op een groot scherm zichtbaar -->
+                        <span class="drop-hint">of sleep een foto hierheen</span>
 
-                    <input
-                        type="range"
-                        id="penpath-count-slider"
-                        class="art-slider"
-                        min="400"
-                        max="1000"
-                        step="100"
-                        value="800"
-                    >
+                        <input type="file" id="image-upload" accept="image/*">
 
-                    <div class="slider-scale">
-                        <span>Snel klaar</span>
-                        <span>Meer details</span>
-                    </div>
+                        <!-- Na "Probeer Deze" bij een voorbeeld, zolang er nog geen foto is -->
+                        <p id="try-hint" class="try-hint hidden"></p>
+                    </section>
 
-                    <label
-                        class="switch-row switch-row-diy"
-                        for="penpath-fill">
+                    <!-- De foto zoals die naar de algoritmes gaat (origineel of uitsnede) -->
+                    <section id="original-container" class="image-section hidden">
+                        <h2 id="original-title" class="step-title" data-step="1">Origineel</h2>
 
-                        <span>
-                            <strong>Tekenvel</strong>
-
-                            <small>
-                                Zet aan voor twee bladen: het raster met punten om op te tekenen, en de routes
-                                die je tekent, met je foto en het "antwoord" klein erbij.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="penpath-fill"
-                                data-offer="Mooi geworden? Maak dan het tekenvel: een raster van punten en de routes die je tekent. Precies dezelfde lijnen als hierboven.">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <div class="button-row">
-                        <button
-                            type="button"
-                            id="penpath-button"
-                            class="create-button">
-                            Maak Penpath
-                        </button>
-                    </div>
-
-                </div>
-
-                <div
-                    id="hatchwork-settings"
-                    class="algorithm-settings hidden">
-
-                    <h3>Hatchwork</h3>
-
-                    <p class="palette-hint">
-                        Werkt het best met een portret of een foto met duidelijke lichte en donkere vlakken.
-                        Het raster komt strak om je hele foto (of uitsnede), zo groot als op A4 past:
-                        liggend bij een liggende foto.
-                    </p>
-
-                    <div class="slider-header">
-                        <label for="hatchwork-columns-slider">
-                            Fijnheid van het raster
-                        </label>
-
-                        <output
-                            id="hatchwork-columns-value"
-                            for="hatchwork-columns-slider">
-                            70
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="hatchwork-columns-slider"
-                        class="art-slider"
-                        min="50"
-                        max="110"
-                        step="10"
-                        value="70"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Grof en snel</span>
-                        <span>Fijn en precies</span>
-                    </div>
-
-                    <label
-                        class="switch-row switch-row-diy"
-                        for="hatchwork-fill">
-
-                        <span>
-                            <strong>Tekenvel</strong>
-
-                            <small>
-                                Zet aan voor twee bladen: het ruitjesraster om op te tekenen, en per ronde de
-                                lijntjes die je trekt, met je foto en het "antwoord" klein erbij.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="hatchwork-fill"
-                                data-offer="Mooi geworden? Maak dan het tekenvel: een ruitjesraster en per ronde de lijntjes die je trekt. Precies dezelfde lijntjes als hierboven.">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <div class="button-row">
-                        <button
-                            type="button"
-                            id="hatchwork-button"
-                            class="create-button">
-                            Maak Hatchwork
-                        </button>
-                    </div>
-
-                </div>
-
-                <div
-                    id="pen-up-settings"
-                    class="algorithm-settings hidden">
-
-                    <h3>Pen Up</h3>
-
-                    <p class="palette-hint">
-                        Werkt het best met <strong>één duidelijk portret</strong> voor een lichte achtergrond.
-                        Je hele foto (of uitsnede) komt zo groot als past op A4: liggend bij een liggende foto.
-                    </p>
-
-                    <div class="slider-header">
-                        <label for="pen-up-lines-slider">
-                            Lijnen per 10 cm
-                        </label>
-
-                        <output
-                            id="pen-up-lines-value"
-                            for="pen-up-lines-slider">
-                            40
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="pen-up-lines-slider"
-                        class="art-slider"
-                        min="25"
-                        max="50"
-                        step="5"
-                        value="40"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Grof en snel</span>
-                        <span>Fijn en precies</span>
-                    </div>
-
-                    <div class="slider-header">
-                        <label for="pen-up-contrast-slider">
-                            Contrast
-                        </label>
-
-                        <output
-                            id="pen-up-contrast-value"
-                            for="pen-up-contrast-slider">
-                            50%
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="pen-up-contrast-slider"
-                        class="art-slider"
-                        min="0"
-                        max="100"
-                        step="10"
-                        value="50"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Grote vlakken</span>
-                        <span>Randen en details</span>
-                    </div>
-
-                    <label
-                        class="switch-row switch-row-diy"
-                        for="pen-up-fill">
-
-                        <span>
-                            <strong>Tekenvel</strong>
-
-                            <small>
-                                Zet aan voor twee bladen: de puntjes op schuine lijnen om op te tekenen, en per lijn
-                                de stukjes die je tekent, met je foto en het "antwoord" klein erbij.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="pen-up-fill"
-                                data-offer="Mooi geworden? Maak dan het tekenvel: puntjes op schuine lijnen en per lijn de stukjes die je tekent. Precies dezelfde lijntjes als hierboven.">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <div class="button-row">
-                        <button
-                            type="button"
-                            id="pen-up-button"
-                            class="create-button">
-                            Maak Pen Up
-                        </button>
-                    </div>
-
-                </div>
-
-                <div
-                    id="shape-division-settings"
-                    class="algorithm-settings hidden">
-
-                    <h3>Shape Division</h3>
-
-                    <label
-                        class="switch-row"
-                        for="shape-custom">
-
-                        <span>
-                            <strong>Eigen Kleuren Kiezen</strong>
-
-                            <small>
-                                Zet aan om zelf de kleuren te bepalen.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="shape-custom">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <!-- Automatisch: aantal kleuren -->
-                    <div id="shape-auto-colors">
-
-                        <div class="slider-header">
-                            <label for="shape-colors-slider">
-                                Aantal kleuren
-                            </label>
-
-                            <output
-                                id="shape-colors-value"
-                                for="shape-colors-slider">
-                                6
-                            </output>
+                        <!-- Zonder uitsnede: de foto zoals geüpload -->
+                        <div id="original-view">
+                            <img
+                                id="uploaded-image"
+                                class="uploaded-image"
+                                alt="Geüploade afbeelding"
+                            >
                         </div>
 
-                        <input
-                            type="range"
-                            id="shape-colors-slider"
-                            class="art-slider"
-                            min="2"
-                            max="12"
-                            step="1"
-                            value="6"
-                        >
-
-                        <div class="slider-scale">
-                            <span>Weinig</span>
-                            <span>Veel</span>
-                        </div>
-
-                    </div>
-
-                    <!-- Zelf kiezen: kleurvakjes met de kleurkiezer van je browser -->
-                    <div id="shape-custom-colors" class="hidden">
-
-                        <p class="palette-hint">
-                            Klik op een kleur om hem te veranderen. Elke vorm krijgt de kleur uit dit rijtje die het dichtst bij de foto ligt.
-                        </p>
-
-                        <div id="shape-palette-list" class="palette-list"></div>
-
-                        <div class="button-row image-actions">
-                            <button
-                                type="button"
-                                id="shape-palette-add-button"
-                                class="secondary-button">
-                                + Kleur Toevoegen
-                            </button>
-
-                            <button
-                                type="button"
-                                id="shape-palette-from-photo-button"
-                                class="secondary-button">
-                                Kleuren Uit Foto
-                            </button>
-
-                            <button
-                                type="button"
-                                id="shape-palette-default-button"
-                                class="secondary-button">
-                                Standaardkleuren
-                            </button>
-                        </div>
-
-                    </div>
-
-                    <div class="slider-header">
-                        <label for="shape-select">
-                            Vorm
-                        </label>
-                    </div>
-
-                    <select id="shape-select" class="art-select">
-                        <option value="hexagons">Zeshoeken</option>
-                        <option value="brick">Bakstenen</option>
-                        <option value="triangles">Driehoeken</option>
-                        <option value="cubes">Kubussen</option>
-                        <option value="octagons_squares">Achthoeken en vierkanten</option>
-                        <option value="crosses">Plussen</option>
-                    </select>
-
-                    <div class="slider-header">
-                        <label for="shape-grid-size-slider">
-                            Grootte van de vormen
-                        </label>
-
-                        <output
-                            id="shape-grid-size-value"
-                            for="shape-grid-size-slider">
-                            4%
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="shape-grid-size-slider"
-                        class="art-slider"
-                        min="1.5"
-                        max="10"
-                        step="0.5"
-                        value="4"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Klein</span>
-                        <span>Groot</span>
-                    </div>
-
-                    <label
-                        class="switch-row switch-row-diy"
-                        for="shape-fill">
-
-                        <span>
-                            <strong>Tekenvel</strong>
-
-                            <small>
-                                Zet aan voor de lege vormen met nummers en een legenda: welk nummer welke kleur.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="shape-fill"
-                                data-offer="Mooi geworden? Maak dan het tekenvel: alleen de lijnen, met in elke vorm een nummer en onderaan welke kleur bij welk nummer hoort.">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <div class="button-row">
-                        <button
-                            type="button"
-                            id="shape-button"
-                            class="create-button">
-                            Maak Vormen
-                        </button>
-                    </div>
-
-                </div>
-
-                <div
-                    id="dots-settings"
-                    class="algorithm-settings hidden">
-
-                    <h3>Coloring Dots</h3>
-
-                    <div class="slider-header">
-                        <label for="dots-grid-size-slider">
-                            Puntgrootte
-                        </label>
-
-                        <output
-                            id="dots-grid-size-value"
-                            for="dots-grid-size-slider">
-                            3%
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="dots-grid-size-slider"
-                        class="art-slider"
-                        min="0.5"
-                        max="5"
-                        step="0.5"
-                        value="3"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Klein</span>
-                        <span>Groot</span>
-                    </div>
-
-                    <label
-                        class="switch-row switch-row-diy"
-                        for="dots-fill">
-
-                        <span>
-                            <strong>Tekenvel</strong>
-
-                            <small>
-                                Zet aan voor alleen de rondjes, om zelf in te vullen.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="dots-fill"
-                                data-offer="Mooi geworden? Maak dan het tekenvel: alleen de rondjes. Print het en vul de stippen zelf in met een stift.">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <div class="button-row">
-                        <button
-                            type="button"
-                            id="dots-button"
-                            class="create-button">
-                            Maak Coloring Dots
-                        </button>
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="chordinates-settings"
-                    class="algorithm-settings hidden">
-
-                    <h3>Chordinates</h3>
-
-                    <p class="palette-hint">
-                        Werkt het best met <strong>één duidelijk portret</strong>: een gezicht dat de cirkel
-                        vult, voor een lichte, rustige achtergrond. Met twee of meer mensen of een drukke
-                        foto wordt het al snel een wirwar van lijnen.
-                    </p>
-
-                    <!-- Welk rondje van de foto de cirkel wordt, met een knop om het zelf te kiezen -->
-                    <div class="circle-choice">
-                        <div class="circle-preview">
-                            <img id="circle-preview-image" alt="Het stuk van je foto dat de cirkel wordt">
-                        </div>
-
-                        <div>
-                            <strong>Jouw Rondje</strong>
-                            <small>
-                                Dit stuk van je foto wordt de cirkel. Zonder keuze neemt het algoritme het
-                                midden van je foto.
-                            </small>
-
-                            <button
-                                type="button"
-                                id="circle-choose-button"
-                                class="secondary-button">
-                                Kies Het Rondje
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="slider-header">
-                        <label for="chordinates-count-slider">
-                            Aantal lijnen
-                        </label>
-
-                        <output
-                            id="chordinates-count-value"
-                            for="chordinates-count-slider">
-                            600
-                        </output>
-                    </div>
-
-                    <input
-                        type="range"
-                        id="chordinates-count-slider"
-                        class="art-slider"
-                        min="250"
-                        max="800"
-                        step="50"
-                        value="600"
-                    >
-
-                    <div class="slider-scale">
-                        <span>Snel klaar</span>
-                        <span>Meer diepte en detail</span>
-                    </div>
-
-                    <label
-                        class="switch-row switch-row-diy"
-                        for="chordinates-fill">
-
-                        <span>
-                            <strong>Tekenvel</strong>
-
-                            <small>
-                                Zet aan voor twee bladen: de cirkel met genummerde punten om op te tekenen,
-                                en de lijst met lijnen, met je foto en het "antwoord" klein erbij.
-                            </small>
-                        </span>
-
-                        <span class="switch">
-                            <input
-                                type="checkbox"
-                                id="chordinates-fill"
-                                data-offer="Mooi geworden? Maak dan het tekenvel: een cirkel met genummerde punten en per punt de lijnen die je trekt. Precies dezelfde lijnen als hierboven.">
-
-                            <span class="switch-slider"></span>
-                        </span>
-
-                    </label>
-
-                    <div class="button-row">
-                        <button
-                            type="button"
-                            id="chordinates-button"
-                            class="create-button">
-                            Maak Chordinates
-                        </button>
-                    </div>
-
-                </div>
-
-            </section>
-
-            <p
-                id="status-message"
-                class="status-message hidden">
-            </p>
-
-            <section
-                id="result-container"
-                class="image-section hidden">
-
-                <h2 class="step-title" data-step="3">Resultaat</h2>
-
-                <img
-                    id="result-image"
-                    class="result-image"
-                    alt="Bewerkte afbeelding">
-
-                <!-- Hier komen de volgende bladen als het resultaat er meer heeft (het tekenvel van
-                     Chordinates: blad 2 met de lijnen). Bij printen komt elk blad op een eigen pagina. -->
-
-                <!-- Wat je nu met je resultaat kunt doen -->
-                <div class="result-actions">
-
-                    <!-- Alleen zichtbaar na "Zo Wordt Het" van een tekenpuzzel: maak dan het tekenvel -->
-                    <div id="diy-offer" class="result-box result-box-diy hidden">
-                        <h3>Nu Zelf Tekenen?</h3>
-
-                        <p id="diy-offer-text"></p>
-
-                        <button
-                            type="button"
-                            id="diy-offer-button"
-                            class="create-button">
-                            Maak Het Tekenvel
-                        </button>
-                    </div>
-
-                    <div class="result-box">
-                        <h3>Print Je Kunsd</h3>
-
-                        <p id="print-text">
-                            Je kunsd past altijd op één vel. Op A3 teken je fijner, maar A4 kan natuurlijk ook.
-                        </p>
-
-                        <div class="form-field file-name-field">
-                            <label for="file-name">Naam Van Je Bestand</label>
-                            <div class="file-name-input">
-                                <input
-                                    type="text"
-                                    id="file-name"
-                                    maxlength="80"
-                                    autocomplete="off"
-                                    spellcheck="false">
-                                <span>.png</span>
+                        <!-- Met uitsnede: alleen het gekozen stuk van dezelfde foto -->
+                        <div id="cropped-preview" class="cropped-preview hidden">
+                            <div id="cropped-preview-frame" class="cropped-preview-frame">
+                                <img
+                                    id="cropped-preview-image"
+                                    alt="Uitsnede van de geüploade afbeelding"
+                                >
                             </div>
                         </div>
 
                         <div class="button-row image-actions">
                             <button
                                 type="button"
-                                id="print-button"
-                                class="create-button">
-                                Print Afbeelding
+                                id="crop-start-button"
+                                class="secondary-button">
+                                Bijsnijden
                             </button>
 
                             <button
                                 type="button"
-                                class="download-button"
-                                disabled
-                                title="Maak eerst een afbeelding om te kunnen downloaden">
-                                Download Afbeelding
+                                id="cutout-start-button"
+                                class="secondary-button">
+                                Uitknippen
                             </button>
 
-                            <!-- Alleen zichtbaar bij een resultaat van meerdere bladen (het tekenvel) -->
                             <button
                                 type="button"
-                                id="pdf-button"
-                                class="secondary-button hidden"
-                                title="Sla alle bladen op als één pdf, klaar om te printen">
-                                Download Pdf
+                                id="rotate-button"
+                                class="secondary-button"
+                                title="Draai de foto een kwartslag rechtsom (met de klok mee)">
+                                <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M20.5 13.5a8.5 8.5 0 1 1-2.6-7.6"></path>
+                                    <path d="M21 3.5v5h-5"></path>
+                                </svg>
+                                Draaien
                             </button>
 
-                            <!-- Alleen zichtbaar als de browser bestanden kan delen (vooral telefoons) -->
                             <button
                                 type="button"
-                                id="share-button"
-                                class="secondary-button hidden"
-                                title="Stuur je kunsd via een app, of bewaar hem bij je foto's">
-                                Deel Afbeelding
+                                id="flip-button"
+                                class="secondary-button"
+                                title="Spiegel de foto (links wordt rechts)">
+                                <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 3v18" stroke-dasharray="2 2.5"></path>
+                                    <path d="M9 7 3 17h6z"></path>
+                                    <path d="M15 7l6 10h-6z"></path>
+                                </svg>
+                                Spiegelen
+                            </button>
+
+                            <button
+                                type="button"
+                                id="crop-reset-button"
+                                class="secondary-button hidden">
+                                Originele Foto Herstellen
                             </button>
                         </div>
 
-                        <p class="result-share">
-                            Getekend? Stuur me een foto, daar word ik blij van!
-                            <a href="/contact?onderwerp=Mijn%20Kunsd" data-track="resultaat-delen">Deel Je Kunsd</a>
+                        <p id="orient-status" class="crop-hint hidden" aria-live="polite"></p>
+                    </section>
+
+                    <!-- Bijsnijden: alleen zichtbaar na een klik op "Bijsnijden" -->
+                    <section id="crop-container" class="image-section hidden">
+                        <h2 id="crop-title">Foto Bijsnijden</h2>
+
+                        <div id="crop-stage" class="crop-stage">
+                            <img id="crop-image" alt="Foto om bij te snijden" draggable="false">
+
+                            <div id="crop-box" class="crop-box">
+                                <span class="crop-edge crop-edge-n" data-handle="n"></span>
+                                <span class="crop-edge crop-edge-e" data-handle="e"></span>
+                                <span class="crop-edge crop-edge-s" data-handle="s"></span>
+                                <span class="crop-edge crop-edge-w" data-handle="w"></span>
+                                <span class="crop-handle" data-handle="nw"></span>
+                                <span class="crop-handle" data-handle="ne"></span>
+                                <span class="crop-handle" data-handle="sw"></span>
+                                <span class="crop-handle" data-handle="se"></span>
+                            </div>
+                        </div>
+
+                        <p id="crop-hint" class="crop-hint">
+                            Sleep de hoekjes of de zijkanten om de uitsnede aan te passen. Je kunt ook de
+                            rechthoek zelf verplaatsen, of over de foto slepen om een
+                            nieuwe uitsnede te tekenen. Klik daarna op OK.
                         </p>
-                    </div>
+
+                        <div class="button-row image-actions">
+                            <button
+                                type="button"
+                                id="crop-cancel-button"
+                                class="secondary-button">
+                                Annuleren
+                            </button>
+
+                            <button
+                                type="button"
+                                id="crop-ok-button"
+                                class="create-button">
+                                OK
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Uitknippen: zelf een vorm om (bijvoorbeeld) een gezicht tekenen; de rest wordt wit -->
+                    <section id="cutout-container" class="image-section hidden">
+                        <h2>Foto Uitknippen</h2>
+
+                        <p class="crop-hint cutout-intro">
+                            Teken met je vinger of muis een lijn om wat je wilt houden, bijvoorbeeld één
+                            gezicht. Alles daarbuiten wordt wit, zodat een drukke achtergrond niet stoort.
+                        </p>
+
+                        <div id="cutout-stage" class="crop-stage cutout-stage">
+                            <!-- De foto met de lijn; bij inzoomen wordt dit hele stuk groter -->
+                            <div id="cutout-view" class="cutout-view">
+                                <img id="cutout-image" alt="Foto om uit te knippen" draggable="false">
+
+                                <svg id="cutout-svg" class="cutout-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+                                    <path id="cutout-shade" class="cutout-shade"></path>
+                                    <path id="cutout-line-under" class="cutout-line-under"></path>
+                                    <path id="cutout-line" class="cutout-line"></path>
+                                    <path id="cutout-dots" class="cutout-dots"></path>
+                                    <path id="cutout-start" class="cutout-start"></path>
+                                </svg>
+                            </div>
+
+                            <!-- Zoomen: ook knijpen met twee vingers, of Ctrl + scrollwiel -->
+                            <div class="cutout-zoom">
+                                <button type="button" id="cutout-zoom-fit" class="cutout-zoom-button cutout-zoom-fit hidden">
+                                    Hele Foto
+                                </button>
+                                <button type="button" id="cutout-zoom-out" class="cutout-zoom-button" aria-label="Uitzoomen" title="Uitzoomen">
+                                    &minus;
+                                </button>
+                                <button type="button" id="cutout-zoom-in" class="cutout-zoom-button" aria-label="Inzoomen" title="Inzoomen">
+                                    +
+                                </button>
+                            </div>
+
+                            <!-- Vergrootglas: je vinger zit anders precies op de plek waar je tekent -->
+                            <div id="cutout-loupe" class="cutout-loupe hidden" aria-hidden="true">
+                                <div id="cutout-loupe-photo" class="cutout-loupe-photo"></div>
+                                <svg id="cutout-loupe-svg" class="cutout-svg" preserveAspectRatio="none">
+                                    <path id="cutout-loupe-line-under" class="cutout-line-under"></path>
+                                    <path id="cutout-loupe-line" class="cutout-line"></path>
+                                </svg>
+                                <span class="cutout-loupe-cross"></span>
+                            </div>
+                        </div>
+
+                        <p id="cutout-hint" class="crop-hint cutout-hint" aria-live="polite"></p>
+
+                        <div class="button-row image-actions">
+                            <button
+                                type="button"
+                                id="cutout-undo-button"
+                                class="secondary-button">
+                                Ongedaan Maken
+                            </button>
+
+                            <button
+                                type="button"
+                                id="cutout-clear-button"
+                                class="secondary-button">
+                                Opnieuw Tekenen
+                            </button>
+
+                            <button
+                                type="button"
+                                id="cutout-cancel-button"
+                                class="secondary-button">
+                                Annuleren
+                            </button>
+
+                            <button
+                                type="button"
+                                id="cutout-ok-button"
+                                class="create-button">
+                                OK
+                            </button>
+                        </div>
+                    </section>
+
+
+                    <section id="algorithm-section" class="hidden">
+
+                        <h2 class="step-title" data-step="2">Kies Een Bewerking</h2>
+
+                        <div class="algorithm-group algorithm-group-diy">
+                            <p class="algorithm-group-title">
+                                Tekenpuzzels: print het en teken zelf
+                                <span>Met "Tekenvel" krijg je de versie om te printen</span>
+                            </p>
+
+                            <div class="algorithm-buttons">
+                                <button
+                                    type="button"
+                                    class="algorithm-button"
+                                    data-settings="penpath-settings">
+                                    <img src="mijn_kunsd/voorbeelden/knoppen/penpath.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                                    Penpath
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="algorithm-button"
+                                    data-settings="hatchwork-settings">
+                                    <img src="mijn_kunsd/voorbeelden/knoppen/hatchwork.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                                    Hatchwork
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="algorithm-button"
+                                    data-settings="pen-up-settings">
+                                    <img src="mijn_kunsd/voorbeelden/knoppen/pen-up.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                                    Pen Up
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="algorithm-button"
+                                    data-settings="chordinates-settings">
+                                    <img src="mijn_kunsd/voorbeelden/knoppen/chordinates.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                                    Chordinates
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="algorithm-button"
+                                    data-settings="shape-division-settings">
+                                    <img src="mijn_kunsd/voorbeelden/knoppen/shape-division.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                                    Shape Division
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="algorithm-button"
+                                    data-settings="dots-settings">
+                                    <img src="mijn_kunsd/voorbeelden/knoppen/coloring-dots.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                                    Coloring Dots
+                                </button>
+                            </div>
+                        </div>
+
+                        <div
+                            id="penpath-settings"
+                            class="algorithm-settings hidden">
+
+                            <h3>Penpath</h3>
+
+                            <p class="palette-hint">
+                                Werkt het best met <strong>één duidelijk portret</strong>, rechtop en dichtbij. Het
+                                raster komt strak om je hele foto (of uitsnede), zo groot als op A4 past: liggend
+                                bij een liggende foto. Snijd je foto dus bij tot wat je wilt tekenen.
+                            </p>
+
+                            <div class="slider-header">
+                                <label for="penpath-count-slider">
+                                    Aantal lijnen
+                                </label>
+
+                                <output
+                                    id="penpath-count-value"
+                                    for="penpath-count-slider">
+                                    800
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="penpath-count-slider"
+                                class="art-slider"
+                                min="400"
+                                max="1000"
+                                step="100"
+                                value="800"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Snel klaar</span>
+                                <span>Meer details</span>
+                            </div>
+
+                            <label
+                                class="switch-row switch-row-diy"
+                                for="penpath-fill">
+
+                                <span>
+                                    <strong>Tekenvel</strong>
+
+                                    <small>
+                                        Zet aan voor twee bladen: het raster met punten om op te tekenen, en de routes
+                                        die je tekent, met je foto en het "antwoord" klein erbij.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="penpath-fill"
+                                        data-offer="Mooi geworden? Maak dan het tekenvel: een raster van punten en de routes die je tekent. Precies dezelfde lijnen als hierboven.">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <div class="button-row">
+                                <button
+                                    type="button"
+                                    id="penpath-button"
+                                    class="create-button">
+                                    Maak Penpath
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div
+                            id="hatchwork-settings"
+                            class="algorithm-settings hidden">
+
+                            <h3>Hatchwork</h3>
+
+                            <p class="palette-hint">
+                                Werkt het best met een portret of een foto met duidelijke lichte en donkere vlakken.
+                                Het raster komt strak om je hele foto (of uitsnede), zo groot als op A4 past:
+                                liggend bij een liggende foto.
+                            </p>
+
+                            <div class="slider-header">
+                                <label for="hatchwork-columns-slider">
+                                    Fijnheid van het raster
+                                </label>
+
+                                <output
+                                    id="hatchwork-columns-value"
+                                    for="hatchwork-columns-slider">
+                                    70
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="hatchwork-columns-slider"
+                                class="art-slider"
+                                min="50"
+                                max="110"
+                                step="10"
+                                value="70"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Grof en snel</span>
+                                <span>Fijn en precies</span>
+                            </div>
+
+                            <label
+                                class="switch-row switch-row-diy"
+                                for="hatchwork-fill">
+
+                                <span>
+                                    <strong>Tekenvel</strong>
+
+                                    <small>
+                                        Zet aan voor twee bladen: het ruitjesraster om op te tekenen, en per ronde de
+                                        lijntjes die je trekt, met je foto en het "antwoord" klein erbij.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="hatchwork-fill"
+                                        data-offer="Mooi geworden? Maak dan het tekenvel: een ruitjesraster en per ronde de lijntjes die je trekt. Precies dezelfde lijntjes als hierboven.">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <div class="button-row">
+                                <button
+                                    type="button"
+                                    id="hatchwork-button"
+                                    class="create-button">
+                                    Maak Hatchwork
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div
+                            id="pen-up-settings"
+                            class="algorithm-settings hidden">
+
+                            <h3>Pen Up</h3>
+
+                            <p class="palette-hint">
+                                Werkt het best met <strong>één duidelijk portret</strong> voor een lichte achtergrond.
+                                Je hele foto (of uitsnede) komt zo groot als past op A4: liggend bij een liggende foto.
+                            </p>
+
+                            <div class="slider-header">
+                                <label for="pen-up-lines-slider">
+                                    Lijnen per 10 cm
+                                </label>
+
+                                <output
+                                    id="pen-up-lines-value"
+                                    for="pen-up-lines-slider">
+                                    40
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="pen-up-lines-slider"
+                                class="art-slider"
+                                min="25"
+                                max="50"
+                                step="5"
+                                value="40"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Grof en snel</span>
+                                <span>Fijn en precies</span>
+                            </div>
+
+                            <div class="slider-header">
+                                <label for="pen-up-contrast-slider">
+                                    Contrast
+                                </label>
+
+                                <output
+                                    id="pen-up-contrast-value"
+                                    for="pen-up-contrast-slider">
+                                    50%
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="pen-up-contrast-slider"
+                                class="art-slider"
+                                min="0"
+                                max="100"
+                                step="10"
+                                value="50"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Grote vlakken</span>
+                                <span>Randen en details</span>
+                            </div>
+
+                            <label
+                                class="switch-row switch-row-diy"
+                                for="pen-up-fill">
+
+                                <span>
+                                    <strong>Tekenvel</strong>
+
+                                    <small>
+                                        Zet aan voor twee bladen: de puntjes op schuine lijnen om op te tekenen, en per lijn
+                                        de stukjes die je tekent, met je foto en het "antwoord" klein erbij.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="pen-up-fill"
+                                        data-offer="Mooi geworden? Maak dan het tekenvel: puntjes op schuine lijnen en per lijn de stukjes die je tekent. Precies dezelfde lijntjes als hierboven.">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <div class="button-row">
+                                <button
+                                    type="button"
+                                    id="pen-up-button"
+                                    class="create-button">
+                                    Maak Pen Up
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div
+                            id="shape-division-settings"
+                            class="algorithm-settings hidden">
+
+                            <h3>Shape Division</h3>
+
+                            <label
+                                class="switch-row"
+                                for="shape-custom">
+
+                                <span>
+                                    <strong>Eigen Kleuren Kiezen</strong>
+
+                                    <small>
+                                        Zet aan om zelf de kleuren te bepalen.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="shape-custom">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <!-- Automatisch: aantal kleuren -->
+                            <div id="shape-auto-colors">
+
+                                <div class="slider-header">
+                                    <label for="shape-colors-slider">
+                                        Aantal kleuren
+                                    </label>
+
+                                    <output
+                                        id="shape-colors-value"
+                                        for="shape-colors-slider">
+                                        6
+                                    </output>
+                                </div>
+
+                                <input
+                                    type="range"
+                                    id="shape-colors-slider"
+                                    class="art-slider"
+                                    min="2"
+                                    max="12"
+                                    step="1"
+                                    value="6"
+                                >
+
+                                <div class="slider-scale">
+                                    <span>Weinig</span>
+                                    <span>Veel</span>
+                                </div>
+
+                            </div>
+
+                            <!-- Zelf kiezen: kleurvakjes met de kleurkiezer van je browser -->
+                            <div id="shape-custom-colors" class="hidden">
+
+                                <p class="palette-hint">
+                                    Klik op een kleur om hem te veranderen. Elke vorm krijgt de kleur uit dit rijtje die het dichtst bij de foto ligt.
+                                </p>
+
+                                <div id="shape-palette-list" class="palette-list"></div>
+
+                                <div class="button-row image-actions">
+                                    <button
+                                        type="button"
+                                        id="shape-palette-add-button"
+                                        class="secondary-button">
+                                        + Kleur Toevoegen
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        id="shape-palette-from-photo-button"
+                                        class="secondary-button">
+                                        Kleuren Uit Foto
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        id="shape-palette-default-button"
+                                        class="secondary-button">
+                                        Standaardkleuren
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            <div class="slider-header">
+                                <label for="shape-select">
+                                    Vorm
+                                </label>
+                            </div>
+
+                            <select id="shape-select" class="art-select">
+                                <option value="hexagons">Zeshoeken</option>
+                                <option value="brick">Bakstenen</option>
+                                <option value="triangles">Driehoeken</option>
+                                <option value="cubes">Kubussen</option>
+                                <option value="octagons_squares">Achthoeken en vierkanten</option>
+                                <option value="crosses">Plussen</option>
+                            </select>
+
+                            <div class="slider-header">
+                                <label for="shape-grid-size-slider">
+                                    Grootte van de vormen
+                                </label>
+
+                                <output
+                                    id="shape-grid-size-value"
+                                    for="shape-grid-size-slider">
+                                    4%
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="shape-grid-size-slider"
+                                class="art-slider"
+                                min="1.5"
+                                max="10"
+                                step="0.5"
+                                value="4"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Klein</span>
+                                <span>Groot</span>
+                            </div>
+
+                            <label
+                                class="switch-row switch-row-diy"
+                                for="shape-fill">
+
+                                <span>
+                                    <strong>Tekenvel</strong>
+
+                                    <small>
+                                        Zet aan voor de lege vormen met nummers en een legenda: welk nummer welke kleur.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="shape-fill"
+                                        data-offer="Mooi geworden? Maak dan het tekenvel: alleen de lijnen, met in elke vorm een nummer en onderaan welke kleur bij welk nummer hoort.">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <div class="button-row">
+                                <button
+                                    type="button"
+                                    id="shape-button"
+                                    class="create-button">
+                                    Maak Vormen
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div
+                            id="dots-settings"
+                            class="algorithm-settings hidden">
+
+                            <h3>Coloring Dots</h3>
+
+                            <div class="slider-header">
+                                <label for="dots-grid-size-slider">
+                                    Puntgrootte
+                                </label>
+
+                                <output
+                                    id="dots-grid-size-value"
+                                    for="dots-grid-size-slider">
+                                    3%
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="dots-grid-size-slider"
+                                class="art-slider"
+                                min="0.5"
+                                max="5"
+                                step="0.5"
+                                value="3"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Klein</span>
+                                <span>Groot</span>
+                            </div>
+
+                            <label
+                                class="switch-row switch-row-diy"
+                                for="dots-fill">
+
+                                <span>
+                                    <strong>Tekenvel</strong>
+
+                                    <small>
+                                        Zet aan voor alleen de rondjes, om zelf in te vullen.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="dots-fill"
+                                        data-offer="Mooi geworden? Maak dan het tekenvel: alleen de rondjes. Print het en vul de stippen zelf in met een stift.">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <div class="button-row">
+                                <button
+                                    type="button"
+                                    id="dots-button"
+                                    class="create-button">
+                                    Maak Coloring Dots
+                                </button>
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            id="chordinates-settings"
+                            class="algorithm-settings hidden">
+
+                            <h3>Chordinates</h3>
+
+                            <p class="palette-hint">
+                                Werkt het best met <strong>één duidelijk portret</strong>: een gezicht dat de cirkel
+                                vult, voor een lichte, rustige achtergrond. Met twee of meer mensen of een drukke
+                                foto wordt het al snel een wirwar van lijnen.
+                            </p>
+
+                            <!-- Welk rondje van de foto de cirkel wordt, met een knop om het zelf te kiezen -->
+                            <div class="circle-choice">
+                                <div class="circle-preview">
+                                    <img id="circle-preview-image" alt="Het stuk van je foto dat de cirkel wordt">
+                                </div>
+
+                                <div>
+                                    <strong>Jouw Rondje</strong>
+                                    <small>
+                                        Dit stuk van je foto wordt de cirkel. Zonder keuze neemt het algoritme het
+                                        midden van je foto.
+                                    </small>
+
+                                    <button
+                                        type="button"
+                                        id="circle-choose-button"
+                                        class="secondary-button">
+                                        Kies Het Rondje
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="slider-header">
+                                <label for="chordinates-count-slider">
+                                    Aantal lijnen
+                                </label>
+
+                                <output
+                                    id="chordinates-count-value"
+                                    for="chordinates-count-slider">
+                                    600
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="chordinates-count-slider"
+                                class="art-slider"
+                                min="250"
+                                max="800"
+                                step="50"
+                                value="600"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Snel klaar</span>
+                                <span>Meer diepte en detail</span>
+                            </div>
+
+                            <label
+                                class="switch-row switch-row-diy"
+                                for="chordinates-fill">
+
+                                <span>
+                                    <strong>Tekenvel</strong>
+
+                                    <small>
+                                        Zet aan voor twee bladen: de cirkel met genummerde punten om op te tekenen,
+                                        en de lijst met lijnen, met je foto en het "antwoord" klein erbij.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="chordinates-fill"
+                                        data-offer="Mooi geworden? Maak dan het tekenvel: een cirkel met genummerde punten en per punt de lijnen die je trekt. Precies dezelfde lijnen als hierboven.">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <div class="button-row">
+                                <button
+                                    type="button"
+                                    id="chordinates-button"
+                                    class="create-button">
+                                    Maak Chordinates
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </section>
 
                 </div>
 
-            </section>
+                <!-- Rechts: het resultaat (op een groot scherm blijft deze kolom in beeld tijdens het scrollen) -->
+                <div class="werkbank-uitkomst">
+
+                    <!-- Alleen op een groot scherm, zolang er nog geen resultaat is: hier komt het te staan -->
+                    <div class="result-placeholder" aria-hidden="true">
+                        <img src="mijn_kunsd/voorbeelden/penpath-leeg.png" alt="" width="800" height="1132" loading="lazy">
+                        <p>
+                            <strong>Hier Verschijnt Je Tekenpuzzel</strong>
+                            Kies een foto en een puzzel, en klik op "Maak". Bekijken is gratis; tevreden? Dan print je het tekenvel.
+                        </p>
+                    </div>
+
+                    <p
+                        id="status-message"
+                        class="status-message hidden">
+                    </p>
+
+                    <section
+                        id="result-container"
+                        class="image-section hidden">
+
+                        <h2 class="step-title" data-step="3">Resultaat</h2>
+
+                        <img
+                            id="result-image"
+                            class="result-image"
+                            alt="Bewerkte afbeelding">
+
+                        <!-- Hier komen de volgende bladen als het resultaat er meer heeft (het tekenvel van
+                             Chordinates: blad 2 met de lijnen). Bij printen komt elk blad op een eigen pagina. -->
+
+                        <!-- Wat je nu met je resultaat kunt doen -->
+                        <div class="result-actions">
+
+                            <!-- Alleen zichtbaar na "Zo Wordt Het" van een tekenpuzzel: maak dan het tekenvel -->
+                            <div id="diy-offer" class="result-box result-box-diy hidden">
+                                <h3>Nu Zelf Tekenen?</h3>
+
+                                <p id="diy-offer-text"></p>
+
+                                <button
+                                    type="button"
+                                    id="diy-offer-button"
+                                    class="create-button">
+                                    Maak Het Tekenvel
+                                </button>
+                            </div>
+
+                            <div class="result-box">
+                                <h3>Print Je Kunsd</h3>
+
+                                <p id="print-text">
+                                    Je kunsd past altijd op één vel. Op A3 teken je fijner, maar A4 kan natuurlijk ook.
+                                </p>
+
+                                <div class="form-field file-name-field">
+                                    <label for="file-name">Naam Van Je Bestand</label>
+                                    <div class="file-name-input">
+                                        <input
+                                            type="text"
+                                            id="file-name"
+                                            maxlength="80"
+                                            autocomplete="off"
+                                            spellcheck="false">
+                                        <span>.png</span>
+                                    </div>
+                                </div>
+
+                                <div class="button-row image-actions">
+                                    <button
+                                        type="button"
+                                        id="print-button"
+                                        class="create-button">
+                                        Print Afbeelding
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="download-button"
+                                        disabled
+                                        title="Maak eerst een afbeelding om te kunnen downloaden">
+                                        Download Afbeelding
+                                    </button>
+
+                                    <!-- Alleen zichtbaar bij een resultaat van meerdere bladen (het tekenvel) -->
+                                    <button
+                                        type="button"
+                                        id="pdf-button"
+                                        class="secondary-button hidden"
+                                        title="Sla alle bladen op als één pdf, klaar om te printen">
+                                        Download Pdf
+                                    </button>
+
+                                    <!-- Alleen zichtbaar als de browser bestanden kan delen (vooral telefoons) -->
+                                    <button
+                                        type="button"
+                                        id="share-button"
+                                        class="secondary-button hidden"
+                                        title="Stuur je kunsd via een app, of bewaar hem bij je foto's">
+                                        Deel Afbeelding
+                                    </button>
+                                </div>
+
+                                <p class="result-share">
+                                    Getekend? Stuur me een foto, daar word ik blij van!
+                                    <a href="/contact?onderwerp=Mijn%20Kunsd" data-track="resultaat-delen">Deel Je Kunsd</a>
+                                </p>
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </div>
 
         </section>
 
@@ -1364,6 +1394,9 @@
 
     </main>
 
+    <!-- Verschijnt als je een foto boven de pagina sleept (js/slepen.js) -->
+    <div class="drop-overlay" aria-hidden="true">Laat Los Om Je Foto Te Gebruiken</div>
+
     <footer class="site-footer">
         <p>
             Ideeën, feedback of zin om te sparren? Over kunst, nieuwe mogelijkheden of websites bouwen:
@@ -1378,6 +1411,7 @@
     <script src="js/jouw_kunst.js"></script>
     <script src="js/uitknippen.js"></script>
     <script src="js/draaien.js"></script>
+    <script src="js/slepen.js"></script>
 
     <script data-goatcounter="https://jessekunsd.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 

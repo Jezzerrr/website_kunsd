@@ -13,7 +13,8 @@
    9. Jouw Kunsd: bovenaan, voorbeelden, resultaat, tips en delen
    10. Contactformulier
    11. Kleine schermen (alle aanpassingen voor mobiel staan hier bij elkaar)
-   12. Printen (alleen het resultaat op Jouw Kunsd)
+   12. Brede schermen (laptop en pc: meer naast elkaar)
+   13. Printen (alleen het resultaat op Jouw Kunsd)
    ========================================================================== */
 
 
@@ -36,10 +37,13 @@
 
 
 /* ---------- 2. Basis ---------- */
+/* De pagina is maximaal 1240px breed (was 1000px): op een laptop of pc-scherm gebruik je zo
+   meer van de ruimte, en lange teksten houden hun eigen, smallere breedte zodat ze prettig lezen.
+   Op een telefoon verandert er niets. */
 body {
-    max-width: 1000px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px clamp(20px, 3vw, 40px);
     color: var(--ink);
     background: #ffffff;
     font-family: "Syne", sans-serif;
@@ -63,6 +67,23 @@ nav a:hover {
     color: var(--accent);
     text-decoration: underline;
     transform: rotate(3deg) scale(1.1);
+}
+
+/* Knop rechts in het menu, naar het maken van je tekenpuzzel (op mobiel verborgen, zie 11) */
+nav .nav-cta {
+    margin-top: -4px;               /* even hoog als de andere menu-items */
+    margin-left: auto;
+    padding: 4px 14px;
+    color: white;
+    background: var(--ink);
+    border-radius: 999px;
+}
+
+nav .nav-cta:hover {
+    color: white;
+    background: var(--accent);
+    text-decoration: none;
+    transform: none;
 }
 
 /* De pagina waar je nu bent: dikke streep eronder */
@@ -385,6 +406,12 @@ body.lightbox-open {
 .slide-show-header p,
 .slide-show-header h2 {
     margin: 0;
+}
+
+/* De twee museumfoto's van De Portrettenparade onder elkaar */
+.parade-fotos {
+    display: grid;
+    gap: 26px;
 }
 
 .slide-show-photos {
@@ -2099,6 +2126,11 @@ body.lightbox-open {
         gap: 8px 14px;
     }
 
+    /* Op een telefoon geen extra knop in het menu: de pagina's zelf hebben hun knoppen al */
+    nav .nav-cta {
+        display: none;
+    }
+
     .gallery,
     .steps,
     .steps-4,
@@ -2231,7 +2263,273 @@ body.lightbox-open {
 }
 
 
-/* ---------- 12. Printen ---------- */
+/* ---------- 12. Brede schermen (laptop en pc) ----------
+   Alles hieronder geldt alleen vanaf 1100px breed. Telefoons en tablets houden de gewone
+   opbouw van hierboven: onder elkaar, in dezelfde volgorde. */
+.result-placeholder {
+    display: none;                  /* alleen op een breed scherm, zie hieronder */
+}
+
+/* Melding als je een foto boven de pagina sleept (js/slepen.js) */
+.drop-overlay {
+    position: fixed;
+    inset: 12px;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+    background: rgba(251, 246, 234, 0.92);
+    border: 4px dashed var(--ink);
+    border-radius: var(--radius-l);
+    font-size: 1.6rem;
+    font-weight: 800;
+    pointer-events: none;
+}
+
+body.is-dragging .drop-overlay {
+    display: flex;
+}
+
+.drop-hint {
+    display: none;
+}
+
+@media screen and (min-width: 1100px) {
+    /* Grotere titel en meer lucht bovenaan */
+    h1 {
+        font-size: 2.6rem;
+        line-height: 1.15;
+    }
+
+    .art-hero {
+        grid-template-columns: 1.1fr 1fr;
+        gap: 64px;
+    }
+
+    .art-hero .before-after {
+        max-width: 520px;
+        justify-self: center;
+        width: 100%;
+    }
+
+    .puzzle-hero {
+        padding: 48px 56px;
+    }
+
+    /* Puzzels: drie naast elkaar in plaats van twee (scheelt de helft scrollen).
+       De uitgelichte puzzel blijft over de hele breedte; de Speeltuin vult het laatste gat. */
+    .examples {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .examples .example-card-wide {
+        display: flex;
+        grid-column: auto;
+    }
+
+    .examples .example-card-wide .example-image {
+        max-width: none;
+    }
+
+    .example-card-featured {
+        grid-template-columns: 1fr 1.4fr;
+        gap: 48px;
+        padding: 28px;
+    }
+
+    .example-card-featured .example-image {
+        max-width: 440px;
+    }
+
+    /* "Sleep je foto hierheen" naast de knop: op een pc staan foto's vaak in een map */
+    .drop-hint {
+        display: inline;
+        margin-left: 14px;
+        color: var(--muted);
+    }
+
+    /* Werkplek: links foto en instellingen, rechts het resultaat dat in beeld blijft */
+    .workspace {
+        padding: 40px 44px 44px;
+    }
+
+    .werkbank {
+        display: grid;
+        grid-template-columns: minmax(380px, 440px) 1fr;
+        gap: 44px;
+        align-items: start;
+    }
+
+    .werkbank-instellingen .upload-section {
+        margin-top: 10px;
+    }
+
+    /* Blijft naast je instellingen in beeld als je scrolt (zolang het past) */
+    .werkbank-uitkomst {
+        position: sticky;
+        top: 16px;
+    }
+
+    /* De rechterkolom begint op dezelfde hoogte als de linker */
+    .werkbank-uitkomst > :first-child,
+    .werkbank-uitkomst #result-container {
+        margin-top: 10px;
+    }
+
+    .werkbank-uitkomst #result-container > h2 {
+        margin-top: 0;
+    }
+
+    /* Resultaat zo groot als past, zonder dat de knoppen eronder uit beeld vallen */
+    .werkbank-uitkomst .result-image {
+        width: auto;
+        max-width: 100%;
+        max-height: calc(100vh - 150px);
+        margin: 0 auto;
+    }
+
+    .werkbank-uitkomst .status-message {
+        margin-top: 10px;
+    }
+
+    /* Zolang er geen resultaat is: een rustig voorbeeld van een tekenvel met uitleg */
+    body:not(.has-result) .result-placeholder {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 28px;
+        align-items: center;
+        padding: 28px;
+        background: white;
+        border: 2px dashed #d9cfb8;
+        border-radius: var(--radius-l);
+    }
+
+    .result-placeholder img {
+        width: 100%;
+        height: auto;
+        opacity: 0.55;
+        transform: rotate(-3deg);
+        box-shadow: var(--shadow);
+    }
+
+    .result-placeholder p {
+        margin: 0;
+        color: var(--muted);
+    }
+
+    .result-placeholder strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--ink);
+        font-size: 1.2rem;
+    }
+
+    /* Foto links kleiner, zodat de instellingen eronder sneller in beeld zijn */
+    .werkbank-instellingen .uploaded-image,
+    .werkbank-instellingen .cropped-preview-frame {
+        max-height: 360px;
+        object-fit: contain;
+    }
+
+    .werkbank-instellingen .algorithm-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .werkbank-instellingen .algorithm-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .werkbank-instellingen .algorithm-button {
+        min-width: 0;
+        padding-right: 12px;
+        font-size: 0.95rem;
+    }
+
+    /* Bijsnijden, Uitknippen, Draaien, Spiegelen: kleiner, zodat ze op één regel passen */
+    .werkbank-instellingen .image-section .button-row button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    /* Bijsnijden of uitknippen: dan even de hele breedte, het resultaat komt er weer naast als je klaar bent */
+    .werkbank:has(#crop-container:not(.hidden)),
+    .werkbank:has(#cutout-container:not(.hidden)) {
+        grid-template-columns: 1fr;
+    }
+
+    .werkbank:has(#crop-container:not(.hidden)) .werkbank-uitkomst,
+    .werkbank:has(#cutout-container:not(.hidden)) .werkbank-uitkomst {
+        display: none;
+    }
+
+    /* Mijn Kunsd: foto en verhaal naast elkaar in plaats van alles in een smalle kolom links */
+    .mijn-kunst-page main {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 0 56px;
+        align-items: start;
+    }
+
+    .mijn-kunst-page main > h1,
+    .mijn-kunst-page .slide-show {
+        grid-column: 1 / -1;
+    }
+
+    .mijn-kunst-page .featured-art img {
+        width: 100%;
+        max-width: none;
+    }
+
+    .mijn-kunst-page .intro-tekst p:first-child {
+        margin-top: 0;
+    }
+
+    /* Een greep uit de verzameling: over de hele breedte, foto's groter */
+    .mijn-kunst-page .slide-show {
+        width: 100%;
+        max-width: none;
+        margin-top: 64px;
+    }
+
+    .mijn-kunst-page .slide-show-photos {
+        gap: 24px;
+    }
+
+    /* De Portrettenparade: verhaal links, museumfoto's rechts */
+    .mijn-kunst-page .parade-tekst {
+        grid-column: 1;
+        grid-row: 4;
+    }
+
+    .mijn-kunst-page .parade-fotos {
+        grid-column: 2;
+        grid-row: 4;
+        margin-top: 56px;
+    }
+
+    /* Contact: uitleg links, formulier rechts (beide direct in beeld) */
+    main:has(> .contact-intro) {
+        display: grid;
+        grid-template-columns: 1fr 1.1fr;
+        gap: 56px;
+        align-items: start;
+    }
+
+    .contact-form {
+        max-width: none;
+        margin-top: 0;
+    }
+
+    /* Tips: vier naast elkaar */
+    .tips {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+
+/* ---------- 13. Printen ---------- */
 /* Op Jouw Kunsd, met een resultaat in beeld: alleen het resultaat op papier, zo groot mogelijk */
 @media print {
     @page {
@@ -2246,7 +2544,9 @@ body.lightbox-open {
     body.jouw-kunst-page.has-result header,
     body.jouw-kunst-page.has-result footer,
     body.jouw-kunst-page.has-result main > :not(#aan-de-slag),
-    body.jouw-kunst-page.has-result #aan-de-slag > :not(#result-container),
+    body.jouw-kunst-page.has-result #aan-de-slag > :not(.werkbank),
+    body.jouw-kunst-page.has-result .werkbank > :not(.werkbank-uitkomst),
+    body.jouw-kunst-page.has-result .werkbank-uitkomst > :not(#result-container),
     body.jouw-kunst-page.has-result #result-container > :not(.result-image) {
         display: none !important;
     }
@@ -2254,6 +2554,15 @@ body.lightbox-open {
     body.jouw-kunst-page.has-result #result-container,
     body.jouw-kunst-page.has-result #aan-de-slag {
         margin: 0;
+    }
+
+    /* Op papier geen kolommen */
+    body.jouw-kunst-page.has-result .werkbank {
+        display: block;
+    }
+
+    body.jouw-kunst-page.has-result .werkbank-uitkomst {
+        position: static;
     }
 
     /* Geen geel kader van de werkplek op papier: alleen het resultaat, met wit eromheen */

@@ -1363,7 +1363,13 @@ function showResult(imageSource, scroll = true, pages = null, pdf = null, combin
     resultContainer.classList.remove("hidden");
 
     if (scroll) {
-        resultContainer.scrollIntoView({
+        // Op een breed scherm staat het resultaat in een kolom die meeschuift (zie "Brede schermen"
+        // in style.css); daar scrollen we naar de bovenkant van de werkbank, zodat je het hele
+        // resultaat naast je instellingen ziet.
+        const wideScreen = window.matchMedia("(min-width: 1100px)").matches;
+        const scrollTarget = wideScreen ? document.querySelector(".werkbank") : resultContainer;
+
+        scrollTarget.scrollIntoView({
             behavior: "smooth",
             block: "start"
         });
