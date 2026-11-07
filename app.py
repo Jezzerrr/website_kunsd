@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import mimetypes
 import os
 import re
 import time
@@ -32,6 +33,9 @@ from src.square_drift import image_to_square_drift
 from src.shadow_stripes import darkness_map, image_to_shadow_stripes
 
 app = Flask(__name__)
+
+# Lettertypebestanden (css/fonts/*.woff2) met het juiste type uitleveren; Windows kent het soms niet.
+mimetypes.add_type("font/woff2", ".woff2")
 
 
 def load_env_file(path):
@@ -82,7 +86,7 @@ SHAPE_CHOICES = {"brick", "triangles", "hexagons", "cubes", "octagons_squares", 
 # Wat de server als bestand mag uitleveren. Alles anders (app.py, src/, .env, .git, ...) niet.
 STATIC_FOLDERS = {"css", "js", "mijn_kunsd"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
-STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico"}
+STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico", ".woff2"}
 
 # De pagina's met een net adres: /mijn_kunst toont mijn_kunst.html. De homepagina (index.html) staat op /.
 PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt", "privacy"}
