@@ -11,7 +11,7 @@ from html import escape
 from pathlib import Path, PurePosixPath
 
 from PIL import Image, ImageDraw, ImageFilter, ImageOps, UnidentifiedImageError
-from flask import Flask, abort, jsonify, redirect, request, send_from_directory
+from flask import Flask, Response, abort, jsonify, redirect, request, send_from_directory
 
 from src.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.helper_functions.color_helpers import get_palette
@@ -89,6 +89,11 @@ PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt"
 # Verhuisde pagina's: oud adres -> nieuw adres. "Over mij" en "Kunsd" zijn samen "Mijn Kunsd" geworden.
 MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
 
+# Voor Google: het adres van de site en de pagina's die in de zoekresultaten mogen (sitemap.xml).
+# Bedankt en Muziek staan er niet in; die hebben <meta name="robots" content="noindex">.
+SITE_URL = "https://jesses-kunsd.onrender.com"
+SITEMAP_PAGES = ["/", "/jouw_kunst", "/mijn_kunst", "/speeltuin", "/contact"]
+
 # De map met foto's voor de diavoorstelling op "Mijn Kunsd"
 SLIDE_SHOW_FOLDER = "mijn_kunsd/slide_show"
 
@@ -117,6 +122,26 @@ contact_log = {}
 @app.route("/")
 def home():
     return send_from_directory(".", "index.html")
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    """Vertelt zoekmachines dat ze alles mogen bekijken, en waar de sitemap staat."""
+    text = f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
+    return Response(text, mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    """De lijst met pagina's voor Google (Search Console > Sitemaps)."""
+    urls = "".join(f"  <url><loc>{SITE_URL}{page}</loc></url>\n" for page in SITEMAP_PAGES)
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{urls}"
+        "</urlset>\n"
+    )
+    return Response(xml, mimetype="application/xml")
 
 
 @app.route("/<path:filename>")
