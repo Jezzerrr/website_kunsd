@@ -2722,3 +2722,28 @@ body.is-dragging .drop-overlay {
         box-shadow: none;
     }
 }
+
+/* Privacy-pagina: smalle kolom, rustig leesbaar */
+.privacy-page {
+    max-width: 720px;
+}
+
+.privacy-page a {
+    color: var(--ink);
+    font-weight: 600;
+    text-underline-offset: 3px;
+}
+
+.privacy-page a:hover {
+    color: var(--accent);
+}
+
+.privacy-page .privacy-date {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* Footer: link naar Privacy (later ook Steun KUNSD) */
+.site-footer .footer-links {
+    margin-bottom: 4px;
+}

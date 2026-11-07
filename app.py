@@ -85,7 +85,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico"}
 
 # De pagina's met een net adres: /mijn_kunst toont mijn_kunst.html. De homepagina (index.html) staat op /.
-PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt"}
+PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt", "privacy"}
 
 # Verhuisde pagina's: oud adres -> nieuw adres. "Over mij" en "Kunsd" zijn samen "Mijn Kunsd" geworden.
 MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
@@ -93,7 +93,7 @@ MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
 # Voor Google: het adres van de site en de pagina's die in de zoekresultaten mogen (sitemap.xml).
 # Bedankt en Muziek staan er niet in; die hebben <meta name="robots" content="noindex">.
 SITE_URL = "https://jesses-kunsd.onrender.com"
-SITEMAP_PAGES = ["/", "/jouw_kunst", "/mijn_kunst", "/speeltuin", "/contact"]
+SITEMAP_PAGES = ["/", "/jouw_kunst", "/mijn_kunst", "/speeltuin", "/contact", "/privacy"]
 
 # De map met foto's voor de diavoorstelling op "Mijn Kunsd"
 SLIDE_SHOW_FOLDER = "mijn_kunsd/slide_show"
