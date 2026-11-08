@@ -96,7 +96,7 @@ MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
 
 # Voor Google: het adres van de site en de pagina's die in de zoekresultaten mogen (sitemap.xml).
 # Bedankt en Muziek staan er niet in; die hebben <meta name="robots" content="noindex">.
-SITE_URL = "https://jesses-kunsd.onrender.com"
+SITE_URL = "https://kunsd.nl"
 SITEMAP_PAGES = ["/", "/jouw_kunst", "/mijn_kunst", "/speeltuin", "/contact", "/privacy"]
 
 # De map met foto's voor de diavoorstelling op "Mijn Kunsd"
@@ -118,6 +118,33 @@ EMAIL_ADDRESS = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 
 # Wanneer elke bezoeker (IP-adres) iets verstuurde, voor de spamrem. Leeg na een herstart; dat is goed genoeg.
 contact_log = {}
+
+
+# ---------------------------------------------------------------------------
+# Eigen domein: het oude adres doorsturen, en veiligheidsheaders
+# ---------------------------------------------------------------------------
+
+# Het oude Render-adres. Pagina's daar sturen we permanent (301) door naar SITE_URL: oude gedeelde
+# links blijven werken en Google neemt de vindbaarheid mee. Niet voor /api/... (cron-job.org en
+# formulieren die nog op het oude adres staan, blijven zo gewoon werken).
+OLD_HOSTS = {"jesses-kunsd.onrender.com"}
+
+
+@app.before_request
+def redirect_old_host():
+    host = request.host.split(":")[0].lower()
+    if host in OLD_HOSTS and request.method in ("GET", "HEAD") and not request.path.startswith("/api/"):
+        return redirect(SITE_URL + request.full_path.rstrip("?"), code=301)
+    return None
+
+
+@app.after_request
+def security_headers(response):
+    """Standaard veiligheidsheaders. HSTS: de browser gebruikt voortaan altijd https (een jaar lang)."""
+    response.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
 
 
 # ---------------------------------------------------------------------------
