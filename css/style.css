@@ -459,6 +459,7 @@ body.lightbox-open {
     box-sizing: border-box;
     flex: 1 1 0;
     min-width: 0;                   /* anders worden de foto's niet smaller dan hun eigen formaat */
+    height: auto;                   /* anders geldt height="1000" uit de html en wordt het vak 1000px hoog */
     aspect-ratio: 1;                /* twee even grote vakken, ook als een foto anders van vorm is */
     object-fit: contain;
     background: black;
