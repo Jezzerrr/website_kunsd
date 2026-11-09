@@ -108,7 +108,7 @@ SLIDE_SHOW_FOLDER = "mijn_kunsd/slide_show"
 #   RESEND_API_KEY  de sleutel van je Resend-account
 #   CONTACT_EMAIL   waar de mail heen gaat: het e-mailadres van je Resend-account
 RESEND_URL = "https://api.resend.com/emails"
-CONTACT_FROM = "KUNSD Website <onboarding@resend.dev>"     # afzender die Resend zonder eigen domein toestaat
+CONTACT_FROM = "KUNSD Website <website@kunsd.nl>"     # eigen domein, geverifieerd bij Resend (Domains)
 CONTACT_MAX_IMAGES = 3              # bijlagen (foto's en pdf's samen); gelijk houden met MAX_IMAGES in js/contact.js
 CONTACT_MAX_FILE_MB = 15            # gelijk houden met MAX_FILE_MB in js/contact.js
 CONTACT_MAX_PDF_MB = 8              # pdf's gaan onverkleind mee; Resend staat in totaal 40 MB per mail toe (na base64)
