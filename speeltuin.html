@@ -195,6 +195,66 @@
             </div>
         </section>
 
+        <section class="home-section workspace playground locked"
+                 data-endpoint="/api/cubist-facets"
+                 data-param="cuts"
+                 data-name="Cubist Facets"
+                 data-file="kunsd-cubist-facets.jpg">
+            <h2 class="step-title" data-step="2">Cubist Facets</h2>
+
+            <p class="section-intro">
+                Je foto gebroken langs rechte lijnen, als een kubistisch schilderij. Elk vlak laat je gezicht
+                net anders zien: gedraaid, verschoven, groter of kleiner, in een eigen tint. Elke keer andere
+                breuken: klik nog eens voor een nieuwe versie.
+            </p>
+
+            <div class="playground-grid">
+                <div class="playground-controls">
+                    <div class="slider-header">
+                        <label for="cubist-slider">Breuklijnen</label>
+                        <output for="cubist-slider">8</output>
+                    </div>
+
+                    <input type="range" id="cubist-slider" class="art-slider"
+                           min="3" max="14" step="1" value="8" data-unit="" disabled>
+
+                    <div class="slider-scale">
+                        <span>Weinig</span>
+                        <span>Veel</span>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="button" id="cubist-facets-button" class="create-button" disabled>
+                            Maak Cubist Facets
+                        </button>
+
+                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-cubist-facets">
+                            Download Afbeelding
+                        </a>
+                    </div>
+
+                    <p class="status-message hidden"></p>
+                </div>
+
+                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: jouw foto,
+                     en na "Maak": het resultaat. -->
+                <figure class="playground-result">
+                    <img
+                        class="playground-output"
+                        src="mijn_kunsd/voorbeelden/cubist-facets.jpg"
+                        alt="Voorbeeld van Cubist Facets: portret gebroken in schuine vlakken die elk iets verschoven zijn"
+                        width="650"
+                        height="800">
+
+                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
+
+                    <div class="photo-frame playground-input hidden">
+                        <img alt="Jouw foto">
+                    </div>
+                </figure>
+            </div>
+        </section>
+
         <!-- Shadow Stripes: geen Maak-knop. De strepen bewegen live mee met de slider (de browser rekent
              ze uit met een klein grijswaardenkaartje van de server, data-live); de download maakt de server. -->
         <section class="home-section workspace playground locked"

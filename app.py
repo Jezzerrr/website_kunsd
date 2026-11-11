@@ -31,6 +31,16 @@ from src.pen_up import image_to_pen_up
 from src.negative_circles import image_to_negative_circles
 from src.square_drift import image_to_square_drift
 from src.shadow_stripes import darkness_map, image_to_shadow_stripes
+from src.cubist_facets import image_to_cubist_facets
+from src.proeftuin.flow_strokes import image_to_flow_strokes
+from src.proeftuin.kaleido_face import image_to_kaleido_face
+from src.proeftuin.mondrian_split import image_to_mondrian_split
+from src.proeftuin.neon_edge import image_to_neon_edge
+from src.proeftuin.pixel_melt import image_to_pixel_melt
+from src.proeftuin.ridge_lines import image_to_ridge_lines
+from src.proeftuin.stained_glass import image_to_stained_glass
+from src.proeftuin.topo_face import image_to_topo_face
+from src.proeftuin.woven_portrait import image_to_woven_portrait
 
 app = Flask(__name__)
 
@@ -89,13 +99,14 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico", ".woff2"}
 
 # De pagina's met een net adres: /mijn_kunst toont mijn_kunst.html. De homepagina (index.html) staat op /.
-PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt", "privacy", "visie"}
+PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt", "privacy", "visie", "proeftuin"}
 
 # Verhuisde pagina's: oud adres -> nieuw adres. "Over mij" en "Kunsd" zijn samen "Mijn Kunsd" geworden.
 MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
 
 # Voor Google: het adres van de site en de pagina's die in de zoekresultaten mogen (sitemap.xml).
-# Bedankt en Muziek staan er niet in; die hebben <meta name="robots" content="noindex">.
+# Bedankt, Muziek en de geheime pagina's Visie en Proeftuin (alleen wie het adres kent) staan er niet in;
+# die hebben <meta name="robots" content="noindex">.
 SITE_URL = "https://kunsd.nl"
 SITEMAP_PAGES = ["/", "/jouw_kunst", "/mijn_kunst", "/speeltuin", "/contact", "/privacy"]
 
@@ -611,6 +622,17 @@ def square_drift():
     ))
 
 
+@app.route("/api/cubist-facets", methods=["POST"])
+@image_endpoint
+def cubist_facets():
+    # Speeltuin: de foto gebroken langs rechte lijnen, elk vlak iets gedraaid, verschoven en getint.
+    # Elke keer anders (toeval). Begonnen in de Proeftuin.
+    return photo_to_json(image_to_cubist_facets(
+        load_input_image(),
+        cuts=read_number("cuts", 8, 3, 14)
+    ))
+
+
 @app.route("/api/shadow-stripes", methods=["POST"])
 @image_endpoint
 def shadow_stripes():
@@ -635,6 +657,39 @@ def shadow_stripes_map():
         "height": dark.height,
         "map": base64.b64encode(dark.tobytes()).decode("ascii")
     })
+
+
+# Proeftuin (verborgen pagina /proeftuin): experimenten, waarvan de goede later naar de Speeltuin gaan.
+# Per experiment: de functie (in src/proeftuin/), de naam van de slider-waarde, standaard, minimum, maximum,
+# en of het resultaat een foto is (JPEG, klein) of vlakke kleuren en lijnen (PNG, scherp).
+# Een experiment verhuizen naar de Speeltuin: bestand naar src/, een eigen route zoals hierboven.
+PROEFTUIN = {
+    "pixel-melt": (image_to_pixel_melt, "melt", 60, 10, 100, True),
+    "kaleido-face": (image_to_kaleido_face, "mirrors", 6, 3, 12, True),
+    "mondrian-split": (image_to_mondrian_split, "blocks", 300, 60, 500, False),
+    "ridge-lines": (image_to_ridge_lines, "lines", 35, 15, 80, True),
+    "stained-glass": (image_to_stained_glass, "shards", 800, 150, 2500, True),
+    "flow-strokes": (image_to_flow_strokes, "length", 5, 1, 10, True),
+    "topo-face": (image_to_topo_face, "levels", 7, 4, 16, True),
+    "neon-edge": (image_to_neon_edge, "glow", 50, 0, 100, True),
+    "woven-portrait": (image_to_woven_portrait, "strips", 18, 8, 40, True),
+}
+
+
+@app.route("/api/proeftuin/<name>", methods=["POST"])
+def proeftuin(name):
+    """Eén adres voor alle experimenten: /api/proeftuin/pixel-melt, /api/proeftuin/kaleido-face, ..."""
+    if name not in PROEFTUIN:
+        abort(404)
+
+    function, param, default, minimum, maximum, is_photo = PROEFTUIN[name]
+
+    @image_endpoint
+    def run():
+        result = function(load_input_image(), read_number(param, default, minimum, maximum))
+        return photo_to_json(result) if is_photo else image_to_json(result)
+
+    return run()
 
 
 @app.route("/api/orient", methods=["POST"])
