@@ -14,24 +14,24 @@ from pathlib import Path, PurePosixPath
 from PIL import Image, ImageDraw, ImageFilter, ImageOps, UnidentifiedImageError
 from flask import Flask, Response, abort, jsonify, redirect, request, send_from_directory
 
-from src.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.helper_functions.color_helpers import get_palette
 from src.helper_functions.pdf_pages import pages_to_pdf
-from src.shape_division import image_to_shapes
-from src.shape_numbers import (
+from src.tekenpuzzels.chordinates import image_to_chordinates
+from src.tekenpuzzels.dotty_affair import image_to_dots, image_to_ranked_dots
+from src.tekenpuzzels.hatchwork import image_to_hatchwork
+from src.tekenpuzzels.pen_up import image_to_pen_up
+from src.tekenpuzzels.penpath import image_to_penpath
+from src.tekenpuzzels.shape_division import image_to_shapes
+from src.tekenpuzzels.shape_numbers import (
     image_to_numbered_shapes,
     image_to_palette_shapes,
     side_for_equal_area,
     suggest_shape_palette,
 )
-from src.chordinates import image_to_chordinates
-from src.hatchwork import image_to_hatchwork
-from src.penpath import image_to_penpath
-from src.pen_up import image_to_pen_up
-from src.negative_circles import image_to_negative_circles
-from src.square_drift import image_to_square_drift
-from src.shadow_stripes import darkness_map, image_to_shadow_stripes
-from src.cubist_facets import image_to_cubist_facets
+from src.speeltuin.cubist_facets import image_to_cubist_facets
+from src.speeltuin.negative_circles import image_to_negative_circles
+from src.speeltuin.shadow_stripes import darkness_map, image_to_shadow_stripes
+from src.speeltuin.square_drift import image_to_square_drift
 from src.proeftuin.flow_strokes import image_to_flow_strokes
 from src.proeftuin.kaleido_face import image_to_kaleido_face
 from src.proeftuin.mondrian_split import image_to_mondrian_split
@@ -466,20 +466,6 @@ def image_endpoint(function):
     return wrapper
 
 
-@app.route("/api/ranked-dots", methods=["POST"])
-@image_endpoint
-def ranked_dots():
-    input_image, grid_size = snap_to_dot_grid(load_dot_image())
-    colors = get_palette("gist_heat", 3, add_white=True, sort_by_darkness=True)
-
-    return image_to_json(image_to_ranked_dots(
-        input_image,
-        colors=colors,
-        grid_size=grid_size,
-        balance=0.5
-    ))
-
-
 @app.route("/api/dots", methods=["POST"])
 @image_endpoint
 def dots():
@@ -597,8 +583,25 @@ def hatchwork():
     return pages_to_json(result) if template else image_to_json(result)
 
 
-@app.route("/api/negative-circles", methods=["POST"])
-@image_endpoint
+# ---------------------------------------------------------------------------
+# De Speeltuin (/speeltuin): bewerkingen om alleen te bekijken. De algoritmes staan in src/speeltuin/.
+# Elke bewerking is hieronder een functie die zijn eigen instellingen leest; de tabel SPEELTUIN (onderaan
+# dit blok) koppelt de naam in het adres aan de functie: /api/speeltuin/negative-circles, ...
+# ---------------------------------------------------------------------------
+
+def ranked_dots():
+    # Speeltuin (RedBlack Dots): de foto in rode en zwarte stippen.
+    input_image, grid_size = snap_to_dot_grid(load_dot_image())
+    colors = get_palette("gist_heat", 3, add_white=True, sort_by_darkness=True)
+
+    return image_to_json(image_to_ranked_dots(
+        input_image,
+        colors=colors,
+        grid_size=grid_size,
+        balance=0.5
+    ))
+
+
 def negative_circles():
     # Speeltuin: zwart-wit vol cirkels, ertussen het negatief, en het geheel als rondje (PNG, doorzichtig erbuiten).
     # shift_x en shift_y verschuiven het raster van cirkels (sleep in de voorvertoning, zie js/speeltuin.js).
@@ -611,8 +614,6 @@ def negative_circles():
     ))
 
 
-@app.route("/api/square-drift", methods=["POST"])
-@image_endpoint
 def square_drift():
     # Speeltuin: rechthoekjes die van het midden naar buiten verschoven zijn. Elke keer anders (toeval).
     # Een foto vol kleurverloop: als JPEG veel kleiner dan als PNG.
@@ -622,8 +623,6 @@ def square_drift():
     ))
 
 
-@app.route("/api/cubist-facets", methods=["POST"])
-@image_endpoint
 def cubist_facets():
     # Speeltuin: de foto gebroken langs rechte lijnen, elk vlak iets gedraaid, verschoven en getint.
     # Elke keer anders (toeval). Begonnen in de Proeftuin.
@@ -633,19 +632,15 @@ def cubist_facets():
     ))
 
 
-@app.route("/api/shadow-stripes", methods=["POST"])
-@image_endpoint
 def shadow_stripes():
     # Speeltuin: de foto als zwarte strepen onder één hoek. Dit is de download; de live voorvertoning
-    # rekent de browser zelf uit met /api/shadow-stripes-map (zie js/speeltuin.js).
+    # rekent de browser zelf uit met /api/speeltuin/shadow-stripes-map (zie js/speeltuin.js).
     return image_to_json(image_to_shadow_stripes(
         load_input_image(),
         angle=read_number("angle", 20, -90, 90)
     ))
 
 
-@app.route("/api/shadow-stripes-map", methods=["POST"])
-@image_endpoint
 def shadow_stripes_map():
     """Het kleine grijswaardenkaartje (500 pixels op de langste zijde) waarmee de browser de strepen
     live uitrekent bij elke stand van de slider. Als ruwe bytes (0 = wit, 255 = zwart), in base64:
@@ -659,10 +654,29 @@ def shadow_stripes_map():
     })
 
 
+SPEELTUIN = {
+    "redblack-dots": ranked_dots,
+    "negative-circles": negative_circles,
+    "square-drift": square_drift,
+    "cubist-facets": cubist_facets,
+    "shadow-stripes": shadow_stripes,
+    "shadow-stripes-map": shadow_stripes_map,
+}
+
+
+@app.route("/api/speeltuin/<name>", methods=["POST"])
+def speeltuin(name):
+    """Eén adres voor de hele Speeltuin: /api/speeltuin/negative-circles, /api/speeltuin/square-drift, ..."""
+    if name not in SPEELTUIN:
+        abort(404)
+
+    return image_endpoint(SPEELTUIN[name])()
+
+
 # Proeftuin (verborgen pagina /proeftuin): experimenten, waarvan de goede later naar de Speeltuin gaan.
 # Per experiment: de functie (in src/proeftuin/), de naam van de slider-waarde, standaard, minimum, maximum,
 # en of het resultaat een foto is (JPEG, klein) of vlakke kleuren en lijnen (PNG, scherp).
-# Een experiment verhuizen naar de Speeltuin: bestand naar src/, een eigen route zoals hierboven.
+# Een experiment verhuizen naar de Speeltuin: bestand naar src/speeltuin/, een functie en een regel in SPEELTUIN.
 PROEFTUIN = {
     "pixel-melt": (image_to_pixel_melt, "melt", 60, 10, 100, True),
     "kaleido-face": (image_to_kaleido_face, "mirrors", 6, 3, 12, True),

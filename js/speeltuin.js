@@ -571,7 +571,7 @@ function setDownloadBusy(download, busy) {
 
 /* ---------- Negative Circles: de cirkels verschuiven ---------- */
 
-// De voorvertoning rekent hetzelfde raster uit als src/negative_circles.py: OUTER_MARGIN en een
+// De voorvertoning rekent hetzelfde raster uit als src/speeltuin/negative_circles.py: OUTER_MARGIN en een
 // cirkel precies in het midden, verschoven met circleShift (fracties van de afstand tussen twee cirkels).
 const CIRCLES_OUTER_MARGIN = 0.01;
 
@@ -688,10 +688,10 @@ function wrap(value) {
 
 /* ---------- Shadow Stripes: live voorvertoning ---------- */
 
-// De server stuurt één keer een klein grijswaardenkaartje van de foto (/api/shadow-stripes-map, zie
+// De server stuurt één keer een klein grijswaardenkaartje van de foto (/api/speeltuin/shadow-stripes-map, zie
 // data-live). Daarmee rekent de browser bij elke stand van de slider de strepen uit en tekent ze als
 // SVG (geen canvas, dat sommige browsers verstoren). De download maakt de server, met precies dezelfde
-// berekening in src/shadow_stripes.py: pas de getallen hieronder ALLEEN samen met die daar aan.
+// berekening in src/speeltuin/shadow_stripes.py: pas de getallen hieronder ALLEEN samen met die daar aan.
 const STRIPES = {
     across: 240,        // STRIPES_ACROSS
     light: 0.22,        // LIGHT
@@ -804,7 +804,7 @@ async function loadStripesMap(tool) {
 }
 
 
-// Tekent de strepen bij de hoek van de slider: zelfde berekening als stripe_segments in src/shadow_stripes.py
+// Tekent de strepen bij de hoek van de slider: zelfde berekening als stripe_segments in src/speeltuin/shadow_stripes.py
 function drawStripes(tool) {
     const map = tool.stripesMap;
     const angle = Number(tool.querySelector(".art-slider").value);

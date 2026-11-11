@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw
 
 from src.helper_functions.drawing import LINE_COLOR, NUMBER_COLOR, add_legend, get_font
 from src.helper_functions.lab_colors import balanced_color_bias, parse_color, rgb_to_lab
-from src.shape_division import (
+from src.tekenpuzzels.shape_division import (
     SHAPES,
     create_polygons,
     get_polygon_average,
