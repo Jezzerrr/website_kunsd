@@ -89,7 +89,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 STATIC_EXTENSIONS = IMAGE_EXTENSIONS | {".css", ".js", ".ico", ".woff2"}
 
 # De pagina's met een net adres: /mijn_kunst toont mijn_kunst.html. De homepagina (index.html) staat op /.
-PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt", "privacy"}
+PAGES = {"mijn_kunst", "jouw_kunst", "speeltuin", "muziek", "contact", "bedankt", "privacy", "visie"}
 
 # Verhuisde pagina's: oud adres -> nieuw adres. "Over mij" en "Kunsd" zijn samen "Mijn Kunsd" geworden.
 MOVED_PAGES = {"over-mij": "mijn_kunst", "kunst": "mijn_kunst"}
