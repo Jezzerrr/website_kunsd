@@ -48,13 +48,10 @@
 
             <p class="section-intro">
                 <a href="#pixel-melt">Pixel&nbsp;Melt</a> &middot;
-                <a href="#kaleido-face">Kaleido&nbsp;Face</a> &middot;
                 <a href="#mondrian-split">Mondrian&nbsp;Split</a> &middot;
                 <a href="#ridge-lines">Ridge&nbsp;Lines</a> &middot;
                 <a href="#stained-glass">Stained&nbsp;Glass</a> &middot;
                 <a href="#flow-strokes">Flow&nbsp;Strokes</a> &middot;
-                <a href="#topo-face">Topo&nbsp;Face</a> &middot;
-                <a href="#neon-edge">Neon&nbsp;Edge</a> &middot;
                 <a href="#woven-portrait">Woven&nbsp;Portrait</a>
             </p>
         </section>
@@ -119,7 +116,7 @@
             <h2 class="step-title" data-step="2">Pixel Melt</h2>
 
             <p class="section-intro">
-                Je foto smelt, als was die te warm is geworden. Alles zakt een beetje uit, en op sommige plekken druipt je gezicht in lange slierten naar beneden. Elke klik smelt het ergens anders.
+                Je foto smelt, als was die te warm is geworden. Alles zakt een beetje uit, en op sommige plekken druipt je gezicht in lange slierten weg: hier schuin naar links, daar naar rechts, in bochten. Elke klik smelt het anders.
             </p>
 
             <div class="playground-grid">
@@ -154,65 +151,8 @@
                     <img
                         class="playground-output"
                         src="mijn_kunsd/proeftuin/pixel-melt.jpg"
-                        alt="Voorbeeld van Pixel Melt: portret dat naar beneden uitrekt en in slierten druipt"
+                        alt="Voorbeeld van Pixel Melt: portret dat in schuine, gebogen slierten naar beneden druipt"
                         width="650"
-                        height="800"
-                        loading="lazy">
-
-                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
-
-                    <div class="photo-frame playground-input hidden">
-                        <img alt="Jouw foto">
-                    </div>
-                </figure>
-            </div>
-        </section>
-
-        <section class="home-section workspace playground locked" id="kaleido-face"
-                 data-endpoint="/api/proeftuin/kaleido-face"
-                 data-param="mirrors"
-                 data-name="Kaleido Face"
-                 data-file="kunsd-kaleido-face.jpg">
-            <h2 class="step-title" data-step="2">Kaleido Face</h2>
-
-            <p class="section-intro">
-                In het midden je gezicht zoals het is; daaromheen valt het uiteen in een caleidoscoop van je eigen ogen, haar en mond. Elke klik een andere mandala.
-            </p>
-
-            <div class="playground-grid">
-                <div class="playground-controls">
-                    <div class="slider-header">
-                        <label for="kaleido-face-slider">Spiegels</label>
-                        <output for="kaleido-face-slider">6</output>
-                    </div>
-
-                    <input type="range" id="kaleido-face-slider" class="art-slider"
-                           min="3" max="12" step="1" value="6" data-unit="" disabled>
-
-                    <div class="slider-scale">
-                        <span>Weinig</span>
-                        <span>Veel</span>
-                    </div>
-
-                    <div class="button-row">
-                        <button type="button" class="create-button" data-track="proeftuin-maak-kaleido-face" disabled>
-                            Maak Kaleido Face
-                        </button>
-
-                        <a class="secondary-button link-button playground-download hidden" data-track="proeftuin-download-kaleido-face">
-                            Download Afbeelding
-                        </a>
-                    </div>
-
-                    <p class="status-message hidden"></p>
-                </div>
-
-                <figure class="playground-result">
-                    <img
-                        class="playground-output"
-                        src="mijn_kunsd/proeftuin/kaleido-face.jpg"
-                        alt="Voorbeeld van Kaleido Face: gezicht in het midden van een mandala van gespiegelde ogen"
-                        width="800"
                         height="800"
                         loading="lazy">
 
@@ -286,22 +226,22 @@
                  data-endpoint="/api/proeftuin/ridge-lines"
                  data-param="lines"
                  data-name="Ridge Lines"
-                 data-file="kunsd-ridge-lines.jpg">
+                 data-file="kunsd-ridge-lines.png">
             <h2 class="step-title" data-step="2">Ridge Lines</h2>
 
             <p class="section-intro">
-                Je gezicht als berglandschap van gekleurd karton. Elke laag komt omhoog waar je foto donker is, heeft de kleur van je foto op die hoogte en werpt een schaduw op de laag erachter.
+                Je foto als een stapel witte golflijnen op zwart, zoals het signaal van een pulsar. Waar je foto donker is, schieten de lijnen omhoog tot een bergketen. Abstract: je herkent hooguit nog een silhouet. Elke klik andere bergen.
             </p>
 
             <div class="playground-grid">
                 <div class="playground-controls">
                     <div class="slider-header">
-                        <label for="ridge-lines-slider">Aantal Lagen</label>
-                        <output for="ridge-lines-slider">35</output>
+                        <label for="ridge-lines-slider">Aantal Lijnen</label>
+                        <output for="ridge-lines-slider">50</output>
                     </div>
 
                     <input type="range" id="ridge-lines-slider" class="art-slider"
-                           min="15" max="80" step="5" value="35" data-unit="" disabled>
+                           min="30" max="120" step="5" value="50" data-unit="" disabled>
 
                     <div class="slider-scale">
                         <span>Weinig</span>
@@ -325,7 +265,7 @@
                     <img
                         class="playground-output"
                         src="mijn_kunsd/proeftuin/ridge-lines.jpg"
-                        alt="Voorbeeld van Ridge Lines: portret als lagen golvend gekleurd karton met schaduwen"
+                        alt="Voorbeeld van Ridge Lines: witte golflijnen op zwart die samen een bergketen vormen"
                         width="650"
                         height="800"
                         loading="lazy">
@@ -440,120 +380,6 @@
                         class="playground-output"
                         src="mijn_kunsd/proeftuin/flow-strokes.jpg"
                         alt="Voorbeeld van Flow Strokes: geschilderd portret met zichtbare, krullende penseelstreken"
-                        width="650"
-                        height="800"
-                        loading="lazy">
-
-                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
-
-                    <div class="photo-frame playground-input hidden">
-                        <img alt="Jouw foto">
-                    </div>
-                </figure>
-            </div>
-        </section>
-
-        <section class="home-section workspace playground locked" id="topo-face"
-                 data-endpoint="/api/proeftuin/topo-face"
-                 data-param="levels"
-                 data-name="Topo Face"
-                 data-file="kunsd-topo-face.jpg">
-            <h2 class="step-title" data-step="2">Topo Face</h2>
-
-            <p class="section-intro">
-                Je gezicht als maquette van gestapeld papier. Licht is hoog, donker is laag: elke hoogtelijn is de rand van een nieuw vel in een eigen kleur, met een schaduw op het vel eronder.
-            </p>
-
-            <div class="playground-grid">
-                <div class="playground-controls">
-                    <div class="slider-header">
-                        <label for="topo-face-slider">Aantal Lagen</label>
-                        <output for="topo-face-slider">7</output>
-                    </div>
-
-                    <input type="range" id="topo-face-slider" class="art-slider"
-                           min="4" max="16" step="1" value="7" data-unit="" disabled>
-
-                    <div class="slider-scale">
-                        <span>Weinig</span>
-                        <span>Veel</span>
-                    </div>
-
-                    <div class="button-row">
-                        <button type="button" class="create-button" data-track="proeftuin-maak-topo-face" disabled>
-                            Maak Topo Face
-                        </button>
-
-                        <a class="secondary-button link-button playground-download hidden" data-track="proeftuin-download-topo-face">
-                            Download Afbeelding
-                        </a>
-                    </div>
-
-                    <p class="status-message hidden"></p>
-                </div>
-
-                <figure class="playground-result">
-                    <img
-                        class="playground-output"
-                        src="mijn_kunsd/proeftuin/topo-face.jpg"
-                        alt="Voorbeeld van Topo Face: portret als gestapelde lagen gekleurd papier met schaduwen"
-                        width="650"
-                        height="800"
-                        loading="lazy">
-
-                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
-
-                    <div class="photo-frame playground-input hidden">
-                        <img alt="Jouw foto">
-                    </div>
-                </figure>
-            </div>
-        </section>
-
-        <section class="home-section workspace playground locked" id="neon-edge"
-                 data-endpoint="/api/proeftuin/neon-edge"
-                 data-param="glow"
-                 data-name="Neon Edge"
-                 data-file="kunsd-neon-edge.jpg">
-            <h2 class="step-title" data-step="2">Neon Edge</h2>
-
-            <p class="section-intro">
-                Je portret in een donkere kamer, alleen verlicht door zijn eigen omtrek. De grote lijnen van je gezicht worden neonbuizen in roze, blauw en geel, en hun licht valt op je gezicht.
-            </p>
-
-            <div class="playground-grid">
-                <div class="playground-controls">
-                    <div class="slider-header">
-                        <label for="neon-edge-slider">Gloed</label>
-                        <output for="neon-edge-slider">50%</output>
-                    </div>
-
-                    <input type="range" id="neon-edge-slider" class="art-slider"
-                           min="0" max="100" step="10" value="50" data-unit="%" disabled>
-
-                    <div class="slider-scale">
-                        <span>Donker</span>
-                        <span>Fel</span>
-                    </div>
-
-                    <div class="button-row">
-                        <button type="button" class="create-button" data-track="proeftuin-maak-neon-edge" disabled>
-                            Maak Neon Edge
-                        </button>
-
-                        <a class="secondary-button link-button playground-download hidden" data-track="proeftuin-download-neon-edge">
-                            Download Afbeelding
-                        </a>
-                    </div>
-
-                    <p class="status-message hidden"></p>
-                </div>
-
-                <figure class="playground-result">
-                    <img
-                        class="playground-output"
-                        src="mijn_kunsd/proeftuin/neon-edge.jpg"
-                        alt="Voorbeeld van Neon Edge: donker portret verlicht door roze, blauwe en gele neonlijnen"
                         width="650"
                         height="800"
                         loading="lazy">

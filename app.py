@@ -34,13 +34,10 @@ from src.speeltuin.negative_circles import image_to_negative_circles
 from src.speeltuin.shadow_stripes import darkness_map, image_to_shadow_stripes
 from src.speeltuin.square_drift import image_to_square_drift
 from src.proeftuin.flow_strokes import image_to_flow_strokes
-from src.proeftuin.kaleido_face import image_to_kaleido_face
 from src.proeftuin.mondrian_split import image_to_mondrian_split
-from src.proeftuin.neon_edge import image_to_neon_edge
 from src.proeftuin.pixel_melt import image_to_pixel_melt
 from src.proeftuin.ridge_lines import image_to_ridge_lines
 from src.proeftuin.stained_glass import image_to_stained_glass
-from src.proeftuin.topo_face import image_to_topo_face
 from src.proeftuin.woven_portrait import image_to_woven_portrait
 
 app = Flask(__name__)
@@ -684,20 +681,17 @@ def speeltuin(name):
 # Een experiment verhuizen naar de Speeltuin: bestand naar src/speeltuin/, een functie en een regel in SPEELTUIN.
 PROEFTUIN = {
     "pixel-melt": (image_to_pixel_melt, "melt", 60, 10, 100, True),
-    "kaleido-face": (image_to_kaleido_face, "mirrors", 6, 3, 12, True),
     "mondrian-split": (image_to_mondrian_split, "blocks", 300, 60, 500, False),
-    "ridge-lines": (image_to_ridge_lines, "lines", 35, 15, 80, True),
+    "ridge-lines": (image_to_ridge_lines, "lines", 50, 30, 120, False),
     "stained-glass": (image_to_stained_glass, "shards", 800, 150, 2500, True),
     "flow-strokes": (image_to_flow_strokes, "length", 5, 1, 10, True),
-    "topo-face": (image_to_topo_face, "levels", 7, 4, 16, True),
-    "neon-edge": (image_to_neon_edge, "glow", 50, 0, 100, True),
     "woven-portrait": (image_to_woven_portrait, "strips", 18, 8, 40, True),
 }
 
 
 @app.route("/api/proeftuin/<name>", methods=["POST"])
 def proeftuin(name):
-    """Eén adres voor alle experimenten: /api/proeftuin/pixel-melt, /api/proeftuin/kaleido-face, ..."""
+    """Eén adres voor alle experimenten: /api/proeftuin/pixel-melt, /api/proeftuin/ridge-lines, ..."""
     if name not in PROEFTUIN:
         abort(404)
 
