@@ -24,35 +24,54 @@ def image_to_neon_edge(image, glow=50):
     smooth = ndimage.gaussian_filter(lum, longest / 260)
     gx, gy = ndimage.sobel(smooth, 1), ndimage.sobel(smooth, 0)
     strength = np.hypot(gx, gy)
-    tube = np.clip((strength / np.percentile(strength, 99.3) - 0.28) * 2.2, 0, 1)
+    tube = np.clip((strength / np.float32(np.percentile(strength, 99.3)) - 0.28) * 2.2, 0, 1)
 
     # Dun maken: een buis is de kam van de randsterkte (plaatselijk maximum dwars op de rand)
     ridge = strength >= ndimage.maximum_filter(strength, size=max(3, int(longest / 230))) * 0.86
     tube = blur(tube * ridge, longest / 900)
-    tube = np.clip(tube / (np.percentile(tube, 99.7) + 1e-6), 0, 1) ** 0.8
+    tube = np.clip(tube / np.float32(np.percentile(tube, 99.7) + 1e-6), 0, 1) ** 0.8
+    del ridge, smooth
 
     # Kleur van de buis: naar de richting van de rand, rond over roze, blauw en geel. Zo heeft de
     # linkerkant van je gezicht een andere kleur dan de rechterkant, zoals bij een echte lichtreclame.
     # (Vervaagd, zodat één buis niet steeds van kleur verspringt.)
-    direction = np.stack([blur01(gx / (strength + 1e-6), longest / 60), blur01(gy / (strength + 1e-6), longest / 60)])
-    turn = (np.arctan2(direction[1], direction[0]) / (2 * np.pi)) % 1 * 3
+    # (Tussenresultaten worden steeds met del opgeruimd: Render heeft maar 512 MB geheugen.)
+    direction_x = blur01(gx / (strength + 1e-6), longest / 60)
+    direction_y = blur01(gy / (strength + 1e-6), longest / 60)
+    del gx, gy, strength
+    turn = (np.arctan2(direction_y, direction_x) / np.float32(2 * np.pi)) % 1 * 3
+    del direction_x, direction_y
     palette = np.stack([PINK, BLUE, YELLOW, PINK])
-    index = np.minimum(turn.astype(int), 2)
+    index = np.minimum(turn.astype(np.int8), 2)
     mix = (turn - index)[..., None]
-    color = palette[index] * (1 - mix) + palette[index + 1] * mix
-    tubes = color * tube[..., None]
+    del turn
+    tubes = palette[index] * (1 - mix)
+    tubes += palette[index + 1] * mix
+    tubes *= tube[..., None]
+    del index, mix
 
     # Het licht van de buizen: dichtbij fel, verder weg zacht
     near = blur(tubes, longest / 220)
     far = blur(tubes, longest / 45)
-    spill = near * 2.5 + far * (2 + 7 * glow)
+    far *= 2 + 7 * glow
+    far += near * 2.5                                                  # far is nu het strooilicht (spill)
 
     # De kamer: de foto zelf, bijna zwart, en alleen zichtbaar waar het neonlicht erop valt
     room = lum[..., None] ** 1.3
-    lit = room * (0.03 + spill * (0.6 + 1.6 * glow))
+    del pixels, lum
+    far *= 0.6 + 1.6 * glow
+    far += 0.03
+    far *= room                                                        # far is nu het licht in de kamer (lit)
+    del room
 
-    core = np.clip(tube - 0.55, 0, 1)[..., None] * 1.6                 # wit hart van de buis
-    return to_image(1 - np.exp(-(lit + tubes * 2.2 + near * 1.2 + core)))
+    far += tubes * 2.2
+    del tubes
+    far += near * 1.2
+    del near
+    far += np.clip(tube - 0.55, 0, 1)[..., None] * 1.6                 # wit hart van de buis
+    np.negative(far, out=far)
+    np.exp(far, out=far)
+    return to_image(1 - far)
 
 
 def blur(array, radius):

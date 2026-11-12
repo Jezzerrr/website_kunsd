@@ -41,6 +41,7 @@ def image_to_kaleido_face(image, mirrors=6, seed=None):
     zigzag = np.abs(np.mod(phase + 1, 2) - 1)
     kaleido_radius = FACE_RADIUS * (1 - 0.8 * (1 - zigzag))
     kaleido_radius = np.where(radius > FACE_RADIUS, kaleido_radius, radius)
+    del x, y, folded, phase, zigzag                          # opruimen: Render heeft maar 512 MB
 
     # Het gezicht zit meestal iets boven het midden; de rand van het gezicht valt op 0.4 van de foto
     reach = 0.5 * min(width, height) * 0.95 / FACE_RADIUS * 0.45
@@ -53,9 +54,14 @@ def image_to_kaleido_face(image, mirrors=6, seed=None):
                          for c in range(3)], axis=-1)
 
     face = sample(radius, angle)
+    del angle
     kaleido = saturate(sample(kaleido_radius, kaleido_angle), 1.5)
+    del kaleido_radius, kaleido_angle, pixels
 
     # Zachte overgang van gezicht naar caleidoscoop
     t = np.clip((radius - FACE_RADIUS) / BLEND, 0, 1)[..., None]
     t = t * t * (3 - 2 * t)
-    return to_image(face * (1 - t) + kaleido * t)
+    face *= 1 - t
+    kaleido *= t
+    face += kaleido
+    return to_image(face)

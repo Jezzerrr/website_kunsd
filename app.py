@@ -3,6 +3,7 @@ import io
 import json
 import mimetypes
 import os
+import math
 import re
 import time
 import urllib.error
@@ -74,6 +75,10 @@ HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 # MAX_IMAGE_SIZE (houdt het snel en het geheugen van de server beperkt).
 MIN_IMAGE_SIZE = 1600
 MAX_IMAGE_SIZE = 3000
+
+# De Speeltuin en de Proeftuin maken hun resultaat op hoogstens 2000 pixels (zie OUTPUT_SIZE in hun
+# bestanden). Daarom laden ze de foto niet groter in: dat houdt het geheugen onder de 512 MB van Render.
+WORK_IMAGE_SIZE = 2000
 
 # Langste zijde van het resultaat bij de stippen (Coloring Dots en RedBlack Dots). Stippen tekenen
 # kost bijna niets, dus we maken ze groot: scherp bij printen (A4 ongeveer 300 dpi).
@@ -607,7 +612,7 @@ def negative_circles():
     # shift_x en shift_y verschuiven het raster van cirkels (sleep in de voorvertoning, zie js/speeltuin.js).
     # Het rondje is het grootste vierkant in het midden van de uitsnede ("Kies Het Rondje" stuurt een vierkant mee).
     return image_to_json(image_to_negative_circles(
-        load_input_image(),
+        load_input_image(WORK_IMAGE_SIZE),
         circles_across=int(read_number("circles", 6, 3, 9)),
         shift_x=read_number("shift_x", 0, 0, 1),
         shift_y=read_number("shift_y", 0, 0, 1)
@@ -618,7 +623,7 @@ def square_drift():
     # Speeltuin: rechthoekjes die van het midden naar buiten verschoven zijn. Elke keer anders (toeval).
     # Een foto vol kleurverloop: als JPEG veel kleiner dan als PNG.
     return photo_to_json(image_to_square_drift(
-        load_input_image(),
+        load_input_image(WORK_IMAGE_SIZE),
         strength=read_number("strength", 60, 20, 100) / 100
     ))
 
@@ -627,7 +632,7 @@ def cubist_facets():
     # Speeltuin: de foto gebroken langs rechte lijnen, elk vlak iets gedraaid, verschoven en getint.
     # Elke keer anders (toeval). Begonnen in de Proeftuin.
     return photo_to_json(image_to_cubist_facets(
-        load_input_image(),
+        load_input_image(WORK_IMAGE_SIZE),
         cuts=read_number("cuts", 8, 3, 14)
     ))
 
@@ -636,7 +641,7 @@ def shadow_stripes():
     # Speeltuin: de foto als zwarte strepen onder één hoek. Dit is de download; de live voorvertoning
     # rekent de browser zelf uit met /api/speeltuin/shadow-stripes-map (zie js/speeltuin.js).
     return image_to_json(image_to_shadow_stripes(
-        load_input_image(),
+        load_input_image(WORK_IMAGE_SIZE),
         angle=read_number("angle", 20, -90, 90)
     ))
 
@@ -645,7 +650,7 @@ def shadow_stripes_map():
     """Het kleine grijswaardenkaartje (500 pixels op de langste zijde) waarmee de browser de strepen
     live uitrekent bij elke stand van de slider. Als ruwe bytes (0 = wit, 255 = zwart), in base64:
     zo hoeft de browser geen plaatje te ontleden met een canvas (dat sommige browsers verstoren)."""
-    dark = darkness_map(load_input_image())
+    dark = darkness_map(load_input_image(WORK_IMAGE_SIZE))
 
     return jsonify({
         "width": dark.width,
@@ -700,7 +705,7 @@ def proeftuin(name):
 
     @image_endpoint
     def run():
-        result = function(load_input_image(), read_number(param, default, minimum, maximum))
+        result = function(load_input_image(WORK_IMAGE_SIZE), read_number(param, default, minimum, maximum))
         return photo_to_json(result) if is_photo else image_to_json(result)
 
     return run()
@@ -740,9 +745,14 @@ def orient():
 # De foto en de instellingen inlezen
 # ---------------------------------------------------------------------------
 
-def load_input_image():
-    """De geüploade foto, bijgesneden als de bezoeker dat wilde, en op een bruikbare grootte gebracht."""
+def load_input_image(max_side=MAX_IMAGE_SIZE):
+    """De geüploade foto, bijgesneden als de bezoeker dat wilde, en op een bruikbare grootte gebracht.
+
+    max_side: de langste zijde van wat de bewerking nodig heeft. Een kleinere waarde scheelt veel
+    geheugen: een telefoonfoto van 12 megapixel kost uitgepakt al snel 150 MB of meer.
+    """
     image = Image.open(request.files["image"])
+    decode_smaller(image, max_side)
 
     # Draai de foto zoals de browser hem toont (telefoonfoto's hebben vaak
     # een rotatie-tag). Zo kloppen de coördinaten van de uitsnede.
@@ -756,11 +766,34 @@ def load_input_image():
     else:
         box = (0, 0) + original_size
 
-    image = ensure_min_size(limit_size(image, MAX_IMAGE_SIZE), MIN_IMAGE_SIZE)
+    image = ensure_min_size(limit_size(image, max_side), min(MIN_IMAGE_SIZE, max_side))
 
     # Uitgeknipt? Dan wordt alles buiten de getekende vorm wit. Pas na het schalen,
     # zodat het masker niet groter is dan nodig en de rand scherp blijft.
     return apply_cutout(image, original_size, box)
+
+
+def decode_smaller(image, max_side):
+    """Laat een JPEG meteen op 1/2, 1/4 of 1/8 van de grootte uitpakken als dat genoeg is.
+
+    Dat gebeurt tijdens het uitpakken zelf (JPEG "draft"), dus de volle foto komt nooit in het geheugen.
+    Er wordt alleen verkleind zolang de (bijgesneden) foto daarna nog minstens max_side pixels heeft.
+    """
+    if image.format != "JPEG":
+        return
+
+    width, height = image.size
+
+    # Telefoonfoto's die gedraaid getoond worden: de uitsnede gaat over de gedraaide foto
+    if image.getexif().get(0x0112) in (5, 6, 7, 8):
+        width, height = height, width
+
+    box = read_crop_box((width, height)) or (0, 0, width, height)
+    needed = max_side / max(box[2] - box[0], box[3] - box[1])
+
+    if needed < 1:
+        # draft kiest de kleinste schaal waarbij beide zijden nog minstens deze grootte hebben
+        image.draft("RGB", (math.ceil(image.width * needed), math.ceil(image.height * needed)))
 
 
 def load_dot_image():
