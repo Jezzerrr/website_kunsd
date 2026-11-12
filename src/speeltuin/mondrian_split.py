@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage
 
-from ._common import fit, hex_colors, luminance, stretch, to_array
+from src.helper_functions.arrays import fit, hex_colors, luminance, stretch, to_array
 
 WORK_SIZE = 400          # klein: het opdelen gebeurt op een mini-versie
 OUTPUT_SIZE = 2000

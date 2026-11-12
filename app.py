@@ -32,13 +32,13 @@ from src.tekenpuzzels.shape_numbers import (
 from src.speeltuin.cubist_facets import image_to_cubist_facets
 from src.speeltuin.negative_circles import image_to_negative_circles
 from src.speeltuin.shadow_stripes import darkness_map, image_to_shadow_stripes
-from src.speeltuin.square_drift import image_to_square_drift
+from src.speeltuin.mondrian_split import image_to_mondrian_split
+from src.speeltuin.ridge_lines import image_to_ridge_lines
+from src.speeltuin.woven_portrait import image_to_woven_portrait
 from src.proeftuin.flow_strokes import image_to_flow_strokes
-from src.proeftuin.mondrian_split import image_to_mondrian_split
 from src.proeftuin.pixel_melt import image_to_pixel_melt
-from src.proeftuin.ridge_lines import image_to_ridge_lines
+from src.proeftuin.square_drift import image_to_square_drift
 from src.proeftuin.stained_glass import image_to_stained_glass
-from src.proeftuin.woven_portrait import image_to_woven_portrait
 
 app = Flask(__name__)
 
@@ -616,12 +616,30 @@ def negative_circles():
     ))
 
 
-def square_drift():
-    # Speeltuin: rechthoekjes die van het midden naar buiten verschoven zijn. Elke keer anders (toeval).
-    # Een foto vol kleurverloop: als JPEG veel kleiner dan als PNG.
-    return photo_to_json(image_to_square_drift(
+def mondrian_split():
+    # Speeltuin: de foto in rechthoeken met dikke zwarte lijnen, in de kleuren van Mondriaan.
+    # Vlakke kleuren: als PNG (scherp en klein). Begonnen in de Proeftuin.
+    return image_to_json(image_to_mondrian_split(
         load_input_image(WORK_IMAGE_SIZE),
-        strength=read_number("strength", 60, 20, 100) / 100
+        blocks=read_number("blocks", 300, 60, 500)
+    ))
+
+
+def ridge_lines():
+    # Speeltuin: de foto als witte golflijnen op zwart, abstract. Elke keer anders (toeval).
+    # Begonnen in de Proeftuin.
+    return image_to_json(image_to_ridge_lines(
+        load_input_image(WORK_IMAGE_SIZE),
+        lines=read_number("lines", 50, 30, 120)
+    ))
+
+
+def woven_portrait():
+    # Speeltuin: de foto in kleur en in blauwdruk, in stroken door elkaar gevlochten. Elke keer anders
+    # (toeval). Begonnen in de Proeftuin.
+    return photo_to_json(image_to_woven_portrait(
+        load_input_image(WORK_IMAGE_SIZE),
+        strips=read_number("strips", 18, 8, 40)
     ))
 
 
@@ -659,8 +677,10 @@ def shadow_stripes_map():
 SPEELTUIN = {
     "redblack-dots": ranked_dots,
     "negative-circles": negative_circles,
-    "square-drift": square_drift,
     "cubist-facets": cubist_facets,
+    "mondrian-split": mondrian_split,
+    "ridge-lines": ridge_lines,
+    "woven-portrait": woven_portrait,
     "shadow-stripes": shadow_stripes,
     "shadow-stripes-map": shadow_stripes_map,
 }
@@ -668,7 +688,7 @@ SPEELTUIN = {
 
 @app.route("/api/speeltuin/<name>", methods=["POST"])
 def speeltuin(name):
-    """Eén adres voor de hele Speeltuin: /api/speeltuin/negative-circles, /api/speeltuin/square-drift, ..."""
+    """Eén adres voor de hele Speeltuin: /api/speeltuin/negative-circles, /api/speeltuin/cubist-facets, ..."""
     if name not in SPEELTUIN:
         abort(404)
 
@@ -681,17 +701,17 @@ def speeltuin(name):
 # Een experiment verhuizen naar de Speeltuin: bestand naar src/speeltuin/, een functie en een regel in SPEELTUIN.
 PROEFTUIN = {
     "pixel-melt": (image_to_pixel_melt, "melt", 60, 10, 100, True),
-    "mondrian-split": (image_to_mondrian_split, "blocks", 300, 60, 500, False),
-    "ridge-lines": (image_to_ridge_lines, "lines", 50, 30, 120, False),
     "stained-glass": (image_to_stained_glass, "shards", 800, 150, 2500, True),
     "flow-strokes": (image_to_flow_strokes, "length", 5, 1, 10, True),
-    "woven-portrait": (image_to_woven_portrait, "strips", 18, 8, 40, True),
+    # Square Drift (terug uit de Speeltuin): de slider is een percentage, het algoritme wil een fractie
+    "square-drift": (lambda image, value: image_to_square_drift(image, strength=value / 100),
+                     "strength", 60, 20, 100, True),
 }
 
 
 @app.route("/api/proeftuin/<name>", methods=["POST"])
 def proeftuin(name):
-    """Eén adres voor alle experimenten: /api/proeftuin/pixel-melt, /api/proeftuin/ridge-lines, ..."""
+    """Eén adres voor alle experimenten: /api/proeftuin/pixel-melt, /api/proeftuin/square-drift, ..."""
     if name not in PROEFTUIN:
         abort(404)
 

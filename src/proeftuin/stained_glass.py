@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFilter
 from scipy import ndimage
 from scipy.spatial import Voronoi, cKDTree
 
-from ._common import fit, luminance, saturate, stretch, to_array
+from src.helper_functions.arrays import fit, luminance, saturate, stretch, to_array
 
 OUTPUT_SIZE = 1800
 LABEL_SIZE = 360         # op deze mini-versie wordt de kleur per scherf bepaald

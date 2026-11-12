@@ -255,6 +255,186 @@
             </div>
         </section>
 
+        <section class="home-section workspace playground locked"
+                 data-endpoint="/api/speeltuin/mondrian-split"
+                 data-param="blocks"
+                 data-name="Mondrian Split"
+                 data-file="kunsd-mondrian-split.png">
+            <h2 class="step-title" data-step="2">Mondrian Split</h2>
+
+            <p class="section-intro">
+                Je foto opgedeeld in rechthoeken met dikke zwarte lijnen, in de kleuren van Mondriaan. De kleur
+                volgt licht en donker (zwart, blauw, rood, geel, wit), dus met genoeg vlakken kijkt je gezicht
+                terug.
+            </p>
+
+            <div class="playground-grid">
+                <div class="playground-controls">
+                    <div class="slider-header">
+                        <label for="mondrian-slider">Aantal Vlakken</label>
+                        <output for="mondrian-slider">300</output>
+                    </div>
+
+                    <input type="range" id="mondrian-slider" class="art-slider"
+                           min="60" max="500" step="20" value="300" data-unit="" disabled>
+
+                    <div class="slider-scale">
+                        <span>Abstract</span>
+                        <span>Herkenbaar</span>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="button" id="mondrian-split-button" class="create-button" disabled>
+                            Maak Mondrian Split
+                        </button>
+
+                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-mondrian-split">
+                            Download Afbeelding
+                        </a>
+                    </div>
+
+                    <p class="status-message hidden"></p>
+                </div>
+
+                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: jouw foto,
+                     en na "Maak": het resultaat. -->
+                <figure class="playground-result">
+                    <img
+                        class="playground-output"
+                        src="mijn_kunsd/voorbeelden/mondrian-split.jpg"
+                        alt="Voorbeeld van Mondrian Split: gezicht opgebouwd uit rechthoeken in rood, geel, blauw, wit en zwart"
+                        width="650"
+                        height="800">
+
+                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
+
+                    <div class="photo-frame playground-input hidden">
+                        <img alt="Jouw foto">
+                    </div>
+                </figure>
+            </div>
+        </section>
+
+        <section class="home-section workspace playground locked"
+                 data-endpoint="/api/speeltuin/ridge-lines"
+                 data-param="lines"
+                 data-name="Ridge Lines"
+                 data-file="kunsd-ridge-lines.png">
+            <h2 class="step-title" data-step="2">Ridge Lines</h2>
+
+            <p class="section-intro">
+                Je foto als een stapel witte golflijnen op zwart, zoals het signaal van een pulsar. Waar je foto
+                donker is, schieten de lijnen omhoog tot een bergketen. Abstract: je herkent hooguit nog een
+                silhouet. Elke keer andere bergen: klik nog eens voor een nieuwe versie.
+            </p>
+
+            <div class="playground-grid">
+                <div class="playground-controls">
+                    <div class="slider-header">
+                        <label for="ridge-slider">Aantal Lijnen</label>
+                        <output for="ridge-slider">50</output>
+                    </div>
+
+                    <input type="range" id="ridge-slider" class="art-slider"
+                           min="30" max="120" step="5" value="50" data-unit="" disabled>
+
+                    <div class="slider-scale">
+                        <span>Weinig</span>
+                        <span>Veel</span>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="button" id="ridge-lines-button" class="create-button" disabled>
+                            Maak Ridge Lines
+                        </button>
+
+                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-ridge-lines">
+                            Download Afbeelding
+                        </a>
+                    </div>
+
+                    <p class="status-message hidden"></p>
+                </div>
+
+                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: jouw foto,
+                     en na "Maak": het resultaat. -->
+                <figure class="playground-result">
+                    <img
+                        class="playground-output"
+                        src="mijn_kunsd/voorbeelden/ridge-lines.jpg"
+                        alt="Voorbeeld van Ridge Lines: witte golflijnen op zwart die samen een bergketen vormen"
+                        width="650"
+                        height="800">
+
+                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
+
+                    <div class="photo-frame playground-input hidden">
+                        <img alt="Jouw foto">
+                    </div>
+                </figure>
+            </div>
+        </section>
+
+        <section class="home-section workspace playground locked"
+                 data-endpoint="/api/speeltuin/woven-portrait"
+                 data-param="strips"
+                 data-name="Woven Portrait"
+                 data-file="kunsd-woven-portrait.jpg">
+            <h2 class="step-title" data-step="2">Woven Portrait</h2>
+
+            <p class="section-intro">
+                Twee afdrukken van je foto, in stroken gesneden en door elkaar gevlochten als een mandje: staand
+                in kleur, liggend in blauwdruk. Met de hand gesneden, dus elke strook ligt net iets scheef.
+                Elke keer anders gevlochten.
+            </p>
+
+            <div class="playground-grid">
+                <div class="playground-controls">
+                    <div class="slider-header">
+                        <label for="woven-slider">Aantal Stroken</label>
+                        <output for="woven-slider">18</output>
+                    </div>
+
+                    <input type="range" id="woven-slider" class="art-slider"
+                           min="8" max="40" step="2" value="18" data-unit="" disabled>
+
+                    <div class="slider-scale">
+                        <span>Breed</span>
+                        <span>Smal</span>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="button" id="woven-portrait-button" class="create-button" disabled>
+                            Maak Woven Portrait
+                        </button>
+
+                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-woven-portrait">
+                            Download Afbeelding
+                        </a>
+                    </div>
+
+                    <p class="status-message hidden"></p>
+                </div>
+
+                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: jouw foto,
+                     en na "Maak": het resultaat. -->
+                <figure class="playground-result">
+                    <img
+                        class="playground-output"
+                        src="mijn_kunsd/voorbeelden/woven-portrait.jpg"
+                        alt="Voorbeeld van Woven Portrait: portret gevlochten uit stroken in kleur en in blauw"
+                        width="650"
+                        height="800">
+
+                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
+
+                    <div class="photo-frame playground-input hidden">
+                        <img alt="Jouw foto">
+                    </div>
+                </figure>
+            </div>
+        </section>
+
         <!-- Shadow Stripes: geen Maak-knop. De strepen bewegen live mee met de slider (de browser rekent
              ze uit met een klein grijswaardenkaartje van de server, data-live); de download maakt de server. -->
         <section class="home-section workspace playground locked"
@@ -325,66 +505,6 @@
         </section>
 
         <section class="home-section workspace playground locked"
-                 data-endpoint="/api/speeltuin/square-drift"
-                 data-param="strength"
-                 data-name="Square Drift"
-                 data-file="kunsd-square-drift.jpg">
-            <h2 class="step-title" data-step="2">Square Drift</h2>
-
-            <p class="section-intro">
-                Honderden rechthoekjes uit je foto, gekopieerd en een stukje verder van het midden weer
-                geplakt. Het midden blijft heel, naar buiten toe valt je foto uiteen. Elke keer net anders:
-                klik nog eens voor een nieuwe versie.
-            </p>
-
-            <div class="playground-grid">
-                <div class="playground-controls">
-                    <div class="slider-header">
-                        <label for="drift-slider">Uiteenvallen</label>
-                        <output for="drift-slider">60%</output>
-                    </div>
-
-                    <input type="range" id="drift-slider" class="art-slider"
-                           min="20" max="100" step="10" value="60" data-unit="%" disabled>
-
-                    <div class="slider-scale">
-                        <span>Een Beetje</span>
-                        <span>Helemaal</span>
-                    </div>
-
-                    <div class="button-row">
-                        <button type="button" id="square-drift-button" class="create-button" disabled>
-                            Maak Square Drift
-                        </button>
-
-                        <a class="secondary-button link-button playground-download hidden" data-track="speeltuin-download-square-drift">
-                            Download Afbeelding
-                        </a>
-                    </div>
-
-                    <p class="status-message hidden"></p>
-                </div>
-
-                <!-- Zonder foto: een voorbeeld (met het label "Voorbeeld"). Met foto: jouw foto (of het rondje),
-                     en na "Maak": het resultaat. -->
-                <figure class="playground-result">
-                    <img
-                        class="playground-output"
-                        src="mijn_kunsd/voorbeelden/square-drift.jpg"
-                        alt="Voorbeeld van Square Drift: portret waarvan rechthoekjes naar buiten zijn verschoven"
-                        width="800"
-                        height="800">
-
-                    <span class="example-tag" aria-hidden="true">Voorbeeld</span>
-
-                    <div class="photo-frame playground-input hidden">
-                        <img alt="Jouw foto">
-                    </div>
-                </figure>
-            </div>
-        </section>
-
-        <section class="home-section workspace playground locked"
                  data-endpoint="/api/speeltuin/redblack-dots"
                  data-param="grid_size_percent"
                  data-extra="fill=false"
@@ -440,6 +560,22 @@
                         <img alt="Jouw foto">
                     </div>
                 </figure>
+            </div>
+        </section>
+
+        <!-- Doorverwijzing naar de Proeftuin: bewerkingen die nog in ontwikkeling zijn -->
+        <section class="home-section">
+            <p class="eyebrow">Nog Niet Af</p>
+            <h2>Proeftuin</h2>
+
+            <p class="section-intro">
+                In de Proeftuin staan de bewerkingen die nog in ontwikkeling zijn: experimenten die ik nog
+                niet goed genoeg vind voor de Speeltuin. Je mag er gewoon mee spelen. Wat goed bevalt,
+                verhuist later hierheen.
+            </p>
+
+            <div class="button-row">
+                <a href="/proeftuin" class="secondary-button link-button" data-track="speeltuin-naar-proeftuin">Naar De Proeftuin</a>
             </div>
         </section>
 

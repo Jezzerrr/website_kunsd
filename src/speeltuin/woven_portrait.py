@@ -8,7 +8,7 @@ strips (8-40): het aantal stroken in de breedte.
 import numpy as np
 from PIL import Image, ImageEnhance, ImageOps
 
-from ._common import fit, hex_colors
+from src.helper_functions.arrays import fit, hex_colors
 
 OUTPUT_SIZE = 1600
 INK, PAPER = hex_colors("#0f2a5f", "#f4efe2")        # blauwdruk: donker en licht

@@ -16,7 +16,7 @@ melt (10-100): hoe hard alles smelt.
 import numpy as np
 from scipy import ndimage
 
-from ._common import fit, luminance, to_array, to_image
+from src.helper_functions.arrays import fit, luminance, to_array, to_image
 
 WORK_SIZE = 1400
 LEAN = 0.8               # de grootste schuinte van het uitlopen (0.8 is ongeveer 40 graden)

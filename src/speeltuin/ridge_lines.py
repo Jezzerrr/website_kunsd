@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage
 
-from ._common import fit, luminance, stretch, to_array
+from src.helper_functions.arrays import fit, luminance, stretch, to_array
 
 OUTPUT_SIZE = 2000
 SUPERSAMPLE = 2          # twee keer zo groot tekenen en verkleinen: gladde lijnen

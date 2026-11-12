@@ -1,7 +1,6 @@
-"""Gedeelde hulpjes voor de experimenten in de Proeftuin (verborgen pagina /proeftuin).
+"""Gedeelde hulpjes voor de fotobewerkingen van de Speeltuin en de Proeftuin (src/speeltuin/, src/proeftuin/).
 
-Elk experiment staat in een eigen bestand, zodat je het makkelijk naar de echte Speeltuin kunt
-verhuizen als het goed bevalt. Alles werkt met float32-arrays tussen 0 en 1 (zuinig met geheugen).
+Alles werkt met float32-arrays tussen 0 en 1 (zuinig met geheugen).
 """
 import numpy as np
 from PIL import Image
