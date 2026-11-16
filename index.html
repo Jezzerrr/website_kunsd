@@ -10,9 +10,9 @@
     <link rel="preload" href="/css/fonts/syne-latin.woff2" as="font" type="font/woff2" crossorigin>
 
     <!-- Favicon (icoontje in het browsertabblad) -->
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/mijn_kunsd/delen/favicon/favicon-32x32.png">
-    <link rel="apple-touch-icon" href="/mijn_kunsd/delen/favicon/apple-touch-icon.png">
+    <link rel="icon" href="/favicon.ico?v=2" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="/mijn_kunsd/delen/favicon/favicon.svg?v=2">
+    <link rel="apple-touch-icon" href="/mijn_kunsd/delen/favicon/apple-touch-icon.png?v=2">
 
     <!-- Voor Google: het echte adres van deze pagina -->
     <link rel="canonical" href="https://kunsd.nl/">
@@ -25,10 +25,10 @@
     <meta property="og:url" content="https://kunsd.nl/">
     <meta property="og:title" content="KUNSD - Jesses Kunst">
     <meta property="og:description" content="Bekijk de digitale kunst van Jesse en ga zelf aan de slag: upload je foto, zijn algoritmes maken er een tekenpuzzel van, en jij tekent hem lijn voor lijn na.">
-    <meta property="og:image" content="https://kunsd.nl/mijn_kunsd/delen/deel_afbeelding.jpg">
+    <meta property="og:image" content="https://kunsd.nl/mijn_kunsd/delen/deel_afbeelding_logo.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="KUNSD: maak kunst van je eigen foto, met een kleurrijk abstract portret en een foto van Jesse">
+    <meta property="og:image:alt" content="Het logo van KUNSD in zwart, rood, geel en blauw, met de tekst: Teken Je Eigen Foto">
     <meta name="twitter:card" content="summary_large_image">
 </head>
 
@@ -36,6 +36,8 @@
 
     <header>
         <nav>
+            <!-- Het logo: bij elk bezoek een nieuwe versie (js/logo.js); zonder JavaScript het vaste logo -->
+            <a href="/" class="nav-logo" data-kunsd-logo data-track="menu-logo" aria-label="KUNSD, naar de homepagina"><img src="/mijn_kunsd/logo/kunsd-logo-kleur.svg" alt="" width="140" height="18"></a>
             <a href="/" aria-current="page">Home</a>
             <a href="/jouw_kunst">Jouw Kunsd</a>
             <a href="/mijn_kunst">Mijn Kunsd</a>
@@ -45,6 +47,7 @@
             <a href="/jouw_kunst#aan-de-slag" class="nav-cta" data-track="menu-maak-tekenpuzzel">Maak Je Tekenpuzzel</a>
         </nav>
     </header>
+    <script src="/js/logo.js"></script>
 
     <main>
 

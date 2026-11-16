@@ -117,6 +117,33 @@ nav .nav-cta:hover {
     transform: none;
 }
 
+/* ---------- Logo in het menu ----------
+   Het wisselende logo (js/logo.js) staat vooraan in het menu en linkt naar de homepagina.
+   Geen draai-effect zoals bij de andere menu-items: met de muis erover veegt er een nieuwe versie overheen. */
+nav .nav-logo {
+    display: block;
+    align-self: center;
+    width: 140px;
+    margin-right: 6px;
+    line-height: 0;
+}
+
+nav .nav-logo svg,
+nav .nav-logo img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+nav .nav-logo:hover {
+    transform: none;
+}
+
+nav .nav-logo:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+}
+
 /* De pagina waar je nu bent: dikke streep eronder */
 nav a[aria-current="page"] {
     text-decoration: underline;
@@ -2293,6 +2320,11 @@ main h1,
     /* Op een telefoon geen extra knop in het menu: de pagina's zelf hebben hun knoppen al */
     nav .nav-cta {
         display: none;
+    }
+
+    /* Het logo op een telefoon iets kleiner, gewoon vooraan tussen de menu-items */
+    nav .nav-logo {
+        width: 130px;
     }
 
     .gallery,
