@@ -134,21 +134,8 @@ contact_log = {}
 
 
 # ---------------------------------------------------------------------------
-# Eigen domein: het oude adres doorsturen, en veiligheidsheaders
+# Veiligheidsheaders
 # ---------------------------------------------------------------------------
-
-# Het oude Render-adres. Pagina's daar sturen we permanent (301) door naar SITE_URL: oude gedeelde
-# links blijven werken en Google neemt de vindbaarheid mee. Niet voor /api/... (cron-job.org en
-# formulieren die nog op het oude adres staan, blijven zo gewoon werken).
-OLD_HOSTS = {"jesses-kunsd.onrender.com"}
-
-
-@app.before_request
-def redirect_old_host():
-    host = request.host.split(":")[0].lower()
-    if host in OLD_HOSTS and request.method in ("GET", "HEAD") and not request.path.startswith("/api/"):
-        return redirect(SITE_URL + request.full_path.rstrip("?"), code=301)
-    return None
 
 
 @app.after_request
