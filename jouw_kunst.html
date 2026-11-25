@@ -422,6 +422,14 @@
 
                             <button
                                 type="button"
+                                id="background-remove-button"
+                                class="secondary-button"
+                                title="Laat de persoon op de foto automatisch uitknippen; de rest wordt wit. Dit gebeurt in je eigen browser.">
+                                Achtergrond Weghalen
+                            </button>
+
+                            <button
+                                type="button"
                                 id="rotate-button"
                                 class="secondary-button"
                                 title="Draai de foto een kwartslag rechtsom (met de klok mee)">
@@ -454,6 +462,7 @@
                         </div>
 
                         <p id="orient-status" class="crop-hint hidden" aria-live="polite"></p>
+                        <p id="background-status" class="crop-hint hidden" aria-live="polite"></p>
                     </section>
 
                     <!-- Bijsnijden: alleen zichtbaar na een klik op "Bijsnijden" -->
@@ -507,6 +516,19 @@
                             gezicht. Alles daarbuiten wordt wit, zodat een drukke achtergrond niet stoort.
                         </p>
 
+                        <!-- Wat slepen doet, zodra de vorm dicht is (zie js/uitknippen.js) -->
+                        <div id="cutout-tools" class="cutout-tools hidden" role="group" aria-label="Wat doet slepen?">
+                            <button type="button" id="cutout-tool-puntjes" class="secondary-button cutout-tool active" data-tool="edit" aria-pressed="true">
+                                Puntjes Verslepen
+                            </button>
+                            <button type="button" id="cutout-tool-wegknippen" class="secondary-button cutout-tool" data-tool="remove" aria-pressed="false">
+                                Stuk Wegknippen
+                            </button>
+                            <button type="button" id="cutout-tool-toevoegen" class="secondary-button cutout-tool" data-tool="add" aria-pressed="false">
+                                Stuk Toevoegen
+                            </button>
+                        </div>
+
                         <div id="cutout-stage" class="crop-stage cutout-stage">
                             <!-- De foto met de lijn; bij inzoomen wordt dit hele stuk groter -->
                             <div id="cutout-view" class="cutout-view">
@@ -516,6 +538,7 @@
                                     <path id="cutout-shade" class="cutout-shade"></path>
                                     <path id="cutout-line-under" class="cutout-line-under"></path>
                                     <path id="cutout-line" class="cutout-line"></path>
+                                    <path id="cutout-lasso" class="cutout-lasso"></path>
                                     <path id="cutout-dots" class="cutout-dots"></path>
                                     <path id="cutout-start" class="cutout-start"></path>
                                 </svg>
@@ -540,6 +563,7 @@
                                 <svg id="cutout-loupe-svg" class="cutout-svg" preserveAspectRatio="none">
                                     <path id="cutout-loupe-line-under" class="cutout-line-under"></path>
                                     <path id="cutout-loupe-line" class="cutout-line"></path>
+                                    <path id="cutout-loupe-lasso" class="cutout-lasso"></path>
                                 </svg>
                                 <span class="cutout-loupe-cross"></span>
                             </div>
@@ -1414,7 +1438,9 @@
     <!-- Volgorde: eerst analytics.js, dan jouw_kunst.js -->
     <script src="js/analytics.js"></script>
     <script src="js/jouw_kunst.js"></script>
+    <script src="js/omtrek.js"></script>
     <script src="js/uitknippen.js"></script>
+    <script src="js/achtergrond.js"></script>
     <script src="js/draaien.js"></script>
     <script src="js/slepen.js"></script>
 

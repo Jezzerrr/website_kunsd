@@ -967,6 +967,44 @@ body.lightbox-open {
     margin: 0 0 16px;
 }
 
+/* Wat slepen doet: Puntjes Verslepen, Stuk Wegknippen, Stuk Toevoegen */
+.cutout-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 12px;
+}
+
+.cutout-tools.hidden {
+    display: none;
+}
+
+/* De gekozen knop: geel, net als de lijn */
+.cutout-tool.active,
+.cutout-tool.active:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--sun);
+}
+
+.cutout-stage-lasso {
+    cursor: crosshair;
+}
+
+/* De lijn om een stuk dat weg moet (rood), of erbij moet (groen) */
+.cutout-lasso {
+    fill: rgba(204, 0, 0, 0.22);
+    stroke: var(--accent);
+    stroke-width: calc(2.5px / var(--cutout-zoom, 1));
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.cutout-lasso-add {
+    fill: rgba(42, 157, 143, 0.28);
+    stroke: #2a9d8f;
+}
+
 .cutout-hint-warning {
     color: var(--accent);
     font-weight: 600;

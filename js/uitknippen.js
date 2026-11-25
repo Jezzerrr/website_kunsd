@@ -7,15 +7,21 @@
 // - Kom je terug bij het startpunt, dan gaat de vorm dicht. Of klik op OK.
 // - Daarna kun je de puntjes verslepen, aan de lijn trekken voor een nieuw puntje, of
 //   binnen de vorm slepen om hem te verplaatsen.
+// - Of in één keer een heel stuk bijwerken, zoals met de lasso in Photoshop: kies Stuk Wegknippen
+//   of Stuk Toevoegen en teken om dat stuk. Bij loslaten gaat het eraf of komt het erbij. Dat
+//   rekent met een masker (canvas): de vorm en het stuk worden samen pixels, en daar maakt
+//   js/omtrek.js weer een vorm van. Dat werkt het best na Achtergrond Weghalen (js/achtergrond.js),
+//   want die vorm heeft veel puntjes.
 // - Is de vorm klein, dan zoomt het beeld vanzelf in, zodat bijwerken geen priegelwerk is.
 //   Zelf zoomen kan met de knoppen + en -, knijpen met twee vingers, of Ctrl + scrollwiel.
 //   Ingezoomd schuif je met twee vingers, het scrollwiel, of door naast de vorm te slepen.
 //
 // De punten zijn fracties van de foto (0 t/m 1), net als de uitsnede. De server knipt
-// (zie apply_cutout in app.py); hier wordt alleen getekend, zonder canvas.
+// (zie apply_cutout in app.py); hier wordt alleen getekend, zonder canvas (behalve bij
+// Stuk Wegknippen en Stuk Toevoegen; kleine verstoringen van een canvas maken daar niets uit).
 //
 // Gebruikt uit js/jouw_kunst.js: originalDataUrl, appliedShape, applyShape, track, clamp,
-// en de elementen originalContainer en algorithmSection.
+// en de elementen originalContainer en algorithmSection. Uit js/omtrek.js: outlineFromMask.
 
 const cutoutContainer = document.getElementById("cutout-container");
 const cutoutStage = document.getElementById("cutout-stage");
@@ -29,6 +35,10 @@ const cutoutLine = document.getElementById("cutout-line");
 const cutoutLineUnder = document.getElementById("cutout-line-under");
 const cutoutDots = document.getElementById("cutout-dots");
 const cutoutStart = document.getElementById("cutout-start");
+const cutoutLasso = document.getElementById("cutout-lasso");
+const cutoutLoupeLasso = document.getElementById("cutout-loupe-lasso");
+const cutoutTools = document.getElementById("cutout-tools");
+const cutoutToolButtons = cutoutTools.querySelectorAll("[data-tool]");
 const cutoutLoupe = document.getElementById("cutout-loupe");
 const cutoutLoupePhoto = document.getElementById("cutout-loupe-photo");
 const cutoutLoupeSvg = document.getElementById("cutout-loupe-svg");
@@ -61,6 +71,10 @@ const CUTOUT_DOT_SPACING = 14;
 // Nooit meer punten dan dit (de server accepteert er 2000).
 const CUTOUT_MAX_POINTS = 1500;
 
+// Stuk Wegknippen en Stuk Toevoegen: de vorm en het getekende stuk worden samen een masker
+// van deze grootte (langste zijde, in pixels). Groot genoeg dat de rand niet verschuift.
+const CUTOUT_MASK_SIZE = 2000;
+
 // Het kleinste stuk dat je mag uitknippen, als fractie van de foto.
 const CUTOUT_MIN_SIZE = 0.03;
 
@@ -88,6 +102,13 @@ const CUTOUT_HINTS = {
         "puntje, of sleep binnen de vorm om hem te verplaatsen. Klik daarna op OK.",
     zoomed: "Ingezoomd, zodat je de rand makkelijk bijwerkt: versleep de puntjes of trek aan de lijn. " +
         "Schuiven: sleep naast de vorm, of met twee vingers. Hele Foto laat alles weer zien. Klik daarna op OK.",
+    remove: "Teken een lijn om het stuk dat weg moet. Als je loslaat, wordt het eraf geknipt. " +
+        "Klik daarna op OK.",
+    add: "Teken een lijn om het stuk dat erbij moet, vast aan de vorm. Als je loslaat, komt het erbij. " +
+        "Klik daarna op OK.",
+    nothingLeft: "Dan blijft er niets over. Teken alleen om het stuk dat weg moet.",
+    notAttached: "Dat stuk zit los van de vorm, dus het komt er niet bij. Teken zo dat je lijn de vorm " +
+        "overlapt.",
     tooFew: "Teken eerst een lijn om wat je wilt houden.",
     tooSmall: "Die vorm is wel heel klein. Teken een grotere vorm, of zoom eerst in met Bijsnijden."
 };
@@ -96,6 +117,11 @@ let cutoutPoints = [];       // [[x, y], ...] als fracties van de foto
 let cutoutClosed = false;
 let cutoutHistory = [];      // eerdere toestanden, voor "Ongedaan Maken"
 let cutoutDrag = null;
+
+// Wat slepen doet bij een dichte vorm: "edit" (puntjes verslepen), "remove" (Stuk Wegknippen)
+// of "add" (Stuk Toevoegen). En de lijn die je daarvoor nu tekent.
+let cutoutTool = "edit";
+let cutoutLassoPoints = [];
 
 // Zoomen: vergroting en verschuiving (in schermpixels) van de foto binnen het kader.
 let cutoutZoom = { scale: 1, x: 0, y: 0 };
@@ -121,6 +147,8 @@ cutoutStartButton.addEventListener("click", function () {
     cutoutPoints = appliedShape ? appliedShape.map(function (point) { return [...point]; }) : [];
     cutoutClosed = Boolean(appliedShape);
     cutoutHistory = [];
+    cutoutTool = "edit";
+    cutoutLassoPoints = [];
 
     originalContainer.classList.add("hidden");
     algorithmSection.classList.add("hidden");
@@ -145,6 +173,7 @@ function closeCutoutEditor() {
     cutoutDrag = null;
     cutoutPinch = null;
     cutoutTouches.clear();
+    cutoutLassoPoints = [];
     cutoutLoupe.classList.add("hidden");
 
     cutoutContainer.classList.add("hidden");
@@ -201,6 +230,16 @@ cutoutClearButton.addEventListener("click", function () {
 
 
 cutoutUndoButton.addEventListener("click", undoCutout);
+
+
+// Puntjes Verslepen, Stuk Wegknippen of Stuk Toevoegen
+cutoutToolButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+        cutoutTool = button.dataset.tool;
+        track("uitknippen-" + button.id.replace("cutout-tool-", ""));
+        renderCutout();
+    });
+});
 
 
 // Ctrl+Z (of Cmd+Z) werkt ook, zolang het uitknippen open staat
@@ -267,7 +306,11 @@ cutoutStage.addEventListener("pointerdown", function (event) {
 
     cutoutDrag = null;
 
-    if (cutoutClosed) {
+    if (cutoutClosed && cutoutTool !== "edit") {
+        // Stuk Wegknippen of Stuk Toevoegen: een lijn om het stuk, verwerkt bij loslaten
+        cutoutLassoPoints = [clampPoint(point)];
+        cutoutDrag = { mode: "lasso", remembered: false };
+    } else if (cutoutClosed) {
         const index = nearestPoint(point, grab);
 
         if (index >= 0) {
@@ -355,6 +398,12 @@ cutoutStage.addEventListener("pointermove", function (event) {
             cutoutPoints.push(clampPoint(point));
             cutoutDrag.moved = true;
         }
+    } else if (cutoutDrag.mode === "lasso") {
+        const last = cutoutLassoPoints[cutoutLassoPoints.length - 1];
+
+        if (distanceInPixels(point, last) >= CUTOUT_STEP && cutoutLassoPoints.length < CUTOUT_MAX_POINTS) {
+            cutoutLassoPoints.push(clampPoint(point));
+        }
     } else if (cutoutDrag.mode === "point") {
         cutoutPoints[cutoutDrag.index] = clampPoint(point);
     } else if (cutoutDrag.mode === "move") {
@@ -383,6 +432,11 @@ function endCutoutDrag(event) {
     }
 
     let justClosed = false;
+    let warning = null;
+
+    if (cutoutDrag.mode === "lasso") {
+        warning = applyLasso();
+    }
 
     if (cutoutDrag.mode === "draw") {
         cutoutPoints = simplifyLine(cutoutPoints, CUTOUT_SIMPLIFY);
@@ -404,6 +458,10 @@ function endCutoutDrag(event) {
     cutoutLoupe.classList.add("hidden");
     renderCutout();
 
+    if (warning) {
+        showCutoutHint(warning, true);
+    }
+
     if (justClosed) {
         zoomToShape(true);
     }
@@ -417,8 +475,10 @@ function cancelCutoutDrag() {
     }
 
     cutoutDrag = null;
+    cutoutLassoPoints = [];
     cutoutStage.classList.remove("cutout-panning");
     cutoutLoupe.classList.add("hidden");
+    renderCutout();
 }
 
 
@@ -437,6 +497,108 @@ function moveShape(dx, dy) {
     cutoutPoints = cutoutPoints.map(function (point) {
         return [point[0] + dx, point[1] + dy];
     });
+}
+
+
+/* ---------- Stuk Wegknippen en Stuk Toevoegen ---------- */
+
+// Verwerkt de getekende lijn. Geeft de naam van een waarschuwing terug, of null.
+function applyLasso() {
+    const lasso = cutoutLassoPoints;
+    cutoutLassoPoints = [];
+
+    // Alleen getikt, of een heel klein krabbeltje: niets doen
+    if (lasso.length < 3) {
+        return null;
+    }
+
+    const shape = combineWithLasso(cutoutPoints, lasso, cutoutTool);
+
+    if (!shape) {
+        return "nothingLeft";
+    }
+
+    // Niets veranderd (bijv. een los stuk naast de vorm: alleen het grootste stuk telt)
+    const before = shapeArea(cutoutPoints);
+    const after = shapeArea(shape);
+
+    if (Math.abs(after - before) < before * 0.002) {
+        return cutoutTool === "add" ? "notAttached" : null;
+    }
+
+    track(cutoutTool === "remove" ? "uitknippen-stuk-weg" : "uitknippen-stuk-erbij");
+
+    rememberCutout();
+    cutoutPoints = shape;
+    return null;
+}
+
+
+// De vorm min (of plus) het getekende stuk, als nieuwe vorm. Valt de vorm in stukken uiteen,
+// dan blijft het grootste stuk over. Niets over: null.
+function combineWithLasso(shape, lasso, tool) {
+    const naturalWidth = cutoutImage.naturalWidth || 1;
+    const naturalHeight = cutoutImage.naturalHeight || 1;
+    const scale = CUTOUT_MASK_SIZE / Math.max(naturalWidth, naturalHeight);
+    const width = Math.max(1, Math.round(naturalWidth * scale));
+    const height = Math.max(1, Math.round(naturalHeight * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    context.fillStyle = "#000000";
+
+    fillShape(context, shape, width, height, "evenodd");
+
+    context.globalCompositeOperation = tool === "remove" ? "destination-out" : "source-over";
+    fillShape(context, lasso, width, height, "nonzero");
+
+    const pixels = context.getImageData(0, 0, width, height).data;
+    const values = new Float32Array(width * height);
+
+    for (let index = 0; index < values.length; index++) {
+        values[index] = pixels[index * 4 + 3] / 255;
+    }
+
+    return outlineFromMask(values, width, height, {
+        threshold: 0.5,
+        tolerance: CUTOUT_SIMPLIFY * Math.max(width, height) / 1000,
+        maxPoints: CUTOUT_MAX_POINTS
+    });
+}
+
+
+// De oppervlakte van een vorm (in fracties van de foto, dus 1 = de hele foto).
+function shapeArea(points) {
+    let area = 0;
+
+    points.forEach(function (point, index) {
+        const next = points[(index + 1) % points.length];
+        area += point[0] * next[1] - next[0] * point[1];
+    });
+
+    return Math.abs(area) / 2;
+}
+
+
+function fillShape(context, points, width, height, rule) {
+    context.beginPath();
+
+    points.forEach(function (point, index) {
+        const x = point[0] * width;
+        const y = point[1] * height;
+
+        if (index === 0) {
+            context.moveTo(x, y);
+        } else {
+            context.lineTo(x, y);
+        }
+    });
+
+    context.closePath();
+    context.fill(rule);
 }
 
 
@@ -598,9 +760,31 @@ function renderCutout() {
     // Dicht: alles buiten de vorm wordt bijna wit, zoals het straks wordt
     cutoutShade.setAttribute("d", cutoutClosed ? "M0 0H1V1H0Z " + line : "");
 
-    // Puntjes om te verslepen (een heel kort lijntje met ronde uiteinden is een rondje)
-    cutoutDots.setAttribute("d", cutoutClosed ? visibleDots().map(dotPath).join(" ") : "");
+    // Puntjes om te verslepen (een heel kort lijntje met ronde uiteinden is een rondje).
+    // Bij Stuk Wegknippen en Stuk Toevoegen niet: dan zitten ze alleen in de weg.
+    const editing = cutoutTool === "edit";
+    cutoutDots.setAttribute("d", cutoutClosed && editing ? visibleDots().map(dotPath).join(" ") : "");
     cutoutStart.setAttribute("d", !cutoutClosed && cutoutPoints.length ? dotPath(cutoutPoints[0]) : "");
+
+    // De lijn om een stuk dat weg moet (rood) of erbij moet (groen)
+    const lasso = linePath(cutoutLassoPoints, false);
+    [cutoutLasso, cutoutLoupeLasso].forEach(function (path) {
+        path.setAttribute("d", lasso);
+        path.classList.toggle("cutout-lasso-add", cutoutTool === "add");
+    });
+
+    // De keuze wat slepen doet: alleen bij een dichte vorm
+    if (!cutoutClosed) {
+        cutoutTool = "edit";
+    }
+
+    cutoutTools.classList.toggle("hidden", !cutoutClosed);
+    cutoutStage.classList.toggle("cutout-stage-lasso", cutoutClosed && cutoutTool !== "edit");
+    cutoutToolButtons.forEach(function (button) {
+        const active = button.dataset.tool === cutoutTool;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
 
     cutoutUndoButton.disabled = cutoutHistory.length === 0;
     cutoutClearButton.disabled = cutoutPoints.length === 0;
@@ -612,6 +796,10 @@ function renderCutout() {
 function currentCutoutHint() {
     if (!cutoutClosed) {
         return cutoutPoints.length ? "open" : "empty";
+    }
+
+    if (cutoutTool !== "edit") {
+        return cutoutTool;
     }
 
     return cutoutZoom.scale > 1 ? "zoomed" : "closed";
