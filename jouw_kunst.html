@@ -117,13 +117,13 @@
             </ol>
         </section>
 
-        <!-- De puzzels: één foto, zes tekenpuzzels, en onderaan een verwijzing naar de Speeltuin. Bij de tekenpuzzels kun je wisselen tussen
+        <!-- De puzzels: één foto, acht tekenpuzzels, en onderaan een verwijzing naar de Speeltuin. Bij de tekenpuzzels kun je wisselen tussen
              hoe het wordt als het af is en het tekenvel om te printen. -->
         <section id="voorbeelden" class="home-section">
             <h2>Kies Je Puzzel</h2>
 
             <p class="section-intro">
-                Zes tekenpuzzels, van rustig inkleuren tot honderden lijnen trekken. Alle voorbeelden zijn
+                Acht tekenpuzzels, van rustig inkleuren tot honderden lijnen trekken. Alle voorbeelden zijn
                 gemaakt van hetzelfde portret van mij. Bij elke tekenpuzzel zie je wat je
                 nodig hebt, hoe lang je ongeveer bezig bent en hoe pittig het is.
             </p>
@@ -229,6 +229,72 @@
                     </dl>
 
                     <button type="button" class="secondary-button try-button" data-algorithm="pen-up-settings" data-name="Pen Up" data-track="probeer-pen-up">Probeer Deze</button>
+                </article>
+
+                <article class="example-card">
+                    <div class="example-image">
+                        <img
+                            src="mijn_kunsd/voorbeelden/spiral-scribble.jpg"
+                            data-filled="mijn_kunsd/voorbeelden/spiral-scribble.jpg"
+                            data-empty="mijn_kunsd/voorbeelden/spiral-scribble-leeg.png"
+                            alt="Spiral Scribble: portret als één spiraal, met grote en kleine zigzags"
+                            width="640"
+                            height="640"
+                            loading="lazy">
+                    </div>
+
+                    <div class="view-toggle" role="group" aria-label="Voorbeeld van Spiral Scribble">
+                        <button type="button" class="active" data-view="filled" data-track="voorbeeld-spiral-scribble-af">Zo Wordt Het</button>
+                        <button type="button" data-view="empty" data-track="voorbeeld-spiral-scribble-om-te-printen">Tekenvel</button>
+                    </div>
+
+                    <h3>Spiral Scribble <span class="tag tag-new">Nieuw</span> <span class="tag tag-diy">Tekenpuzzel</span></h3>
+                    <p>
+                        Eén lange spiraal, van het midden naar buiten, zonder je pen op te tillen. Een
+                        "partituur" zegt per rondje waar je kriebelt: rustig, klein of zo wild dat je de buren
+                        raakt. In de partituur zie je nog niets; in de spiraal verschijnt je portret.
+                    </p>
+
+                    <dl class="puzzle-specs">
+                        <div><dt>Nodig</dt><dd>Fineliner (0,4 mm)</dd></div>
+                        <div><dt>Tijd</dt><dd>1 tot 2 uur</dd></div>
+                        <div><dt>Niveau</dt><dd><span class="level" role="img" style="--level: 2" aria-label="2 van 5"></span></dd></div>
+                    </dl>
+
+                    <button type="button" class="secondary-button try-button" data-algorithm="spiral-settings" data-name="Spiral Scribble" data-track="probeer-spiral-scribble">Probeer Deze</button>
+                </article>
+
+                <article class="example-card">
+                    <div class="example-image">
+                        <img
+                            src="mijn_kunsd/voorbeelden/coin-maze.jpg"
+                            data-filled="mijn_kunsd/voorbeelden/coin-maze.jpg"
+                            data-empty="mijn_kunsd/voorbeelden/coin-maze-leeg.png"
+                            alt="Coin Maze: portret in een doolhof van boogjes"
+                            width="640"
+                            height="640"
+                            loading="lazy">
+                    </div>
+
+                    <div class="view-toggle" role="group" aria-label="Voorbeeld van Coin Maze">
+                        <button type="button" class="active" data-view="filled" data-track="voorbeeld-coin-maze-af">Zo Wordt Het</button>
+                        <button type="button" data-view="empty" data-track="voorbeeld-coin-maze-om-te-printen">Tekenvel</button>
+                    </div>
+
+                    <h3>Coin Maze <span class="tag tag-new">Nieuw</span> <span class="tag tag-diy">Tekenpuzzel</span></h3>
+                    <p>
+                        Een vel met alleen puntjes, en per hokje een getal: 1, 3 of 5 boogjes. Welke hoeken? Dat
+                        beslist een muntje. Zo groeit er een doolhof waarin je portret opduikt, en dat van
+                        niemand anders hetzelfde is.
+                    </p>
+
+                    <dl class="puzzle-specs">
+                        <div><dt>Nodig</dt><dd>Muntje, fineliner (0,4 mm)</dd></div>
+                        <div><dt>Tijd</dt><dd>1 tot 2 uur</dd></div>
+                        <div><dt>Niveau</dt><dd><span class="level" role="img" style="--level: 2" aria-label="2 van 5"></span></dd></div>
+                    </dl>
+
+                    <button type="button" class="secondary-button try-button" data-algorithm="coin-maze-settings" data-name="Coin Maze" data-track="probeer-coin-maze">Probeer Deze</button>
                 </article>
 
                 <article class="example-card">
@@ -641,6 +707,22 @@
                                 <button
                                     type="button"
                                     class="algorithm-button"
+                                    data-settings="spiral-settings">
+                                    <img src="mijn_kunsd/voorbeelden/knoppen/spiral-scribble.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                                    Spiral Scribble
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="algorithm-button"
+                                    data-settings="coin-maze-settings">
+                                    <img src="mijn_kunsd/voorbeelden/knoppen/coin-maze.jpg" alt="" class="algorithm-thumb" width="40" height="40">
+                                    Coin Maze
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="algorithm-button"
                                     data-settings="chordinates-settings">
                                     <img src="mijn_kunsd/voorbeelden/knoppen/chordinates.jpg" alt="" class="algorithm-thumb" width="40" height="40">
                                     Chordinates
@@ -807,6 +889,153 @@
                                     id="hatchwork-button"
                                     class="create-button">
                                     Maak Hatchwork
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div
+                            id="spiral-settings"
+                            class="algorithm-settings hidden">
+
+                            <h3>Spiral Scribble</h3>
+
+                            <p class="palette-hint">
+                                Werkt het best met één gezicht dichtbij. Het midden van je foto (of uitsnede) wordt een
+                                rondje: snijd je foto bij tot ongeveer een vierkant rond het gezicht.
+                            </p>
+
+                            <div class="slider-header">
+                                <label for="spiral-turns-slider">
+                                    Aantal rondjes
+                                </label>
+
+                                <output
+                                    id="spiral-turns-value"
+                                    for="spiral-turns-slider">
+                                    36
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="spiral-turns-slider"
+                                class="art-slider"
+                                min="24"
+                                max="48"
+                                step="4"
+                                value="36"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Grof en snel</span>
+                                <span>Fijn en precies</span>
+                            </div>
+
+                            <label
+                                class="switch-row switch-row-diy"
+                                for="spiral-fill">
+
+                                <span>
+                                    <strong>Tekenvel</strong>
+
+                                    <small>
+                                        Zet aan voor twee bladen: de lege spiraal om op te tekenen, en de partituur
+                                        die per rondje zegt waar je kriebelt, met je foto en het "antwoord" klein erbij.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="spiral-fill"
+                                        data-offer="Mooi geworden? Maak dan het tekenvel: een lege spiraal en de partituur die zegt waar je kriebelt. Precies dezelfde spiraal als hierboven.">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <div class="button-row">
+                                <button
+                                    type="button"
+                                    id="spiral-button"
+                                    class="create-button">
+                                    Maak Spiral Scribble
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div
+                            id="coin-maze-settings"
+                            class="algorithm-settings hidden">
+
+                            <h3>Coin Maze</h3>
+
+                            <p class="palette-hint">
+                                Werkt het best met één gezicht dichtbij, voor een lichte of weggehaalde achtergrond.
+                                Elke keer dat je op de knop drukt, gooit de computer andere muntjes: een ander doolhof
+                                met hetzelfde gezicht.
+                            </p>
+
+                            <div class="slider-header">
+                                <label for="coin-maze-columns-slider">
+                                    Hokjes naast elkaar
+                                </label>
+
+                                <output
+                                    id="coin-maze-columns-value"
+                                    for="coin-maze-columns-slider">
+                                    24
+                                </output>
+                            </div>
+
+                            <input
+                                type="range"
+                                id="coin-maze-columns-slider"
+                                class="art-slider"
+                                min="16"
+                                max="26"
+                                step="2"
+                                value="24"
+                            >
+
+                            <div class="slider-scale">
+                                <span>Grof en snel</span>
+                                <span>Fijn en precies</span>
+                            </div>
+
+                            <label
+                                class="switch-row switch-row-diy"
+                                for="coin-maze-fill">
+
+                                <span>
+                                    <strong>Tekenvel</strong>
+
+                                    <small>
+                                        Zet aan voor twee bladen: alleen puntjes om op te tekenen, en per hokje het aantal
+                                        boogjes, met je foto en een voorbeeld van het "antwoord" klein erbij.
+                                    </small>
+                                </span>
+
+                                <span class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="coin-maze-fill"
+                                        data-offer="Mooi geworden? Maak dan het tekenvel: puntjes en per hokje het aantal boogjes. Met je eigen muntje wordt het doolhof weer anders, maar het gezicht blijft.">
+
+                                    <span class="switch-slider"></span>
+                                </span>
+
+                            </label>
+
+                            <div class="button-row">
+                                <button
+                                    type="button"
+                                    id="coin-maze-button"
+                                    class="create-button">
+                                    Maak Coin Maze
                                 </button>
                             </div>
 
@@ -1387,7 +1616,7 @@
                 <li>
                     <strong>Goed Gereedschap</strong>
                     Voor Penpath, Hatchwork, Pen Up en Chordinates: een doorzichtige liniaal en een fineliner van
-                    0,3 mm. Een te dikke stift maakt alles snel zwart. Voor Coloring Dots juist een stift met een ronde punt.
+                    0,3 mm. Voor Spiral Scribble en Coin Maze een fineliner van 0,4 mm, zonder liniaal. Een te dikke stift maakt alles snel zwart. Voor Coloring Dots juist een stift met een ronde punt.
                 </li>
                 <li>
                     <strong>Streep Af Wat Klaar Is</strong>

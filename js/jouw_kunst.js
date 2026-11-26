@@ -26,6 +26,12 @@ const penpathButton = document.getElementById("penpath-button");
 const hatchworkColumnsSlider = document.getElementById("hatchwork-columns-slider");
 const hatchworkFill = document.getElementById("hatchwork-fill");
 const hatchworkButton = document.getElementById("hatchwork-button");
+const spiralTurnsSlider = document.getElementById("spiral-turns-slider");
+const spiralFill = document.getElementById("spiral-fill");
+const spiralButton = document.getElementById("spiral-button");
+const coinMazeColumnsSlider = document.getElementById("coin-maze-columns-slider");
+const coinMazeFill = document.getElementById("coin-maze-fill");
+const coinMazeButton = document.getElementById("coin-maze-button");
 const penUpLinesSlider = document.getElementById("pen-up-lines-slider");
 const penUpContrastSlider = document.getElementById("pen-up-contrast-slider");
 const penUpFill = document.getElementById("pen-up-fill");
@@ -88,6 +94,8 @@ const FILE_NAMES = {
     "dots-settings": "coloring-dots",
     "penpath-settings": "penpath",
     "hatchwork-settings": "hatchwork",
+    "spiral-settings": "spiral-scribble",
+    "coin-maze-settings": "coin-maze",
     "pen-up-settings": "pen-up"
 };
 
@@ -107,7 +115,8 @@ const EXTRA_COLORS = ["#2a9d8f", "#f4a261", "#8ecae6", "#9b5de5", "#e76f51", "#6
 // Bevat het laatste resultaat, of null als er (nog) niets te downloaden is.
 let resultSource = null;
 
-// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates, Penpath, Hatchwork en Pen Up): alle bladen, alle
+// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates, Penpath, Hatchwork, Pen Up,
+// Spiral Scribble en Coin Maze): alle bladen, alle
 // bladen naast elkaar in één afbeelding (voor "Download Afbeelding"), en samen als pdf. Anders null.
 let resultPages = null;
 let resultCombined = null;
@@ -828,6 +837,36 @@ hatchworkButton.addEventListener("click", async function () {
             fill: !hatchworkFill.checked
         },
         hatchworkButton
+    );
+});
+
+
+spiralButton.addEventListener("click", async function () {
+    track("maak-spiral-scribble");
+    rememberAlgorithm(spiralFill, spiralButton);
+
+    await runPythonAlgorithm(
+        "/api/spiral-scribble",
+        {
+            turns: spiralTurnsSlider.value,
+            fill: !spiralFill.checked
+        },
+        spiralButton
+    );
+});
+
+
+coinMazeButton.addEventListener("click", async function () {
+    track("maak-coin-maze");
+    rememberAlgorithm(coinMazeFill, coinMazeButton);
+
+    await runPythonAlgorithm(
+        "/api/coin-maze",
+        {
+            columns: coinMazeColumnsSlider.value,
+            fill: !coinMazeFill.checked
+        },
+        coinMazeButton
     );
 });
 
