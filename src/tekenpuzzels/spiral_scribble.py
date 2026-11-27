@@ -52,7 +52,8 @@ def image_to_spiral_scribble(img, turns=36, template=False, output_size=1800):
     """Maak een kriebelspiraal van een foto.
 
     Args:
-        img: PIL Image. Het grootste vierkant uit het midden wordt gebruikt.
+        img: PIL Image. Het grootste vierkant uit het midden wordt gebruikt, net als bij Chordinates
+            (daar rekent "Kies Het Rondje" in de browser ook mee).
         turns: hoeveel rondjes de spiraal heeft. Meer = fijner, maar meer werk.
         template: False = voorbeeld van hoe het eruitziet als het af is (één afbeelding),
             True = het tekenvel: een lijst van twee A4-bladen (de lege spiraal, en de partituur).
@@ -62,7 +63,7 @@ def image_to_spiral_scribble(img, turns=36, template=False, output_size=1800):
         PIL Image (RGB), of bij template=True een lijst van twee PIL Images.
     """
     turns = int(turns)
-    photo = ImageOps.fit(img.convert("RGB"), (800, 800), Image.LANCZOS, centering=(0.5, 0.42))
+    photo = ImageOps.fit(img.convert("RGB"), (800, 800), Image.LANCZOS)
     levels = find_levels(_darkness(photo), turns)
 
     if template:

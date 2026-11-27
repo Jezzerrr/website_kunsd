@@ -139,6 +139,21 @@ def _draw_tile(draw, left, top, cell, count, heads, line_width, color=INK_COLOR)
                      width=line_width)
 
 
+def _draw_tile_dots(draw, left, top, cell):
+    """De stippen van blad 1 in een voorbeeldhokje: groot op de hoeken, klein halverwege de randen."""
+    corner = round(PX_PER_MM * 0.35)
+    half = round(PX_PER_MM * 0.25)
+
+    for step_y in range(3):
+        for step_x in range(3):
+            if step_x == 1 and step_y == 1:
+                continue
+
+            x, y = left + step_x * cell / 2, top + step_y * cell / 2
+            size, color = (corner, DOT_COLOR) if step_x != 1 and step_y != 1 else (half, (165, 165, 170))
+            draw.ellipse((x - size, y - size, x + size, y + size), fill=color)
+
+
 def _draw_maze(counts, coins, output_size, pen_mm=0.4):
     """Zo ziet het eruit als alle boogjes getekend zijn."""
     rows, columns = counts.shape
@@ -224,7 +239,8 @@ def _draw_chart_page(counts, coins, photo):
     explanation = [
         "Gooi per hokje een muntje. Kop: teken de boogjes in de hoeken linksboven en rechtsonder.",
         "Munt: rechtsboven en linksonder. Het getal zegt hoeveel boogjes je in elk van die twee hoeken tekent.",
-        "De middelste boog loopt van lichte puntje naar lichte puntje; de andere liggen er netjes omheen.",
+        "Een boogje is een kwart rondje om het hoekpunt. Het middelste boogje loopt van kleine stip tot kleine",
+        "stip (de stippen halverwege de randen). Bij 3 of 5 komen de andere er op gelijke afstand binnen en buiten.",
     ]
     y = margin + round(unit * 0.04)
 
@@ -248,6 +264,7 @@ def _draw_chart_page(counts, coins, photo):
             tile_top = y + round(unit * 0.025)
             draw.rectangle((tile_left, tile_top, tile_left + tile, tile_top + tile), outline=CHART_LINE, width=2)
             _draw_tile(draw, tile_left, tile_top, tile, count, heads, max(2, round(tile * 0.035)))
+            _draw_tile_dots(draw, tile_left, tile_top, tile)
             draw.text((tile_left + tile / 2, tile_top + tile + round(unit * 0.008)), str(count), fill=LINE_COLOR,
                       font=small_font, anchor="mt")
 

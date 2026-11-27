@@ -1536,6 +1536,21 @@ body.lightbox-open {
     gap: 12px;
 }
 
+/* Bij "Resultaat": de naam van de puzzel waar het resultaat bij hoort (js/jouw_kunst.js) */
+.result-name {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.result-name:empty {
+    display: none;
+}
+
+.result-name::before {
+    margin-right: 12px;
+    content: "·";
+}
+
 .step-title::before {
     display: inline-flex;
     flex: 0 0 auto;
@@ -2671,6 +2686,15 @@ body.is-dragging .drop-overlay {
     .result-placeholder p {
         margin: 0;
         color: var(--muted);
+    }
+
+    /* "Maak ..." van de gekozen puzzel, ook hier in beeld */
+    .result-placeholder .create-button {
+        margin-top: 18px;
+    }
+
+    .result-placeholder .create-button.hidden {
+        display: none;
     }
 
     .result-placeholder strong {
