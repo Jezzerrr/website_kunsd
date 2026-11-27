@@ -18,6 +18,7 @@ from flask import Flask, Response, abort, jsonify, redirect, request, send_from_
 from src.helper_functions.color_helpers import get_palette
 from src.helper_functions.pdf_pages import pages_to_pdf
 from src.tekenpuzzels.chordinates import image_to_chordinates
+from src.tekenpuzzels.coin_maze import image_to_coin_maze
 from src.tekenpuzzels.dotty_affair import image_to_dots, image_to_ranked_dots
 from src.tekenpuzzels.hatchwork import image_to_hatchwork
 from src.tekenpuzzels.pen_up import image_to_pen_up
@@ -29,6 +30,7 @@ from src.tekenpuzzels.shape_numbers import (
     side_for_equal_area,
     suggest_shape_palette,
 )
+from src.tekenpuzzels.spiral_scribble import image_to_spiral_scribble
 from src.speeltuin.cubist_facets import image_to_cubist_facets
 from src.speeltuin.negative_circles import image_to_negative_circles
 from src.speeltuin.shadow_stripes import darkness_map, image_to_shadow_stripes
@@ -566,6 +568,35 @@ def hatchwork():
     result = image_to_hatchwork(
         load_input_image(),
         columns=int(read_number("columns", 70, 50, 110)),
+        template=template
+    )
+
+    return pages_to_json(result) if template else image_to_json(result)
+
+
+@app.route("/api/spiral-scribble", methods=["POST"])
+@image_endpoint
+def spiral_scribble():
+    # Zonder "fill" krijg je het tekenvel: twee A4-bladen (de lege spiraal, en de partituur)
+    template = not read_flag("fill", default=True)
+    result = image_to_spiral_scribble(
+        load_input_image(WORK_IMAGE_SIZE),
+        turns=int(read_number("turns", 36, 24, 48)),
+        template=template
+    )
+
+    return pages_to_json(result) if template else image_to_json(result)
+
+
+@app.route("/api/coin-maze", methods=["POST"])
+@image_endpoint
+def coin_maze():
+    # Zonder "fill" krijg je het tekenvel: twee A4-bladen (de puntjes, en per hokje het aantal boogjes).
+    # Het voorbeeld gooit elke keer andere muntjes, dus elke keer een ander doolhof.
+    template = not read_flag("fill", default=True)
+    result = image_to_coin_maze(
+        load_input_image(WORK_IMAGE_SIZE),
+        columns=int(read_number("columns", 24, 16, 26)),
         template=template
     )
 

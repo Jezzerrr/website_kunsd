@@ -26,6 +26,12 @@ const penpathButton = document.getElementById("penpath-button");
 const hatchworkColumnsSlider = document.getElementById("hatchwork-columns-slider");
 const hatchworkFill = document.getElementById("hatchwork-fill");
 const hatchworkButton = document.getElementById("hatchwork-button");
+const spiralTurnsSlider = document.getElementById("spiral-turns-slider");
+const spiralFill = document.getElementById("spiral-fill");
+const spiralButton = document.getElementById("spiral-button");
+const coinMazeColumnsSlider = document.getElementById("coin-maze-columns-slider");
+const coinMazeFill = document.getElementById("coin-maze-fill");
+const coinMazeButton = document.getElementById("coin-maze-button");
 const penUpLinesSlider = document.getElementById("pen-up-lines-slider");
 const penUpContrastSlider = document.getElementById("pen-up-contrast-slider");
 const penUpFill = document.getElementById("pen-up-fill");
@@ -57,8 +63,15 @@ const cropTitle = document.getElementById("crop-title");
 const cropHint = document.getElementById("crop-hint");
 
 // Chordinates: het rondje van de foto dat de cirkel wordt, en de knop om het zelf te kiezen
-const circlePreviewImage = document.getElementById("circle-preview-image");
-const circleChooseButton = document.getElementById("circle-choose-button");
+// (Spiral Scribble heeft er ook een: allebei met dezelfde klassen, het is hetzelfde rondje)
+const circlePreviewImages = document.querySelectorAll(".circle-preview-image");
+const circleChooseButtons = document.querySelectorAll(".circle-choose-button");
+
+// Na een bewerking: de naam van de puzzel bij "Resultaat", zodat altijd duidelijk is waar het resultaat bij hoort
+const resultName = document.getElementById("result-name");
+
+// Zolang er geen resultaat is (breed scherm): de knop "Maak ..." van de gekozen puzzel ook rechts in beeld
+const placeholderCreateButton = document.getElementById("placeholder-create-button");
 
 // De gewone teksten van de bijsnijder; bij "Kies Het Rondje" staan er andere
 const CROP_TITLE = cropTitle.textContent;
@@ -88,6 +101,8 @@ const FILE_NAMES = {
     "dots-settings": "coloring-dots",
     "penpath-settings": "penpath",
     "hatchwork-settings": "hatchwork",
+    "spiral-settings": "spiral-scribble",
+    "coin-maze-settings": "coin-maze",
     "pen-up-settings": "pen-up"
 };
 
@@ -107,7 +122,8 @@ const EXTRA_COLORS = ["#2a9d8f", "#f4a261", "#8ecae6", "#9b5de5", "#e76f51", "#6
 // Bevat het laatste resultaat, of null als er (nog) niets te downloaden is.
 let resultSource = null;
 
-// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates, Penpath, Hatchwork en Pen Up): alle bladen, alle
+// Bij een resultaat van meerdere bladen (het tekenvel van Chordinates, Penpath, Hatchwork, Pen Up,
+// Spiral Scribble en Coin Maze): alle bladen, alle
 // bladen naast elkaar in één afbeelding (voor "Download Afbeelding"), en samen als pdf. Anders null.
 let resultPages = null;
 let resultCombined = null;
@@ -230,10 +246,12 @@ cropStartButton.addEventListener("click", function () {
 });
 
 
-// "Kies Het Rondje" bij Chordinates: dezelfde bijsnijder, maar altijd vierkant en met een rond kader.
-circleChooseButton.addEventListener("click", function () {
-    track("kies-het-rondje");
-    openCropEditor(true);
+// "Kies Het Rondje" bij Chordinates en Spiral Scribble: dezelfde bijsnijder, maar altijd vierkant en met een rond kader.
+circleChooseButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+        track("kies-het-rondje");
+        openCropEditor(true);
+    });
 });
 
 
@@ -421,7 +439,7 @@ function centerSquare(rect, naturalWidth, naturalHeight) {
 }
 
 
-// Het rondje bij Chordinates: hetzelfde stuk van de foto als de server gebruikt.
+// Het rondje bij Chordinates en Spiral Scribble: hetzelfde stuk van de foto als de server gebruikt.
 function renderCirclePreview() {
     const naturalWidth = uploadedImage.naturalWidth;
     const naturalHeight = uploadedImage.naturalHeight;
@@ -432,11 +450,13 @@ function renderCirclePreview() {
 
     const square = centerSquare(appliedCrop || { x: 0, y: 0, w: 1, h: 1 }, naturalWidth, naturalHeight);
 
-    circlePreviewImage.src = originalDataUrl;
-    circlePreviewImage.style.clipPath = shapeClipPath(appliedShape);
-    circlePreviewImage.style.width = `${100 / square.w}%`;
-    circlePreviewImage.style.left = `${-(square.x / square.w) * 100}%`;
-    circlePreviewImage.style.top = `${-(square.y / square.h) * 100}%`;
+    circlePreviewImages.forEach(function (image) {
+        image.src = originalDataUrl;
+        image.style.clipPath = shapeClipPath(appliedShape);
+        image.style.width = `${100 / square.w}%`;
+        image.style.left = `${-(square.x / square.w) * 100}%`;
+        image.style.top = `${-(square.y / square.h) * 100}%`;
+    });
 }
 
 
@@ -697,8 +717,58 @@ function selectAlgorithm(settingsId) {
         settings.classList.toggle("hidden", settings.id !== settingsId);
     });
 
+    updatePlaceholderButton();
     saveProgress();
 }
+
+
+// De open instellingen (bijv. "coin-maze-settings"), of null als er geen puzzel gekozen is.
+function activeSettings() {
+    return document.querySelector(".algorithm-settings:not(.hidden)");
+}
+
+
+// De naam van een puzzel, zoals boven zijn instellingen ("Coin Maze").
+function settingsName(settings) {
+    const title = settings ? settings.querySelector("h3") : null;
+
+    return title ? title.textContent.trim() : "";
+}
+
+
+// De puzzel waar het huidige resultaat bij hoort (de instellingen van de laatst gebruikte "Maak ..."-knop).
+function resultSettings() {
+    return lastCreateButton ? lastCreateButton.closest(".algorithm-settings") : null;
+}
+
+
+// Rechts, zolang er nog geen resultaat is: "Maak Coin Maze" voor de gekozen puzzel. Na Bijsnijden of
+// Uitknippen is het resultaat weg en staat de gewone knop links ver naar beneden, vaak buiten beeld.
+function updatePlaceholderButton() {
+    const settings = activeSettings();
+    const createButton = settings ? settings.querySelector(".create-button") : null;
+    const show = Boolean(originalFile && createButton);
+
+    placeholderCreateButton.classList.toggle("hidden", !show);
+
+    if (show) {
+        placeholderCreateButton.textContent = createButton.disabled
+            ? createButton.textContent
+            : "Maak " + settingsName(settings);
+        placeholderCreateButton.disabled = createButton.disabled;
+    }
+}
+
+
+placeholderCreateButton.addEventListener("click", function () {
+    const settings = activeSettings();
+    const createButton = settings ? settings.querySelector(".create-button") : null;
+
+    if (createButton && !createButton.disabled) {
+        track("maak-vanaf-rechts");
+        createButton.click();
+    }
+});
 
 
 /* ---------- Voorbeelden ---------- */
@@ -832,6 +902,36 @@ hatchworkButton.addEventListener("click", async function () {
 });
 
 
+spiralButton.addEventListener("click", async function () {
+    track("maak-spiral-scribble");
+    rememberAlgorithm(spiralFill, spiralButton);
+
+    await runPythonAlgorithm(
+        "/api/spiral-scribble",
+        {
+            turns: spiralTurnsSlider.value,
+            fill: !spiralFill.checked
+        },
+        spiralButton
+    );
+});
+
+
+coinMazeButton.addEventListener("click", async function () {
+    track("maak-coin-maze");
+    rememberAlgorithm(coinMazeFill, coinMazeButton);
+
+    await runPythonAlgorithm(
+        "/api/coin-maze",
+        {
+            columns: coinMazeColumnsSlider.value,
+            fill: !coinMazeFill.checked
+        },
+        coinMazeButton
+    );
+});
+
+
 penUpButton.addEventListener("click", async function () {
     track("maak-pen-up");
     rememberAlgorithm(penUpFill, penUpButton);
@@ -886,6 +986,14 @@ diyOfferButton.addEventListener("click", function () {
     diyOfferBusy = true;
     setLoadingState(diyOfferButton, true);
     diyOfferButton.textContent = "Tekenvel wordt gemaakt...";
+
+    // Het tekenvel hoort bij de puzzel van het resultaat. Was intussen een andere puzzel gekozen,
+    // dan gaat die van het resultaat weer open: wat geselecteerd is, klopt dan met wat je krijgt.
+    const settings = resultSettings();
+
+    if (settings && settings.classList.contains("hidden")) {
+        selectAlgorithm(settings.id);
+    }
 
     lastFillSwitch.checked = true;
     lastCreateButton.click();
@@ -1355,6 +1463,7 @@ function showResult(imageSource, scroll = true, pages = null, pdf = null, combin
 
     setDownloadEnabled(true);
     fileNameInput.value = defaultFileName();
+    resultName.textContent = settingsName(resultSettings());
     updateShareButton();
     updateDiyOffer();
     document.body.classList.add("has-result");
@@ -1450,11 +1559,12 @@ function saveFile(source, fileName) {
 
 // Bijvoorbeeld "kunsd-shape-division-tekenvel-2026-10-24-0739"
 function defaultFileName() {
-    const activeButton = document.querySelector(".algorithm-button.active");
+    // De puzzel van het resultaat, niet de puzzel die nu toevallig open staat
+    const settings = resultSettings() || activeSettings();
     const parts = ["kunsd"];
 
-    if (activeButton && FILE_NAMES[activeButton.dataset.settings]) {
-        parts.push(FILE_NAMES[activeButton.dataset.settings]);
+    if (settings && FILE_NAMES[settings.id]) {
+        parts.push(FILE_NAMES[settings.id]);
     }
 
     if (lastFillSwitch && lastFillSwitch.checked) {
@@ -1551,6 +1661,8 @@ function setLoadingState(button, isLoading) {
         button.textContent = button.dataset.originalText;
         button.disabled = false;
     }
+
+    updatePlaceholderButton();
 }
 
 
@@ -1562,6 +1674,8 @@ function closeAlgorithmSettings() {
     algorithmSettings.forEach(function (settings) {
         settings.classList.add("hidden");
     });
+
+    updatePlaceholderButton();
 }
 
 
