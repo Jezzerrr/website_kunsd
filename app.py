@@ -396,7 +396,7 @@ def read_contact_images():
             raise UserError(f"Een foto is groter dan {CONTACT_MAX_FILE_MB} MB. Kies een kleinere foto.")
 
         try:
-            image = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
+            image = on_white(ImageOps.exif_transpose(Image.open(io.BytesIO(data))))
         except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
             raise UserError(f"\"{file.filename}\" kan ik niet openen als foto of pdf.")
 
@@ -752,7 +752,7 @@ def orient():
     gebruikt het resultaat daarna als de foto, dus de uitsnede en alle bewerkingen gaan vanzelf mee.
     Dit gebeurt hier en niet in de browser, omdat sommige browsers een canvas bewust verstoren.
     """
-    image = ImageOps.exif_transpose(Image.open(request.files["image"])).convert("RGB")
+    image = on_white(ImageOps.exif_transpose(Image.open(request.files["image"])))
 
     if read_flag("flip", default=False):
         image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
@@ -788,7 +788,8 @@ def load_input_image(max_side=MAX_IMAGE_SIZE):
 
     # Draai de foto zoals de browser hem toont (telefoonfoto's hebben vaak
     # een rotatie-tag). Zo kloppen de coördinaten van de uitsnede.
-    image = ImageOps.exif_transpose(image).convert("RGB")
+    # Doorzichtige delen (bijv. een PNG zonder achtergrond) worden wit, niet zwart.
+    image = on_white(ImageOps.exif_transpose(image))
 
     original_size = image.size
     box = read_crop_box(original_size)
@@ -803,6 +804,22 @@ def load_input_image(max_side=MAX_IMAGE_SIZE):
     # Uitgeknipt? Dan wordt alles buiten de getekende vorm wit. Pas na het schalen,
     # zodat het masker niet groter is dan nodig en de rand scherp blijft.
     return apply_cutout(image, original_size, box)
+
+
+def on_white(image):
+    """De foto als RGB, met doorzichtige delen wit.
+
+    Een PNG of WebP zonder achtergrond (bijv. uit een achtergrond-verwijderaar) heeft doorzichtige
+    pixels. Gewoon .convert("RGB") gooit de doorzichtigheid weg en laat de kleur eronder over, en
+    die is meestal zwart. Dan zien alle bewerkingen daar een zwart vlak. Hier leggen we de foto
+    eerst op wit papier.
+    """
+    if image.mode in ("RGBA", "LA", "PA", "RGBa", "La") or "transparency" in image.info:
+        image = image.convert("RGBA")
+        paper = Image.new("RGBA", image.size, (255, 255, 255, 255))
+        image = Image.alpha_composite(paper, image)
+
+    return image.convert("RGB")
 
 
 def decode_smaller(image, max_side):
